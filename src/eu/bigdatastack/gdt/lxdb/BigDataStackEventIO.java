@@ -1,0 +1,391 @@
+package eu.bigdatastack.gdt.lxdb;
+
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
+
+/**
+ * IO layer for reading and writing events from the Database
+ * 
+ * @author EbonBlade
+ *
+ */
+public class BigDataStackEventIO {
+
+	protected final String tableName = "BigDataStackEvents";
+
+	LXDB client;
+
+	public BigDataStackEventIO(LXDB client) throws SQLException {
+		this.client = client;
+
+		initTable();
+	}
+
+	/**
+	 * Check whether the table exists in the DB already and if not creates it
+	 * 
+	 * @throws SQLException
+	 */
+	public void initTable() throws SQLException {
+
+		Connection conn = client.openConnection();
+
+		DatabaseMetaData md = conn.getMetaData();
+		ResultSet rs = md.getTables(null, null, "%", null);
+
+		boolean tableExists = false;
+
+		while (rs.next()) {
+			if (rs.getString(3).equalsIgnoreCase(tableName)) {
+				tableExists = true;
+			}
+		}
+
+		if (!tableExists) {
+			Statement statement = conn.createStatement();
+			statement.executeUpdate("CREATE TABLE " + tableName + " ( " + "appID VARCHAR(100), "
+					+ "owner VARCHAR(140), " + "eventNo INT, " + "objectID VARCHAR(100), " + "namespace VARCHAR(140), "
+					+ "title VARCHAR(140), " + "description VARCHAR(1000), " + "eventTime BIGINT, "
+					+ "type VARCHAR(100), " + "severity VARCHAR(100), " + "PRIMARY KEY (appID,owner,eventNo)" + ")");
+
+			conn.commit();
+		}
+
+		conn.close();
+	}
+
+	/**
+	 * Add a new BigDataStack event to the database. The event will only be added if
+	 * it is unique.
+	 * 
+	 * @param app
+	 * @return whether the insert was successful
+	 * @throws SQLException
+	 */
+	public boolean addEvent(BigDataStackEvent event) throws SQLException {
+
+		Connection conn = client.openConnection();
+
+		Statement statement = conn.createStatement();
+		try {
+			statement.executeUpdate("INSERT INTO " + tableName
+					+ " (appID, owner, eventNo, objectID, namespace, title, description, eventTime, type, severity)"
+					+ " VALUES ( " + SQLUtils.prepareText(event.getAppID(), 100) + ", "
+					+ SQLUtils.prepareText(event.getOwner(), 140) + ", "
+					+ event.getEventNo() + ", "
+					+ SQLUtils.prepareText(event.getObjectID(), 100) + ", "
+					+ SQLUtils.prepareText(event.getNamepace(), 140) + ", "
+					+ SQLUtils.prepareText(event.getTitle(), 140) + ", "
+					+ SQLUtils.prepareText(event.getDescription(), 1000) + ", "
+					+ event.getEventTime() + ", "
+					+ SQLUtils.prepareText(event.getType().name(), 100) + ", "
+					+ SQLUtils.prepareText(event.getSeverity().name(), 100) + " )");
+		} catch (Exception e) {
+			//e.printStackTrace();
+			conn.close();
+			return false;
+		}
+
+		conn.commit();
+		conn.close();
+
+		return true;
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, BigDataStackEventSeverity severity, String objectID, long startTime, long endTime) throws SQLException {
+		Connection conn = client.openConnection();
+
+		Statement statement = conn.createStatement();
+
+		StringBuilder baseStatement = new StringBuilder();
+		baseStatement.append("SELECT * FROM "+tableName+" WHERE appID='"+appID+"' AND owner='"+owner+"'");
+		if (type!=null) baseStatement.append(" AND type='"+type.name()+"'");
+		if (severity!=null) baseStatement.append(" AND severity='"+severity.name()+"'");
+		if (objectID!=null) baseStatement.append(" AND objectID='"+objectID+"'");
+
+		statement.execute(baseStatement.toString());
+		ResultSet results = statement.getResultSet();
+
+		List<BigDataStackEvent> retrievedEvents = new ArrayList<BigDataStackEvent>(30);
+
+		try {
+			while (results.next()) {
+
+				BigDataStackEvent event = new BigDataStackEvent(
+						results.getString("appID"),
+						results.getString("owner"),
+						results.getInt("eventNo"),
+						results.getString("namespace"),
+						results.getLong("eventTime"),
+						BigDataStackEventType.valueOf(results.getString("type")),
+						BigDataStackEventSeverity.valueOf(results.getString("severity")),
+						results.getString("title"),
+						results.getString("description"),
+						results.getString("objectID")
+						);
+
+
+				if (startTime>=0) if (event.getEventTime()<startTime) continue;
+				if (endTime>=0) if (event.getEventTime()>endTime) continue;
+
+				retrievedEvents.add(event);
+
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+
+		Collections.sort(retrievedEvents);
+		Collections.reverse(retrievedEvents);
+
+		conn.close();
+
+		return retrievedEvents;
+	}
+
+	/**
+	 * Returns the number of events for an app. 
+	 * @param appID
+	 * @param owner
+	 * @return
+	 * @throws SQLException
+	 */
+	public int getEventCount(String appID, String owner) throws SQLException {
+		Connection conn = client.openConnection();
+
+		Statement statement = conn.createStatement();
+
+		StringBuilder baseStatement = new StringBuilder();
+		baseStatement.append("SELECT COUNT(*) FROM "+tableName+" WHERE appID='"+appID+"' AND owner='"+owner+"'");
+
+		int count = 0;
+
+
+
+		try {
+			statement.execute(baseStatement.toString());
+			ResultSet results = statement.getResultSet();
+
+			while (results.next()) {
+
+				count = results.getInt(1);
+
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+
+		conn.close();
+
+		return count;
+	}
+
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param type
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner) throws SQLException {
+		return getEvents(appID,owner,null, null, null,-1,-1);
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param type
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type) throws SQLException {
+		return getEvents(appID,owner,type, null, null,-1,-1);
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param severity
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventSeverity severity) throws SQLException {
+		return getEvents(appID,owner,null, severity, null,-1,-1);
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param type
+	 * @param severity
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, BigDataStackEventSeverity severity) throws SQLException {
+		return getEvents(appID,owner,type, severity, null,-1,-1);
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param type
+	 * @param objectID
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, String objectID) throws SQLException {
+		return getEvents(appID,owner,type, null, objectID,-1,-1);
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param severity
+	 * @param objectID
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventSeverity severity, String objectID) throws SQLException {
+		return getEvents(appID,owner,null, severity, objectID,-1,-1);
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param type
+	 * @param severity
+	 * @param objectID
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, BigDataStackEventSeverity severity, String objectID) throws SQLException {
+		return getEvents(appID,owner,type, severity, objectID,-1,-1);
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param type
+	 * @param startTime
+	 * @param endTime
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, long startTime, long endTime) throws SQLException {
+		return getEvents(appID,owner,type, null, null,startTime,endTime);
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param severity
+	 * @param startTime
+	 * @param endTime
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventSeverity severity, long startTime, long endTime) throws SQLException {
+		return getEvents(appID,owner,null, severity, null,startTime,endTime);
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param type
+	 * @param severity
+	 * @param startTime
+	 * @param endTime
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, BigDataStackEventSeverity severity, long startTime, long endTime) throws SQLException {
+		return getEvents(appID,owner,type, severity, null,startTime,endTime);
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param type
+	 * @param objectID
+	 * @param startTime
+	 * @param endTime
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, String objectID, long startTime, long endTime) throws SQLException {
+		return getEvents(appID,owner,type, null, objectID,startTime,endTime);
+	}
+
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param severity
+	 * @param objectID
+	 * @param startTime
+	 * @param endTime
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventSeverity severity, String objectID, long startTime, long endTime) throws SQLException {
+		return getEvents(appID,owner,null, severity, objectID,startTime,endTime);
+	}
+
+	/**
+	 * Deletes the table in the database and re-creates it
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean clearTable() throws SQLException {
+		Connection conn = client.openConnection();
+
+		try {
+			Statement statement = conn.createStatement();
+			statement.execute("DROP TABLE \""+client.username+"\".\""+tableName+"\"");
+
+			conn.commit();
+			conn.close();
+
+			initTable();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+			return false;
+		}
+
+		return true;
+	}
+
+}

@@ -1,0 +1,45 @@
+
+appID: "DeepRecSys"
+owner: "richardm"
+namespace: "richardmproject"
+
+objectID: "cmd"
+type: DeploymentConfig
+
+yamlSource: 
+  apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    name: $appID$-$objectID$
+    namespace: $namespace$
+  spec:
+    replicas: 1
+    strategy:
+      resources: {}
+    template:
+      metadata:
+        labels:
+          jobconfig: $objectID$
+          app: $appID$
+      spec:
+        containers:
+        - name: bash
+          image: rsippl/centos-dev:latest
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "2048Mi"
+          command:
+           - 'sleep'
+          args:
+           - '24h'
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - mountPath: /nfs/
+              name: terminal-nfs-access
+        securityContext: {}
+        serviceAccount: default
+        volumes:
+        - name: terminal-nfs-access
+          persistentVolumeClaim:
+            claimName: $owner$vol1claim

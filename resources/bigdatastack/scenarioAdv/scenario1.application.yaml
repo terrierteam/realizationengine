@@ -1,0 +1,10 @@
+# BigDataStack Product Recommendation Playbook
+
+appID: "DeepRecSys"
+name: "Deep Learning Grocery Recommender"
+description: "A grocery recommendation application. Contains both learning and serving components"
+owner: "richardm"
+namespace: "richardmproject"
+types:
+ - playbook
+ - parameterized

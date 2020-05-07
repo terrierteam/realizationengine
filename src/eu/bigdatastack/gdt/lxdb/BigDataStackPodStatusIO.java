@@ -1,0 +1,193 @@
+package eu.bigdatastack.gdt.lxdb;
+
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
+
+public class BigDataStackPodStatusIO {
+
+	protected final String tableName = "BigDataStackPodStatus";
+
+	LXDB client;
+
+	public BigDataStackPodStatusIO(LXDB client) throws SQLException {
+		this.client = client;
+
+		initTable();
+	}
+
+	/**
+	 * Check whether the table exists in the DB already and if not creates it
+	 * 
+	 * @throws SQLException
+	 */
+	public void initTable() throws SQLException {
+
+		Connection conn = client.openConnection();
+
+		DatabaseMetaData md = conn.getMetaData();
+		ResultSet rs = md.getTables(null, null, "%", null);
+
+		boolean tableExists = false;
+
+		while (rs.next()) {
+			if (rs.getString(3).equalsIgnoreCase(tableName)) {
+				tableExists = true;
+			}
+		}
+
+		if (!tableExists) {
+			Statement statement = conn.createStatement();
+			statement.executeUpdate("CREATE TABLE " + tableName + " ( " + "appID VARCHAR(100), "
+					+ "owner VARCHAR(140), " + "podID VARCHAR(100), " + "objectID VARCHAR(100), " + "namespace VARCHAR(140), "
+					+ "status VARCHAR(100), " + "podIP VARCHAR(50), " + "hostIP VARCHAR(50), "
+					+ "PRIMARY KEY (podID)" + ")");
+
+			conn.commit();
+		}
+
+		conn.close();
+	}
+
+	/**
+	 * Add a new BigDataStack pod status to the database. The event will only be added if
+	 * it is unique.
+	 * 
+	 * @param status
+	 * @return whether the insert was successful
+	 * @throws SQLException
+	 */
+	public boolean addPodStatus(BigDataStackPodStatus status) throws SQLException {
+
+		Connection conn = client.openConnection();
+
+		Statement statement = conn.createStatement();
+		try {
+			statement.executeUpdate("INSERT INTO " + tableName
+					+ " (appID, owner, podID, objectID, namespace, status, podIP, hostIP)"
+					+ " VALUES ( " + SQLUtils.prepareText(status.getAppID(), 100) + ", "
+					+ SQLUtils.prepareText(status.getOwner(), 140) + ", "
+					+ SQLUtils.prepareText(status.getPodID(), 100) + ", "
+					+ SQLUtils.prepareText(status.getObjectID(), 100) + ", "
+					+ SQLUtils.prepareText(status.getNamespace(), 140) + ", "
+					+ SQLUtils.prepareText(status.getStatus(), 100) + ", "
+					+ SQLUtils.prepareText(status.getPodIP(), 50) + ", "
+					+ SQLUtils.prepareText(status.getHostIP(), 50) + " )");
+		} catch (Exception e) {
+			//e.printStackTrace();
+			conn.close();
+			return false;
+		}
+
+		conn.commit();
+		conn.close();
+
+		return true;
+	}
+
+	/**
+	 * Returns the status for a particular named pod. 
+	 * @param appID
+	 * @param objectID
+	 * @param podID
+	 * @return
+	 * @throws SQLException
+	 */
+	public BigDataStackPodStatus getPodStatus(String podID) throws SQLException {
+		Connection conn = client.openConnection();
+		
+		Statement statement = conn.createStatement();
+		
+		StringBuilder baseStatement = new StringBuilder();
+		baseStatement.append("SELECT * FROM "+tableName+" WHERE podID='"+podID+"'");
+		
+		statement.execute(baseStatement.toString());
+		ResultSet results = statement.getResultSet();
+		
+		BigDataStackPodStatus status = null;
+		
+		 try {
+			while (results.next()) {
+				 
+				status = new BigDataStackPodStatus(
+						results.getString("appID"),
+						results.getString("owner"),
+						results.getString("podID"),
+						results.getString("objectID"),
+						results.getString("namespace"),
+						results.getString("status"),
+						results.getString("podIP"),
+						results.getString("hostIP")
+						);
+
+			 }
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		 
+		
+		
+		conn.close();
+		
+		return status;
+	}
+	
+	/**
+	 * Update the data for an existing BigDataStack status for a pod. 
+	 * @param status
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean updatePodStatus(BigDataStackPodStatus status) throws SQLException {
+		Connection conn = client.openConnection();
+		
+		try {
+			Statement statement = conn.createStatement();
+			statement.executeUpdate("UPDATE "+tableName+" SET "+
+					"status="+SQLUtils.prepareText(status.getStatus(),100)+", "+
+					"podIP="+SQLUtils.prepareText(status.getPodIP(),50)+", "+
+					"hostIP="+SQLUtils.prepareText(status.getHostIP(),50)+
+					" WHERE appID="+SQLUtils.prepareText(status.getAppID(),100)+" AND objectID="+SQLUtils.prepareText(status.getObjectID(),100)+" AND podID="+SQLUtils.prepareText(status.getPodID(),100));
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+			return false;
+		}
+		
+		
+		conn.commit();
+		conn.close();
+		
+		return true;
+	}
+	
+	/**
+	 * Deletes the table in the database and re-creates it
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean clearTable() throws SQLException {
+		Connection conn = client.openConnection();
+		
+		try {
+			Statement statement = conn.createStatement();
+			statement.execute("DROP TABLE \""+client.username+"\".\""+tableName+"\"");
+
+			conn.commit();
+			conn.close();
+			
+			initTable();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+			return false;
+		}
+		
+		return true;
+	}
+}

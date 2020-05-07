@@ -1,0 +1,33 @@
+
+appID: "DeepRecSys"
+owner: "richardm"
+namespace: "richardmproject"
+	
+sequenceID: "learnmodel"
+name: "Learn Single Model"
+description: "Performs training of a single machine learned model for grocery recommendation, is parameterized"
+	
+parameters: {}
+
+operations:
+  - className: Apply
+    objectID: "cmd"
+  - className: WaitFor
+    objectID: "cmd"
+    waitForStatus: "Available"
+  - className: ExecuteCMD
+    objectID: "cmd"
+    command: "rm -rf /nfs/logs/*"
+  - className: WaitFor
+    objectID: "paramgen"
+    waitForStatus: "Available"
+  - className: SetParameters
+    objectID: "deeprecsys"
+    parameterSourceObjectID: "paramgen"
+  - className: Apply
+    objectID: "deeprecsys"
+  - className: WaitFor
+    objectID: "deeprecsys"
+    waitForStatus: "Complete"
+  - className: Delete
+    objectID: "cmd"

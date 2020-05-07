@@ -1,0 +1,262 @@
+package eu.bigdatastack.gdt.threads;
+
+import java.sql.SQLException;
+import java.util.List;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import eu.bigdatastack.gdt.lxdb.BigDataStackOperationSequenceIO;
+import eu.bigdatastack.gdt.lxdb.LXDB;
+import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
+import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
+import eu.bigdatastack.gdt.operations.BigDataStackOperation;
+import eu.bigdatastack.gdt.operations.BigDataStackOperationState;
+import eu.bigdatastack.gdt.operations.Delete;
+import eu.bigdatastack.gdt.prometheus.PrometheusDataClient;
+import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
+import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
+import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceMode;
+import eu.bigdatastack.gdt.util.EventUtil;
+
+/**
+ * This thread contains all of the logic for running a BigDataStack operation
+ * sequence. This may interact with the Openshift cluster and update the database
+ * during execution. 
+ * @author EbonBlade
+ *
+ */
+public class OperationSequenceThread implements Runnable {
+
+	OpenshiftOperationClient operationsClient;
+	OpenshiftStatusClient statusClient;
+	LXDB database;
+	RabbitMQClient mailboxClient;
+	PrometheusDataClient prometheusDataClient;
+	BigDataStackOperationSequence sequence;
+	EventUtil eventUtil;
+	
+	boolean kill = false;
+	boolean failed = false;
+
+
+	public OperationSequenceThread(LXDB database,
+			OpenshiftOperationClient openshiftOperationClient,
+			OpenshiftStatusClient openshiftStatusClient,
+			RabbitMQClient mailboxClient,
+			PrometheusDataClient prometheusDataClient, 
+			BigDataStackOperationSequence sequence) {
+		super();
+		this.operationsClient = openshiftOperationClient;
+		this.statusClient = openshiftStatusClient;
+		this.mailboxClient =mailboxClient;
+		this.prometheusDataClient = prometheusDataClient;
+		this.database = database;
+		this.sequence = sequence;
+	}
+
+
+
+	@Override
+	public void run() {
+
+		
+		
+		// Stage 1: Instantiate Instance of Sequence
+		try {
+			this.eventUtil = new EventUtil(database, mailboxClient);
+
+			BigDataStackOperationSequenceIO sequenceIO = new BigDataStackOperationSequenceIO(database, false);
+			
+			boolean sequenceAddedOK = tryAddSequence(sequenceIO);
+			if (!sequenceAddedOK) {
+				eventUtil.registerEvent(
+						sequence.getAppID(),
+						sequence.getOwner(),
+						sequence.getNamepace(),
+						BigDataStackEventType.ObjectRegistry,
+						BigDataStackEventSeverity.Error,
+						"Operation Sequence Creation Failed for: '"+sequence.getSequenceID()+"'",
+						"Tried to create a new operation sequence for app '"+sequence.getAppID()+"' but failed when adding to the Object Registry (SequenceID='"+sequence.getSequenceID()+"', Index='"+sequence.getIndex()+"')",
+						sequence.getSequenceID()
+						);
+				failed = true;
+				return;
+			}
+			
+			eventUtil.registerEvent(
+					sequence.getAppID(),
+					sequence.getOwner(),
+					sequence.getNamepace(),
+					BigDataStackEventType.GlobalDecisionTracker,
+					BigDataStackEventSeverity.Info,
+					"New Operation Sequence Created: '"+sequence.getSequenceID()+"'",
+					"The user created a new operation sequence for app '"+sequence.getAppID()+"', it has been registered and is being processed (SequenceID='"+sequence.getSequenceID()+"', Index='"+sequence.getIndex()+"')",
+					sequence.getSequenceID()
+					);
+			
+		} catch (SQLException | JsonProcessingException e) {
+			e.printStackTrace();
+			failed = true;
+			return;
+		}
+		
+		if (kill || failed) return;
+
+		// Stage 2: Process Operations
+		BigDataStackOperationSequenceMode mode = sequence.getMode();
+		for (BigDataStackOperation operation : sequence.getOperations()) {
+			try {
+				BigDataStackOperationSequenceIO sequenceIO = new BigDataStackOperationSequenceIO(database, false);
+				
+				BigDataStackOperationState currentState = operation.getState();
+				boolean operationSucceeded = false;
+				if (kill || failed) return;
+				switch (currentState) {
+				case NotStarted:
+					// clean state, ready to run
+					operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this);
+					break; 
+				case InProgress:
+					// We are in a bad situation, where a previous operation sequence run left the sequence
+					// in an unknown state, we will need to clean up before running again
+					if (!tryCleanUpPreviousOperation(operation)) break;
+					operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this);
+					break;
+				case Completed:
+					switch (mode) {
+					case Run:
+						if (!tryCleanUpPreviousOperation(operation)) break;
+						operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this);
+						break;
+					case Continue:
+						// Skip to next operation
+						operationSucceeded = true;
+						break;
+					}
+					break;
+				case Failed:
+					if (!tryCleanUpPreviousOperation(operation)) break;
+					operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this);
+					break;
+				}
+				
+				sequenceIO.updateSequence(sequence);
+				
+				if (kill || failed) return;
+				
+				if (!operationSucceeded) {
+					failed = true;
+					eventUtil.registerEvent(
+							sequence.getAppID(),
+							sequence.getOwner(),
+							sequence.getNamepace(),
+							BigDataStackEventType.Stage,
+							BigDataStackEventSeverity.Alert,
+							"Operation Sequence Failed for: '"+sequence.getSequenceID()+"' at Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getName(),
+							"Running operation '"+operation.getObjectID()+"' failed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
+							sequence.getSequenceID()
+							);
+					return;
+				}
+				
+				eventUtil.registerEvent(
+						sequence.getAppID(),
+						sequence.getOwner(),
+						sequence.getNamepace(),
+						BigDataStackEventType.Stage,
+						BigDataStackEventSeverity.Info,
+						"Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getName()+" Complete within sequqnce '"+sequence.getSequenceID()+"'",
+						"Running operation '"+operation.getObjectID()+"' completed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
+						sequence.getSequenceID()
+						);
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+				failed = true;
+				return;
+			}
+
+		}
+
+
+	}
+
+	/**
+	 * Try to add an operation sequence instance to the database
+	 * @param sequenceIO
+	 * @return
+	 * @throws SQLException
+	 * @throws JsonProcessingException
+	 */
+	protected boolean tryAddSequence(BigDataStackOperationSequenceIO sequenceIO) throws SQLException, JsonProcessingException {
+
+		int failedAttempts = 0;
+		boolean sequenceAdded = false;
+
+		while (!sequenceAdded) {
+			List<BigDataStackOperationSequence> existingSequenceInstances = sequenceIO.getOperationSequences(sequence.getAppID(), sequence.getSequenceID());
+			int highestIndex = 0;
+			for (BigDataStackOperationSequence sequenceInstance : existingSequenceInstances) {
+				if (sequenceInstance.getIndex()>highestIndex) highestIndex = sequenceInstance.getIndex();
+			}
+
+			int newIndex = highestIndex+1;
+			sequence = sequence.clone();
+			sequence.setIndex(newIndex);
+
+			sequenceAdded = sequenceIO.addSequence(sequence);
+			if (!sequenceAdded) {
+				failedAttempts++;
+				if (failedAttempts>=5) {
+					return false;
+				} else continue;
+			}
+		}
+
+		return true;
+
+	}
+	
+	/**
+	 * Tries to delete the underlying object which is the target of this operation
+	 * @param operation
+	 * @return
+	 */
+	protected boolean tryCleanUpPreviousOperation(BigDataStackOperation operation) {
+		Delete deleteOperation = new Delete(operation.getAppID(), operation.getOwner(), operation.getNamespace(), operation.getObjectID());
+		boolean deleteOK = deleteOperation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this);
+		if (!deleteOK) {
+			operation.setState(BigDataStackOperationState.Failed);
+			return false;
+		}
+		operation.setState(BigDataStackOperationState.NotStarted);
+		return true;
+	}
+	
+	
+	
+	public BigDataStackOperationSequence getSequence() {
+		return sequence;
+	}
+
+
+
+	/**
+	 * Call this to kill the thread
+	 */
+	public void kill() {
+		kill = true;
+	}
+
+	/**
+	 * If the thread has exited, you can use this to check whether it died
+	 * due to an internal exception
+	 * @return
+	 */
+	public boolean hasFailed() {
+		return failed;
+	} 
+
+}

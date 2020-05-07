@@ -1,0 +1,54 @@
+
+appID: "DeepRecSys"
+owner: "richardm"
+namespace: "richardmproject"
+
+objectID: "deeprecsys"
+type: Job
+
+yamlSource: 
+  apiVersion: batch/v1
+  kind: Job
+  metadata:
+    name: $appID$-$objectID$
+    namespace: $namespace$
+  spec:
+    parallelism: 1
+    completions: 1
+    template:
+      metadata:
+        labels:
+          jobconfig: $objectID$
+          app: $appID$
+      spec:
+        nodeSelector:
+          node-role.ida/gpu2080ti: "true"
+        containers:
+        - name: neumf
+          image: 'inferislux/ml-conda:v1'
+          resources:
+            requests:
+              cpu: "1500m"
+              memory: "4Gi"
+              nvidia.com/gpu: 1
+            limits:
+              cpu: "2500m"
+              memory: "16Gi"
+              nvidia.com/gpu: 1
+          volumeMounts:
+           - mountPath: /nfs/
+             name: nfs-access
+          env:
+          - name: JOB_MANAGER_RPC_ADDRESS
+            value: srv-jobmanager
+          imagePullPolicy: IfNotPresent
+          command:
+           - 'bash'
+          args:
+           - '/nfs/tr_rec/openshift/neumf.main.sh'
+           - '/nfs/tr_rec/train_nmf.py'
+           - '#2'
+        volumes:
+        - name: nfs-access
+          persistentVolumeClaim:
+            claimName: $owner$vol1claim

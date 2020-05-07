@@ -1,0 +1,25 @@
+# ------------------------------------------------------
+# Unit Test 1, Deploy Pod Example
+# ------------------------------------------------------
+owner: richardm
+objectID: "helloworldpod"
+type: Pod
+
+yamlSource:
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: $appID$-$objectID$
+    namespace: $namespace$
+  spec:
+    containers:
+    - name: hwcontainer
+      image: rsippl/centos-dev:latest 
+      imagePullPolicy: IfNotPresent
+      command:
+        - 'echo'
+      args:
+        - 'hello world' 
+      resources: {}
+    dnsPolicy: ClusterFirst
+    restartPolicy: Never

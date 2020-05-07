@@ -1,0 +1,231 @@
+package eu.bigdatastack.gdt.lxdb;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import eu.bigdatastack.gdt.structures.data.BigDataStackNamespaceState;
+
+public class BigDataStackNamespaceStateIO {
+
+	protected final String tableName = "BigDataStackNamespaceStatus";
+	protected ObjectMapper mapper = new ObjectMapper();
+
+	LXDB client;
+
+	public BigDataStackNamespaceStateIO(LXDB client) throws SQLException {
+		this.client = client;
+
+		initTable();
+	}
+
+	/**
+	 * Check whether the table exists in the DB already and if not creates it
+	 * @throws SQLException
+	 */
+	public void initTable() throws SQLException {
+
+		Connection conn = client.openConnection();
+
+		DatabaseMetaData md = conn.getMetaData();
+		ResultSet rs = md.getTables(null, null, "%", null);
+
+		boolean tableExists = false;
+
+		while (rs.next()) {
+			if (rs.getString(3).equalsIgnoreCase(tableName)) {
+				tableExists = true;
+			}
+		}
+
+		if (!tableExists) {
+			Statement statement = conn.createStatement();
+			statement.executeUpdate("CREATE TABLE "+tableName+" ( "+
+					"namepace VARCHAR(140), "+
+					"clusterMonitoringActive BOOLEAN, "+
+					"clusterMonitoringHost VARCHAR(200), "+
+					"clusterMonitoringPort INT, "+
+					"metricStoreActive BOOLEAN, "+
+					"metricStoreHost VARCHAR(200), "+
+					"metricStorePort INT, "+
+					"logSearchActive BOOLEAN, "+
+					"logSearchHost VARCHAR(200), "+
+					"logSearchPort INT, "+
+					"eventExchangeActive BOOLEAN, "+
+					"eventExchangeHost VARCHAR(200), "+
+					"eventExchangePort INT, "+
+					"PRIMARY KEY (namepace)"+
+					")");
+
+			conn.commit();
+		}
+		
+		conn.close();
+	}
+
+	/**
+	 * Add a new BigDataStack namespace to the database. The namespace will only be added if unique.
+	 * @param app
+	 * @return whether the insert was successful
+	 * @throws SQLException
+	 */
+	public boolean addNamespace(BigDataStackNamespaceState namespace) throws SQLException {
+
+		Connection conn = client.openConnection();
+
+		Statement statement = conn.createStatement();
+		try {
+			statement.executeUpdate("INSERT INTO "+tableName+" (namepace, clusterMonitoringActive, clusterMonitoringHost, clusterMonitoringPort, metricStoreActive, metricStoreHost, metricStorePort, logSearchActive, logSearchHost, logSearchPort, eventExchangeActive, eventExchangeHost, eventExchangePort)"+
+					" VALUES ( "+
+					SQLUtils.prepareText(namespace.getNamespace(),140)+", "+
+					namespace.isClusterMonitoringActive()+","+
+					SQLUtils.prepareText(namespace.getClusterMonitoringHost(),200)+", "+
+					namespace.getClusterMonitoringPort()+","+
+					namespace.isMetricStoreActive()+","+
+					SQLUtils.prepareText(namespace.getMetricStoreHost(),200)+", "+
+					namespace.getMetricStorePort()+","+
+					namespace.isLogSearchActive()+","+
+					SQLUtils.prepareText(namespace.getLogSearchHost(),200)+", "+
+					namespace.getLogSearchPort()+","+
+					namespace.isEventExchangeActive()+","+
+					SQLUtils.prepareText(namespace.getEventExchangeHost(),200)+", "+
+					namespace.getEventExchangePort()+
+					" )");
+		} catch (Exception e) {
+			//e.printStackTrace();
+			conn.close();
+			return false;
+		}
+
+		conn.commit();
+		conn.close();
+
+		return true;
+	}
+
+	/**
+	 * Returns a previously stored BigDataStack Namespace. 
+	 * @param namespace
+	 * @return
+	 * @throws SQLException
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	public BigDataStackNamespaceState getNamespace(String namespace) throws SQLException {
+		Connection conn = client.openConnection();
+
+		Statement statement = conn.createStatement();
+		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE namespace='"+namespace+"'");
+		ResultSet results = statement.getResultSet();
+
+		BigDataStackNamespaceState state = null;
+
+		try {
+			while (results.next()) {
+
+
+				state = new BigDataStackNamespaceState(
+						results.getString("namespace"),
+						results.getBoolean("clusterMonitoringActive"),
+						results.getString("clusterMonitoringHost"),
+						results.getInt("clusterMonitoringPort"),
+						results.getBoolean("metricStoreActive"),
+						results.getString("metricStoreHost"),
+						results.getInt("metricStorePort"),
+						results.getBoolean("logSearchActive"),
+						results.getString("logSearchHost"),
+						results.getInt("logSearchPort"),
+						results.getBoolean("eventExchangeActive"),
+						results.getString("eventExchangeHost"),
+						results.getInt("eventExchangePort")
+				);
+
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+
+
+
+		conn.close();
+
+		return state;
+	}
+
+	/**
+	 * Update the data for an existing BigDataStack namespace.
+	 * @param namespace
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean updateNamespace(BigDataStackNamespaceState namespace) throws SQLException {
+		Connection conn = client.openConnection();
+
+		try {
+			Statement statement = conn.createStatement();
+			statement.executeUpdate("UPDATE "+tableName+" SET "+
+					"clusterMonitoringActive="+namespace.isClusterMonitoringActive()+","+
+					"clusterMonitoringHost="+SQLUtils.prepareText(namespace.getClusterMonitoringHost(),200)+", "+
+					"clusterMonitoringPort="+namespace.getClusterMonitoringPort()+","+
+					"metricStoreActive="+namespace.isMetricStoreActive()+","+
+					"metricStoreHost="+SQLUtils.prepareText(namespace.getMetricStoreHost(),200)+", "+
+					"metricStorePort="+namespace.getMetricStorePort()+","+
+					"logSearchActive="+namespace.isLogSearchActive()+","+
+					"logSearchHost="+SQLUtils.prepareText(namespace.getLogSearchHost(),200)+", "+
+					"logSearchPort="+namespace.getLogSearchPort()+","+
+					"eventExchangeActive="+namespace.isEventExchangeActive()+","+
+					"eventExchangeHost="+SQLUtils.prepareText(namespace.getEventExchangeHost(),200)+", "+
+					"eventExchangePort="+namespace.getEventExchangePort()+
+					" WHERE namespace="+SQLUtils.prepareText(namespace.getNamespace(),140));
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+			return false;
+		}
+
+
+
+		conn.commit();
+		conn.close();
+
+		return true;
+	}
+
+	
+	
+	/**
+	 * Deletes the table in the database and re-creates it
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean clearTable() throws SQLException {
+		Connection conn = client.openConnection();
+		
+		try {
+			Statement statement = conn.createStatement();
+			statement.execute("DROP TABLE \""+client.username+"\".\""+tableName+"\"");
+
+			conn.commit();
+			conn.close();
+			
+			initTable();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+			return false;
+		}
+		
+		return true;
+	}
+	
+}
