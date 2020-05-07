@@ -1,0 +1,156 @@
+/******************************************************************************* 
+ * Copyright (c) 2016 Red Hat, Inc. 
+ * Distributed under license by Red Hat, Inc. All rights reserved. 
+ * This program is made available under the terms of the 
+ * Eclipse Public License v1.0 which accompanies this distribution, 
+ * and is available at http://www.eclipse.org/legal/epl-v10.html 
+ * 
+ * Contributors: 
+ * Red Hat, Inc. - initial API and implementation 
+ ******************************************************************************/
+
+package com.openshift.internal.restclient.okhttp;
+
+import java.io.IOException;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.openshift.internal.restclient.DefaultClient;
+import com.openshift.internal.restclient.authorization.AuthorizationDetails;
+import com.openshift.internal.restclient.model.Status;
+import com.openshift.internal.util.URIUtils;
+import com.openshift.restclient.BadRequestException;
+import com.openshift.restclient.IClient;
+import com.openshift.restclient.NotFoundException;
+import com.openshift.restclient.OpenShiftException;
+import com.openshift.restclient.authorization.ResourceForbiddenException;
+import com.openshift.restclient.authorization.UnauthorizedException;
+import com.openshift.restclient.http.IHttpConstants;
+import com.openshift.restclient.model.IStatus;
+
+import okhttp3.Interceptor;
+import okhttp3.Response;
+
+/**
+ * Interpret response codes and handle accordingly
+ *
+ */
+public class ResponseCodeInterceptor implements Interceptor, IHttpConstants {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResponseCodeInterceptor.class);
+
+    public static final String X_OPENSHIFT_IGNORE_RCI = "X-OPENSHIFT-IGNORE-RCI";
+
+    private IClient client;
+    
+    /**
+     * If a request tag() implements this interface, HTTP errors will not throw
+     * OpenShift exceptions.
+     */
+    public interface Ignore {
+    }
+
+    @Override
+    public Response intercept(Chain chain) throws IOException {
+        Response response = chain.proceed(chain.request());
+        if (!response.isSuccessful()
+                && StringUtils.isBlank(response.request().header(X_OPENSHIFT_IGNORE_RCI))) {
+            switch (response.code()) {
+            case STATUS_UPGRADE_PROTOCOL:
+            case STATUS_MOVED_PERMANENTLY:
+                break;
+            case STATUS_MOVED_TEMPORARILY:
+                response = makeSuccessIfAuthorized(response);
+                break;
+            default:
+                if (!isIgnoreTagged(response)) {
+                    throw createOpenShiftException(client, response, null);
+                }
+            }
+        }
+        return response;
+    }
+
+    private boolean isIgnoreTagged(Response response) {
+        return response.request().tag() instanceof Ignore;
+    }
+
+    private Response makeSuccessIfAuthorized(final Response response) {
+        Response returnedResponse = response;
+        String location = response.header(PROPERTY_LOCATION);
+        if (StringUtils.isNotBlank(location)
+                && URIUtils.splitFragment(location).containsKey(IHttpConstants.PROPERTY_ACCESS_TOKEN)) {
+            returnedResponse = response.newBuilder()
+                    .request(response.request())
+                    .code(STATUS_OK)
+                    .headers(response.headers())
+                    .build();
+            response.close();
+        }
+        return returnedResponse;
+    }
+
+    public void setClient(DefaultClient client) {
+        this.client = client;
+    }
+
+    public static IStatus getStatus(String response) {
+        if (response != null && response.startsWith("{")) {
+            return new Status(response);
+        }
+        return null;
+    }
+
+    private static OpenShiftException createOpenShiftException(IClient client, Response response, Throwable e)
+            throws IOException {
+        LOGGER.debug(response.toString(), e);
+        IStatus status = getStatus(response.body().string());
+        int responseCode = response.code();
+        if (status != null && status.getCode() != 0) {
+            responseCode = status.getCode();
+        }
+        switch (responseCode) {
+        case STATUS_BAD_REQUEST:
+            return new BadRequestException(e, status, response.request().url().toString());
+        case STATUS_FORBIDDEN:
+            return new ResourceForbiddenException(
+                    status != null ? status.getMessage() : "Resource Forbidden", status, e);
+        case STATUS_UNAUTHORIZED:
+            String link = String.format("%s/oauth/token/request", client.getBaseURL());
+            AuthorizationDetails details = new AuthorizationDetails(response.headers(), link);
+            return new UnauthorizedException(details, status);
+        case IHttpConstants.STATUS_NOT_FOUND:
+            return new NotFoundException(e, status, status == null ? "Not Found" : status.getMessage());
+        default:
+            return new OpenShiftException(e, status, "Exception trying to %s %s response code: %s",
+                    response.request().method(), response.request().url().toString(), responseCode);
+        }
+    }
+
+    public static OpenShiftException createOpenShiftException(IClient client, int responseCode, String message,
+            String response, Throwable e) {
+        LOGGER.debug(response, e);
+        IStatus status = getStatus(response);
+        if (status != null && status.getCode() != 0) {
+            responseCode = status.getCode();
+        }
+        switch (responseCode) {
+        case STATUS_BAD_REQUEST:
+            return new BadRequestException(e, status, response);
+        case STATUS_FORBIDDEN:
+            return new ResourceForbiddenException(status != null ? status.getMessage() : "Resource Forbidden", status,
+                    e);
+        case STATUS_UNAUTHORIZED:
+            return new UnauthorizedException(
+                    client.getAuthorizationContext().getAuthorizationDetails(), status);
+        case IHttpConstants.STATUS_NOT_FOUND:
+            return new NotFoundException(status == null ? "Not Found" : status.getMessage());
+        default:
+            return new OpenShiftException(e, status, "Exception trying to fetch %s response code: %s", response,
+                    responseCode);
+        }
+    }
+
+}

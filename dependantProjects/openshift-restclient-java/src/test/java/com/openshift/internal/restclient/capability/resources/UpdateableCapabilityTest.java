@@ -1,0 +1,95 @@
+/*******************************************************************************
+ * Copyright (c) 2015-2019 Red Hat, Inc. Distributed under license by Red Hat, Inc.
+ * All rights reserved. This program is made available under the terms of the
+ * Eclipse Public License v1.0 which accompanies this distribution, and is
+ * available at http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors: Red Hat, Inc.
+ ******************************************************************************/
+
+package com.openshift.internal.restclient.capability.resources;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import com.openshift.internal.restclient.IntegrationTestHelper;
+import com.openshift.internal.restclient.ResourceFactory;
+import com.openshift.restclient.IApiTypeMapper;
+import com.openshift.restclient.IApiTypeMapper.IVersionedType;
+import com.openshift.restclient.IClient;
+import com.openshift.restclient.IResourceFactory;
+import com.openshift.restclient.ResourceKind;
+import com.openshift.restclient.capability.CapabilityVisitor;
+import com.openshift.restclient.capability.resources.IUpdatable;
+import com.openshift.restclient.model.IService;
+
+@RunWith(MockitoJUnitRunner.class)
+public class UpdateableCapabilityTest {
+
+    @Mock
+    private IClient client;
+    @Mock
+    private IApiTypeMapper mapper;
+    private IService service;
+    private IResourceFactory factory;
+
+    @Before
+    public void setup() {
+        lenient().when(client.getOpenShiftAPIVersion()).thenReturn("v1");
+        when(client.adapt(IApiTypeMapper.class)).thenReturn(mapper);
+        when(mapper.getType(anyString(), eq(ResourceKind.SERVICE))).thenReturn(new IVersionedType() {
+            
+            @Override
+            public String getVersion() {
+                return "v1";
+            }
+            
+            @Override
+            public String getPrefix() {
+                return null;
+            }
+            
+            @Override
+            public String getKind() {
+                return ResourceKind.SERVICE;
+            }
+            
+            @Override
+            public String getApiGroupName() {
+                return null;
+            }
+        });
+        this.factory = new ResourceFactory(client);
+        this.service = factory.stub(ResourceKind.SERVICE, "foo", IntegrationTestHelper.getDefaultNamespace());
+        service.setAnnotation("foo", "bar");
+    }
+
+    @Test
+    public void testUpdateCapability() {
+        IService target = factory.stub(ResourceKind.SERVICE, "foo", IntegrationTestHelper.getDefaultNamespace());
+        target.setAnnotation("foo", "xyz");
+
+        service.accept(new CapabilityVisitor<IUpdatable, IService>() {
+
+            @Override
+            public IService visit(IUpdatable capability) {
+                capability.updateFrom(target);
+                return null;
+            }
+        }, null);
+        assertNotSame("Exp. services to not be the same instance", target, service);
+        assertEquals("Exp. the annotation to be updated", "xyz", service.getAnnotation("foo"));
+        assertEquals("Exp. the JSON to be the same", target.toJson(), service.toJson());
+    }
+
+}
