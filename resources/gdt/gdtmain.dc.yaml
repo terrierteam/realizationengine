@@ -1,0 +1,31 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: $appID$-$objectID$
+  namespace: $namespace$
+spec:
+  replicas: 1
+  strategy:
+    resources: {}
+  template:
+    metadata:
+      labels:
+        jobconfig: $objectID$
+        app: $appID$
+    spec:
+      containers:
+      - name: bash
+        image: "docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest"
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "2048Mi"
+        command:
+         - 'java'
+        args:
+         - '-jar'
+         - './target/BigDataStack-GDT-Data-0.0.1-SNAPSHOT.jar'
+         - 'namespaceMonitor'
+        imagePullPolicy: IfNotPresent
+      securityContext: {}
+      serviceAccount: default

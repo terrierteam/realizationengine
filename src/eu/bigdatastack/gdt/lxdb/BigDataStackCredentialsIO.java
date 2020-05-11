@@ -1,0 +1,249 @@
+package eu.bigdatastack.gdt.lxdb;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Map;
+
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import eu.bigdatastack.gdt.structures.data.BigDataStackCredentials;
+import eu.bigdatastack.gdt.structures.data.BigDataStackCredentialsType;
+
+public class BigDataStackCredentialsIO {
+	protected final String tableName = "BigDataStackCredentials";
+	protected ObjectMapper mapper = new ObjectMapper();
+
+	LXDB client;
+
+	public BigDataStackCredentialsIO(LXDB client) throws SQLException {
+		this.client = client;
+
+		initTable();
+	}
+
+	/**
+	 * Check whether the table exists in the DB already and if not creates it
+	 * @throws SQLException
+	 */
+	public void initTable() throws SQLException {
+
+		Connection conn = client.openConnection();
+
+		DatabaseMetaData md = conn.getMetaData();
+		ResultSet rs = md.getTables(null, null, "%", null);
+
+		boolean tableExists = false;
+
+		while (rs.next()) {
+			if (rs.getString(3).equalsIgnoreCase(tableName)) {
+				tableExists = true;
+			}
+		}
+
+		if (!tableExists) {
+			Statement statement = conn.createStatement();
+			statement.executeUpdate("CREATE TABLE "+tableName+" ( "+
+					"owner VARCHAR(140), "+
+					"username VARCHAR(140), "+
+					"password VARCHAR(140), "+
+					"tokens VARCHAR(1000), "+
+					"type VARCHAR(100), "+
+					"PRIMARY KEY (owner,type)"+
+					")");
+
+			conn.commit();
+		}
+
+		conn.close();
+	}
+
+	/**
+	 * Add a new BigDataStack credentials to the database.
+	 * @param app
+	 * @return whether the insert was successful
+	 * @throws SQLException
+	 */
+	public boolean addCredential(BigDataStackCredentials credential) throws SQLException {
+
+		Connection conn = client.openConnection();
+
+		try {
+			PreparedStatement statement = conn.prepareStatement(
+				"INSERT INTO "+tableName+" (owner, username, password, tokens, type)"+
+				" VALUES ( ?, ?, ?, ?, ? )");
+
+		
+			statement.setString(1, SQLUtils.prepareTextNoQuote(credential.getOwner(),140));
+			statement.setString(2, SQLUtils.prepareTextNoQuote(credential.getUsername(),140));
+			statement.setString(3, SQLUtils.prepareTextNoQuote(credential.getPassword(),140));
+			statement.setString(4, SQLUtils.prepareTextNoQuote(mapper.writeValueAsString(credential.getTokens()),1000));
+			statement.setString(5, SQLUtils.prepareTextNoQuote(credential.getType().name(),100));
+			statement.executeUpdate();
+			
+			conn.commit();
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+			return false;
+		} 
+		
+		
+		conn.close();
+
+		return true;
+	}
+
+	/**
+	 * Returns a previously stored BigDataStack Credential for a service type. 
+	 * @param owner
+	 * @param type
+	 * @return
+	 * @throws SQLException
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	@SuppressWarnings("unchecked")
+	public BigDataStackCredentials getCredential(String owner, BigDataStackCredentialsType type) throws SQLException {
+		Connection conn = client.openConnection();
+
+		Statement statement = conn.createStatement();
+		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE owner='"+owner+"' AND type='"+type.name()+"'");
+		ResultSet results = statement.getResultSet();
+
+		BigDataStackCredentials credential = null;
+
+		try {
+			while (results.next()) {
+
+				Map<String,Long> tokens = mapper.readValue(results.getString("tokens"), Map.class);
+
+				credential = new BigDataStackCredentials(
+						results.getString("owner"),
+						results.getString("username"),
+						results.getString("password"),
+						tokens,
+						BigDataStackCredentialsType.valueOf(results.getString("type"))
+					);
+
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+
+
+
+		conn.close();
+
+		return credential;
+	}
+
+	/**
+	 * Mint a new connection token for a user.
+	 * @param owner
+	 * @param password
+	 * @param type
+	 * @return
+	 * @throws SQLException
+	 */
+	public String getNewToken(String owner, String password, BigDataStackCredentialsType type) throws SQLException {
+		
+		BigDataStackCredentials credentials = getCredential(owner, type);
+		if (!credentials.getPassword().equals(password)) return null;
+		
+		String token = credentials.generateToken(password);
+		
+		Connection conn = client.openConnection();
+
+		try {
+			Statement statement = conn.createStatement();
+			statement.executeUpdate("UPDATE "+tableName+" SET "+
+					"tokens="+SQLUtils.prepareTextNoQuote(mapper.writeValueAsString(credentials.getTokens()),1000)+", "+
+					" WHERE owner="+SQLUtils.prepareText(owner,140)+" AND type="+SQLUtils.prepareText(type.name(),100));
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+			return null;
+		}
+
+
+
+		conn.commit();
+		conn.close();
+
+		return token;
+	}
+	
+	/**
+	 * Update credentials password.
+	 * @param app
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean updatePassweord(String owner, BigDataStackCredentialsType type, String username, String password) throws SQLException {
+		
+		BigDataStackCredentials credentials = getCredential(owner, type);
+		if (!credentials.getPassword().equals(password) || !username.equals(credentials.getUsername())) return false;
+		
+		credentials.setUsername(username);
+		credentials.setPassword(password);
+		
+		Connection conn = client.openConnection();
+
+		try {
+			Statement statement = conn.createStatement();
+			statement.executeUpdate("UPDATE "+tableName+" SET "+
+					"username="+ SQLUtils.prepareTextNoQuote(credentials.getUsername(),140)+", "+
+					"password="+ SQLUtils.prepareTextNoQuote(credentials.getPassword(),140)+", "+
+					"tokens="+SQLUtils.prepareTextNoQuote(mapper.writeValueAsString(credentials.getTokens()),1000)+", "+
+					" WHERE owner="+SQLUtils.prepareText(owner,140)+" AND type="+SQLUtils.prepareText(type.name(),100));
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+			return false;
+		}
+
+
+
+		conn.commit();
+		conn.close();
+
+		return true;
+	}
+
+	
+	/**
+	 * Deletes the table in the database and re-creates it
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean clearTable() throws SQLException {
+		Connection conn = client.openConnection();
+		
+		try {
+			Statement statement = conn.createStatement();
+			statement.execute("DROP TABLE \""+client.username+"\".\""+tableName+"\"");
+
+			conn.commit();
+			conn.close();
+			
+			initTable();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+			return false;
+		}
+		
+		return true;
+	}
+}

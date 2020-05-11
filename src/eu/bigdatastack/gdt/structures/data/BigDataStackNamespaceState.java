@@ -3,6 +3,8 @@ package eu.bigdatastack.gdt.structures.data;
 public class BigDataStackNamespaceState {
 
 	String namespace;
+	String host;
+	int port;
 	
 	boolean clusterMonitoringActive;
 	String clusterMonitoringHost;
@@ -22,8 +24,10 @@ public class BigDataStackNamespaceState {
 	
 	public BigDataStackNamespaceState() {}
 	
-	public BigDataStackNamespaceState(String namespace) {
+	public BigDataStackNamespaceState(String namespace, String host, int port) {
 		this.namespace =namespace;
+		this.host = host;
+		this.port = port;
 		clusterMonitoringActive = false;
 		clusterMonitoringHost = null;
 		clusterMonitoringPort = -1;
@@ -40,12 +44,14 @@ public class BigDataStackNamespaceState {
 	
 	
 
-	public BigDataStackNamespaceState(String namespace, boolean clusterMonitoringActive, String clusterMonitoringHost,
+	public BigDataStackNamespaceState(String namespace, String host, int port, boolean clusterMonitoringActive, String clusterMonitoringHost,
 			int clusterMonitoringPort, boolean metricStoreActive, String metricStoreHost, int metricStorePort,
 			boolean logSearchActive, String logSearchHost, int logSearchPort, boolean eventExchangeActive,
 			String eventExchangeHost, int eventExchangePort) {
 		super();
 		this.namespace = namespace;
+		this.host = host;
+		this.port = port;
 		this.clusterMonitoringActive = clusterMonitoringActive;
 		this.clusterMonitoringHost = clusterMonitoringHost;
 		this.clusterMonitoringPort = clusterMonitoringPort;
@@ -162,6 +168,22 @@ public class BigDataStackNamespaceState {
 
 	public void setEventExchangePort(int eventExchangePort) {
 		this.eventExchangePort = eventExchangePort;
+	}
+
+	public String getHost() {
+		return host;
+	}
+
+	public void setHost(String host) {
+		this.host = host;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
 	}
 	
 	

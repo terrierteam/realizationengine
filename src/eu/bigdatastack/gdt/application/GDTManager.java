@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackApplicationIO;
+import eu.bigdatastack.gdt.lxdb.BigDataStackCredentialsIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackEventIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackMetricIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackNamespaceStateIO;
@@ -27,8 +28,11 @@ import eu.bigdatastack.gdt.structures.config.GDTConfig;
 import eu.bigdatastack.gdt.structures.config.OpenshiftConfig;
 import eu.bigdatastack.gdt.structures.config.RabbitMQConf;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
+import eu.bigdatastack.gdt.structures.data.BigDataStackCredentials;
+import eu.bigdatastack.gdt.structures.data.BigDataStackCredentialsType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
+import eu.bigdatastack.gdt.structures.data.BigDataStackNamespaceState;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceMode;
@@ -41,7 +45,7 @@ import eu.bigdatastack.gdt.util.GDTFileUtil;
  * @author EbonBlade
  *
  */
-public class GDTManager {
+public class GDTManager implements Manager {
 
 	GDTConfig gdtConfig; 
 	
@@ -64,6 +68,7 @@ public class GDTManager {
 	BigDataStackOperationSequenceIO sequenceTemplateClient;
 	BigDataStackPodStatusIO podStatusClient;
 	BigDataStackNamespaceStateIO namespaceStateClient;
+	BigDataStackCredentialsIO credentialsClient;
 	
 	
 	public GDTManager(File gdtJsonConfigFile) throws Exception {
@@ -91,10 +96,17 @@ public class GDTManager {
 		sequenceTemplateClient = new BigDataStackOperationSequenceIO(database, true);
 		podStatusClient = new BigDataStackPodStatusIO(database);
 		namespaceStateClient = new BigDataStackNamespaceStateIO(database);
+		credentialsClient = new BigDataStackCredentialsIO(database);
 		
+		
+		// Add database credentials
+		BigDataStackCredentials databaseCredential = new BigDataStackCredentials("GDT", gdtConfig.getDatabase().getUsername(), gdtConfig.getDatabase().getPassword(), BigDataStackCredentialsType.database);
+		if (!credentialsClient.addCredential(databaseCredential)) credentialsClient.updatePassweord("GDT", BigDataStackCredentialsType.database, gdtConfig.getDatabase().getUsername(), gdtConfig.getDatabase().getPassword());
 		
 		// Initalize Openshift Clients
 		OpenshiftConfig openshiftConf = gdtConfig.getOpenshift();
+		BigDataStackCredentials openshiftCredential = new BigDataStackCredentials("GDT", gdtConfig.getOpenshift().getUsername(), gdtConfig.getOpenshift().getPassword(), BigDataStackCredentialsType.openshift);
+		if (!credentialsClient.addCredential(openshiftCredential)) credentialsClient.updatePassweord("GDT", BigDataStackCredentialsType.openshift, gdtConfig.getOpenshift().getUsername(), gdtConfig.getOpenshift().getPassword());
 		openshiftOperationClient = new OpenshiftOperationClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
 		openshiftStatusClient = new OpenshiftStatusClient(openshiftOperationClient.getClient());
 		openshiftOperationClient.connectToOpenshift();
@@ -102,6 +114,9 @@ public class GDTManager {
 		// Initalize RabbitMQ Client
 		RabbitMQConf rabbitMQConf = gdtConfig.getRabbitmq();
 		mailboxClient = new RabbitMQClient(rabbitMQConf.getHost(), rabbitMQConf.getPort(), rabbitMQConf.getUsername(), rabbitMQConf.getPassword());
+		BigDataStackCredentials rabbitMQCredential = new BigDataStackCredentials("GDT", gdtConfig.getRabbitmq().getUsername(), gdtConfig.getRabbitmq().getPassword(), BigDataStackCredentialsType.rabbitmq);
+		if (!credentialsClient.addCredential(rabbitMQCredential)) credentialsClient.updatePassweord("GDT", BigDataStackCredentialsType.rabbitmq, gdtConfig.getRabbitmq().getUsername(), gdtConfig.getRabbitmq().getPassword());
+		
 		
 		// Initalize Prometheus Data Client
 		prometheusDataClient = new PrometheusDataClient();
@@ -296,6 +311,44 @@ public class GDTManager {
 		
 		thread.run();
 		return !thread.hasFailed();
+	}
+	
+	/**
+	 * Registers a new namspace with the database (this does not trigger the start of monitoring)
+	 * @param namespace
+	 * @return
+	 */
+	public boolean registerNamespace(BigDataStackNamespaceState namespace) {
+		try {
+			if (!namespaceStateClient.addNamespace(namespace)) {
+				eventUtil.registerEvent(
+						"GDT",
+						"None",
+						namespace.getNamespace(),
+						BigDataStackEventType.ObjectRegistry,
+						BigDataStackEventSeverity.Error,
+						"Failed adding namespace : '"+namespace.getNamespace()+"'",
+						"Attempted to add a new namepace '"+namespace.getNamespace()+"', but the registry rejected it, there may already be a namespace with that name.",
+						namespace.getNamespace()
+						);
+				return false;
+			} else {
+				eventUtil.registerEvent(
+						"GDT",
+						"None",
+						namespace.getNamespace(),
+						BigDataStackEventType.ObjectRegistry,
+						BigDataStackEventSeverity.Info,
+						"Added new namespace : '"+namespace.getNamespace()+"'",
+						"Successfully added a new namepace '"+namespace.getNamespace()+"'",
+						namespace.getNamespace()
+						);
+				return true;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 	
 	

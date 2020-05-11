@@ -7,5 +7,5 @@ RUN export CLASSPATH=$CLASSPATH:/gdt/lib/qe-driver-0.500-20200406.151302-4-jdbc-
  && cd /gdt/dependantProjects/openshift-restclient-java \
  && mvn install \
  && cd /gdt/ \
- && mvn package
+ && mvn package -DskipTests=true
 CMD ["java", "-jar", "target/BigDataStack-GDT-Data-0.0.1-SNAPSHOT.jar", "namespaceMonitor"]

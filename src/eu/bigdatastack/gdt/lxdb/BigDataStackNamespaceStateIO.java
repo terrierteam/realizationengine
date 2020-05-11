@@ -49,6 +49,8 @@ public class BigDataStackNamespaceStateIO {
 			Statement statement = conn.createStatement();
 			statement.executeUpdate("CREATE TABLE "+tableName+" ( "+
 					"namepace VARCHAR(140), "+
+					"host VARCHAR(200), "+
+					"port INT, "+
 					"clusterMonitoringActive BOOLEAN, "+
 					"clusterMonitoringHost VARCHAR(200), "+
 					"clusterMonitoringPort INT, "+
@@ -82,9 +84,11 @@ public class BigDataStackNamespaceStateIO {
 
 		Statement statement = conn.createStatement();
 		try {
-			statement.executeUpdate("INSERT INTO "+tableName+" (namepace, clusterMonitoringActive, clusterMonitoringHost, clusterMonitoringPort, metricStoreActive, metricStoreHost, metricStorePort, logSearchActive, logSearchHost, logSearchPort, eventExchangeActive, eventExchangeHost, eventExchangePort)"+
+			statement.executeUpdate("INSERT INTO "+tableName+" (namepace, host, port, clusterMonitoringActive, clusterMonitoringHost, clusterMonitoringPort, metricStoreActive, metricStoreHost, metricStorePort, logSearchActive, logSearchHost, logSearchPort, eventExchangeActive, eventExchangeHost, eventExchangePort)"+
 					" VALUES ( "+
 					SQLUtils.prepareText(namespace.getNamespace(),140)+", "+
+					SQLUtils.prepareText(namespace.getHost(),200)+", "+
+					namespace.getPort()+","+
 					namespace.isClusterMonitoringActive()+","+
 					SQLUtils.prepareText(namespace.getClusterMonitoringHost(),200)+", "+
 					namespace.getClusterMonitoringPort()+","+
@@ -134,6 +138,8 @@ public class BigDataStackNamespaceStateIO {
 
 				state = new BigDataStackNamespaceState(
 						results.getString("namespace"),
+						results.getString("host"),
+						results.getInt("port"),
 						results.getBoolean("clusterMonitoringActive"),
 						results.getString("clusterMonitoringHost"),
 						results.getInt("clusterMonitoringPort"),
@@ -173,6 +179,8 @@ public class BigDataStackNamespaceStateIO {
 		try {
 			Statement statement = conn.createStatement();
 			statement.executeUpdate("UPDATE "+tableName+" SET "+
+					"host="+SQLUtils.prepareText(namespace.getHost(),200)+", "+
+					"port="+namespace.getPort()+","+
 					"clusterMonitoringActive="+namespace.isClusterMonitoringActive()+","+
 					"clusterMonitoringHost="+SQLUtils.prepareText(namespace.getClusterMonitoringHost(),200)+", "+
 					"clusterMonitoringPort="+namespace.getClusterMonitoringPort()+","+

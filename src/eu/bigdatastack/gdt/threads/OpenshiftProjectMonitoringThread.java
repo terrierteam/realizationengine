@@ -126,7 +126,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 								if ( objectDef.getType() == BigDataStackObjectType.Job ) processJob(project, app, objectDef);
 								
 								// If DEPLOYMENT CONFIG Type
-								//if ( objectDef.getType() == BigDataStackObjectType.DeploymentConfig ) processDeploymentConfig(project, app, objectDef);
+								if ( objectDef.getType() == BigDataStackObjectType.DeploymentConfig ) processDeploymentConfig(project, app, objectDef);
 
 							}
 
