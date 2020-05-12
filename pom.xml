@@ -47,27 +47,116 @@
     <version>5.6.2</version>
 </dependency>
 
-    <dependency>
-      <groupId>com.leanxcale</groupId>
-      <artifactId>kivi-api</artifactId>
-      <version>0.500</version>
-      <scope>system</scope>
-      <systemPath>/gdt/lib/kivi-api-0.500-20200407.124711-4-direct-client.jar</systemPath>
-    </dependency>
-    
-      <dependency>
-      <groupId>com.leanxcale</groupId>
-      <artifactId>qe-driver</artifactId>
-      <version>0.500</version>
-      <scope>system</scope>
-      <systemPath>/gdt/lib/qe-driver-0.500-20200406.151302-4-jdbc-client.jar</systemPath>
-    </dependency>
-  
+<dependency>
+    <groupId>com.leanxcale</groupId>
+    <artifactId>kivi-api</artifactId>
+    <version>0.500</version>
+</dependency>
+
+<dependency>
+    <groupId>com.leanxcale</groupId>
+    <artifactId>qe-driver</artifactId>
+    <version>0.500</version>
+</dependency>
+
   </dependencies>
+  
+  
   
   <build>
     <sourceDirectory>src</sourceDirectory>
+    
+    <pluginManagement>
+	<plugins>
+		<!--This plugin's configuration is used to store Eclipse m2e settings only. 
+			It has no influence on the Maven build itself. -->
+		<plugin>
+			<groupId>org.eclipse.m2e</groupId>
+			<artifactId>lifecycle-mapping</artifactId>
+			<version>1.0.0</version>
+			<configuration>
+				<lifecycleMappingMetadata>
+					<pluginExecutions>
+						<pluginExecution>
+							<pluginExecutionFilter>
+								<groupId>org.codehaus.mojo</groupId>
+								<artifactId>aspectj-maven-plugin</artifactId>
+								<versionRange>[1.0,)</versionRange>
+								<goals>
+									<goal>test-compile</goal>
+									<goal>compile</goal>
+								</goals>
+							</pluginExecutionFilter>
+							<action>
+								<execute />
+							</action>
+						</pluginExecution>
+						<pluginExecution>
+							<pluginExecutionFilter>
+								<groupId>
+									org.apache.maven.plugins
+								</groupId>
+								<artifactId>
+									maven-install-plugin
+								</artifactId>
+								<versionRange>
+									[2.5,)
+								</versionRange>
+								<goals>
+									<goal>install-file</goal>
+								</goals>
+							</pluginExecutionFilter>
+							<action>
+								<execute>
+									<runOnIncremental>false</runOnIncremental>
+								</execute>
+							</action>
+						</pluginExecution>
+					</pluginExecutions>
+				</lifecycleMappingMetadata>
+			</configuration>
+		</plugin>
+	</plugins>
+</pluginManagement>
+    
     <plugins>
+    
+   <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-install-plugin</artifactId>
+    <version>2.5</version>
+    <executions>
+        <execution>
+        	<id>kivi-api</id>
+            <phase>initialize</phase>
+            <goals>
+                <goal>install-file</goal>
+            </goals>
+            <configuration>
+                <groupId>com.leanxcale</groupId>
+                <artifactId>kivi-api</artifactId>
+                <version>0.500</version>
+                <packaging>jar</packaging>
+                <file>${basedir}/lib/kivi-api-0.500-20200407.124711-4-direct-client.jar</file>
+            </configuration>
+        </execution>
+        <execution>
+            <id>qe-driver</id>
+            <phase>initialize</phase>
+            <goals>
+                <goal>install-file</goal>
+            </goals>
+            <configuration>
+                <groupId>com.leanxcale</groupId>
+                <artifactId>qe-driver</artifactId>
+                <version>0.500</version>
+                <packaging>jar</packaging>
+                <file>${basedir}/lib/qe-driver-0.500-20200406.151302-4-jdbc-client.jar</file>
+            </configuration>
+        </execution>
+    </executions>
+  </plugin>
+    
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.0</version>
