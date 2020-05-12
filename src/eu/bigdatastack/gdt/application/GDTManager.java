@@ -569,19 +569,19 @@ public class GDTManager implements Manager {
 			parameters.put("dbname", gdtConfig.getDatabase().getName());
 			// database credentials
 			parameters.put("dbusername", databaseCredential.getUsername());
-			parameters.put("dbusername", databaseCredential.getPassword());
+			parameters.put("dbpassword", databaseCredential.getPassword());
 			// openshift info
 			parameters.put("ochost", gdtConfig.getOpenshift().getHost());
 			parameters.put("ocport", String.valueOf(gdtConfig.getOpenshift().getPort()));
 			// openshift credentials
 			parameters.put("ocusername", openshiftCredential.getUsername());
-			parameters.put("ocusername", openshiftCredential.getPassword());
+			parameters.put("ocpassword", openshiftCredential.getPassword());
 			// rabbitmq info
 			parameters.put("rmqhost", gdtConfig.getRabbitmq().getHost());
 			parameters.put("rmqport", String.valueOf(gdtConfig.getRabbitmq().getPort()));
 			// rabbitmq credentials
 			parameters.put("rmqusername", rabbitMQCredential.getUsername());
-			parameters.put("rmqusername", rabbitMQCredential.getPassword());
+			parameters.put("rmqpassword", rabbitMQCredential.getPassword());
 			return executeSequenceFromTemplateSync(existingSequenceTemplate, parameters);
 		} catch (Exception e) {
 			e.printStackTrace();
