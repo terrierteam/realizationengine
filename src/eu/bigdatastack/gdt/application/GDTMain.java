@@ -26,6 +26,7 @@ public class GDTMain {
 			String ocpassword = System.getenv("ocpassword");
 			
 			OpenshiftStatusClient openshiftStatus = new OpenshiftStatusClient(ochost, ocport, ocusername, ocpassword);
+			openshiftStatus.connectToOpenshift();
 			
 			String rmqhost = System.getenv("rmqhost");
 			int rmqport = Integer.parseInt(System.getenv("rmqport"));
@@ -39,6 +40,7 @@ public class GDTMain {
 			
 			OpenshiftProjectMonitoringThread monitorThread = new OpenshiftProjectMonitoringThread(openshiftStatus, rabbitMQClient, database, owner, namespace);
 			monitorThread.run();
+			openshiftStatus.close();
 		}
 		
 	}
