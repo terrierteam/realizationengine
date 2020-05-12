@@ -85,7 +85,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 			return;
 		}
 
-		IProject project = openshiftStatus.getProject(namespace);
+		IProject project = openshiftStatus.getProject(namespace); // here
 
 		while (!kill) {
 

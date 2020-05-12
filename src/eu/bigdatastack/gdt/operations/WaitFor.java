@@ -20,7 +20,9 @@ public class WaitFor extends BigDataStackOperation{
 	private String objectID;
 	private String waitForStatus;
 	
-	public WaitFor() {}
+	public WaitFor() {
+		this.className = this.getClass().getName();
+	}
 	
 	public WaitFor(String appID, String owner, String namepace, String objectID, String waitForStatus) {
 		super();

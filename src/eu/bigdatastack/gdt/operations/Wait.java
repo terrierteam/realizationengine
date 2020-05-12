@@ -17,7 +17,9 @@ public class Wait extends BigDataStackOperation {
 	
 	private int secondsToWait;
 
-	public Wait() {};
+	public Wait() {
+		this.className = this.getClass().getName();
+	};
 	
 	public Wait(String appID, String owner, String namepace, int secondsToWait) {
 		super();

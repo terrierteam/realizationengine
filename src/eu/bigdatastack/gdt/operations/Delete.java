@@ -18,7 +18,9 @@ public class Delete extends BigDataStackOperation{
 	private String owner;
 	private String namepace;
 	
-	public Delete() {}
+	public Delete() {
+		this.className = this.getClass().getName();
+	}
 	
 	public Delete(String appID, String owner, String namepace, String objectID) {
 		super();

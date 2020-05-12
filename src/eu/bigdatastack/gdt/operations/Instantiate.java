@@ -23,7 +23,9 @@ public class Instantiate extends BigDataStackOperation{
 	private String objectID;
 	private String seqInstanceRef;
 
-	public Instantiate() {}
+	public Instantiate() {
+		this.className = this.getClass().getName();
+	}
 
 	public Instantiate(String appID, String owner, String namespace, String objectID, String defineInstanceRef) {
 		super();

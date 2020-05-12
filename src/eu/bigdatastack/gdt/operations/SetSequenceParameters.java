@@ -24,7 +24,9 @@ public class SetSequenceParameters extends BigDataStackOperation{
 	
 	private String instanceRef;
 	
-	public SetSequenceParameters() {}
+	public SetSequenceParameters() {
+		this.className = this.getClass().getName();
+	}
 	
 	public SetSequenceParameters(String appID, String owner, String namepace, String instanceRef) {
 		super();

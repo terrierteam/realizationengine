@@ -20,7 +20,9 @@ public class SetParameters extends BigDataStackOperation{
 	private String objectID;
 	private String parameterSourceObjectID;
 	
-	public SetParameters() {}
+	public SetParameters() {
+		this.className = this.getClass().getName();
+	}
 	
 	public SetParameters(String appID, String owner, String namepace, String objectID, String parameterSourceObjectID) {
 		super();

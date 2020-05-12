@@ -20,7 +20,9 @@ public class RecommendResources extends BigDataStackOperation{
 	
 	private String objectID;
 	
-	public RecommendResources() {}
+	public RecommendResources() {
+		this.className = this.getClass().getName();
+	}
 	
 	public RecommendResources(String appID, String owner, String namepace, String objectID) {
 		super();

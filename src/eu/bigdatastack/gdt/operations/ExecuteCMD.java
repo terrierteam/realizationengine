@@ -22,7 +22,9 @@ public class ExecuteCMD extends BigDataStackOperation {
 	private String command;
 	
 	
-	public ExecuteCMD() {}
+	public ExecuteCMD() {
+		this.className = this.getClass().getName();
+	}
 	
 	public ExecuteCMD(String appID, String owner, String namepace, String objectID, String podID,
 			String command) {

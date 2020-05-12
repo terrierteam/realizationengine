@@ -23,7 +23,9 @@ public class Apply extends BigDataStackOperation{
 	private String owner;
 	private String namespace;
 	
-	public Apply() {}
+	public Apply() {
+		this.className = this.getClass().getName();
+	}
 	
 	public Apply(String appID, String owner, String namepace, String instanceRef) {
 		super();

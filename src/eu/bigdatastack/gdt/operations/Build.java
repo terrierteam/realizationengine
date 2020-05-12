@@ -19,7 +19,9 @@ public class Build extends BigDataStackOperation {
 	
 	private String objectID;
 
-	public Build() {}
+	public Build() {
+		this.className = this.getClass().getName();
+	}
 	
 	public Build(String appID, String owner, String namepace, String objectID) {
 		super();
