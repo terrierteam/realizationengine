@@ -3,7 +3,9 @@ package eu.bigdatastack.gdt.application;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -21,6 +23,7 @@ import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.operations.Apply;
 import eu.bigdatastack.gdt.operations.BigDataStackOperation;
+import eu.bigdatastack.gdt.operations.Instantiate;
 import eu.bigdatastack.gdt.prometheus.PrometheusDataClient;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
 import eu.bigdatastack.gdt.structures.config.DatabaseConf;
@@ -70,6 +73,9 @@ public class GDTManager implements Manager {
 	BigDataStackNamespaceStateIO namespaceStateClient;
 	BigDataStackCredentialsIO credentialsClient;
 	
+	BigDataStackCredentials databaseCredential;
+	BigDataStackCredentials openshiftCredential;
+	BigDataStackCredentials rabbitMQCredential;
 	
 	public GDTManager(File gdtJsonConfigFile) throws Exception {
 		gdtConfig = new GDTConfig(gdtJsonConfigFile);
@@ -100,12 +106,12 @@ public class GDTManager implements Manager {
 		
 		
 		// Add database credentials
-		BigDataStackCredentials databaseCredential = new BigDataStackCredentials("GDT", gdtConfig.getDatabase().getUsername(), gdtConfig.getDatabase().getPassword(), BigDataStackCredentialsType.database);
+		databaseCredential = new BigDataStackCredentials("GDT", gdtConfig.getDatabase().getUsername(), gdtConfig.getDatabase().getPassword(), BigDataStackCredentialsType.database);
 		if (!credentialsClient.addCredential(databaseCredential)) credentialsClient.updatePassweord("GDT", BigDataStackCredentialsType.database, gdtConfig.getDatabase().getUsername(), gdtConfig.getDatabase().getPassword());
 		
 		// Initalize Openshift Clients
 		OpenshiftConfig openshiftConf = gdtConfig.getOpenshift();
-		BigDataStackCredentials openshiftCredential = new BigDataStackCredentials("GDT", gdtConfig.getOpenshift().getUsername(), gdtConfig.getOpenshift().getPassword(), BigDataStackCredentialsType.openshift);
+		openshiftCredential = new BigDataStackCredentials("GDT", gdtConfig.getOpenshift().getUsername(), gdtConfig.getOpenshift().getPassword(), BigDataStackCredentialsType.openshift);
 		if (!credentialsClient.addCredential(openshiftCredential)) credentialsClient.updatePassweord("GDT", BigDataStackCredentialsType.openshift, gdtConfig.getOpenshift().getUsername(), gdtConfig.getOpenshift().getPassword());
 		openshiftOperationClient = new OpenshiftOperationClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
 		openshiftStatusClient = new OpenshiftStatusClient(openshiftOperationClient.getClient());
@@ -114,7 +120,7 @@ public class GDTManager implements Manager {
 		// Initalize RabbitMQ Client
 		RabbitMQConf rabbitMQConf = gdtConfig.getRabbitmq();
 		mailboxClient = new RabbitMQClient(rabbitMQConf.getHost(), rabbitMQConf.getPort(), rabbitMQConf.getUsername(), rabbitMQConf.getPassword());
-		BigDataStackCredentials rabbitMQCredential = new BigDataStackCredentials("GDT", gdtConfig.getRabbitmq().getUsername(), gdtConfig.getRabbitmq().getPassword(), BigDataStackCredentialsType.rabbitmq);
+		rabbitMQCredential = new BigDataStackCredentials("GDT", gdtConfig.getRabbitmq().getUsername(), gdtConfig.getRabbitmq().getPassword(), BigDataStackCredentialsType.rabbitmq);
 		if (!credentialsClient.addCredential(rabbitMQCredential)) credentialsClient.updatePassweord("GDT", BigDataStackCredentialsType.rabbitmq, gdtConfig.getRabbitmq().getUsername(), gdtConfig.getRabbitmq().getPassword());
 		
 		
@@ -136,6 +142,37 @@ public class GDTManager implements Manager {
 	public BigDataStackApplication registerApplication(String yaml) {
 		try {
 			BigDataStackApplication app = yamlMapper.readValue(yaml, BigDataStackApplication.class);
+			return registerApplication(app, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new BigDataStack Application with the database from a yaml format String
+	 * @param yaml
+	 * @return
+	 */
+	public BigDataStackApplication registerApplication(String yaml, String namespace) {
+		try {
+			BigDataStackApplication app = yamlMapper.readValue(yaml, BigDataStackApplication.class);
+			return registerApplication(app, namespace);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new BigDataStack Application from a BigDataStackApplication object
+	 * @param yaml
+	 * @return
+	 */
+	protected BigDataStackApplication registerApplication(BigDataStackApplication app, String namespace) {
+		if (namespace!=null) app.setNamespace(namespace);
+		
+		try {
 			if (appClient.addApplication(app)) {
 				eventUtil.registerEvent(
 						app.getAppID(),
@@ -176,6 +213,21 @@ public class GDTManager implements Manager {
 		try {
 			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
 			return registerApplication(yaml);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new BigDataStack Application with the database from a yaml format File
+	 * @param yamlFile
+	 * @return
+	 */
+	public BigDataStackApplication registerApplication(File yamlFile, String namespace) {
+		try {
+			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
+			return registerApplication(yaml, namespace);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -245,8 +297,10 @@ public class GDTManager implements Manager {
 	 */
 	public boolean createOperationSequence(BigDataStackApplication app, BigDataStackObjectDefinition object, String sequenceID) {
 		try {
-			Apply applyOperation = new Apply(app.getAppID(), app.getOwner(), app.getNamespace(), object.getObjectID());
+			Instantiate instantiateOperation = new Instantiate(app.getAppID(), app.getOwner(), app.getNamespace(), object.getObjectID(), "defaultInstanceRef");
+			Apply applyOperation = new Apply(app.getAppID(), app.getOwner(), app.getNamespace(), "defaultInstanceRef");
 			List<BigDataStackOperation> operations = new ArrayList<BigDataStackOperation>(1);
+			operations.add(instantiateOperation);
 			operations.add(applyOperation);
 			
 			BigDataStackOperationSequence sequence = new BigDataStackOperationSequence(
@@ -256,7 +310,7 @@ public class GDTManager implements Manager {
 					0, 
 					sequenceID, 
 					"Generic auto-created sequence for '"+object.getObjectID()+"'",
-					"This is an automatically generated sequence in Run mode comprising of Apply for '"+object.getObjectID()+"'", 
+					"This is an automatically generated sequence in Run mode comprising of Instantiate then Apply for '"+object.getObjectID()+"'", 
 					operations, 
 					BigDataStackOperationSequenceMode.Run);
 			
@@ -299,7 +353,7 @@ public class GDTManager implements Manager {
 	 * @param sequenceTemplate
 	 * @return
 	 */
-	public boolean executeSequenceFromTemplateSync(BigDataStackOperationSequence sequenceTemplate) {
+	public boolean executeSequenceFromTemplateSync(BigDataStackOperationSequence sequenceTemplate, Map<String,String> parameters) {
 		
 		OperationSequenceThread thread = new OperationSequenceThread(
 				database,
@@ -307,19 +361,38 @@ public class GDTManager implements Manager {
 				openshiftStatusClient,
 				mailboxClient,
 				prometheusDataClient, 
-				sequenceTemplate);
+				sequenceTemplate,
+				parameters);
 		
 		thread.run();
 		return !thread.hasFailed();
 	}
 	
 	/**
-	 * Registers a new namspace with the database (this does not trigger the start of monitoring)
+	 * Triggers the execution of an operation sequence from an existing sequence template. This will
+	 * generate a sequence instance, and as needed, object instances. 
+	 * 
+	 * This is the synchronous version of the call (will not exit until the sequence ends or fails).
+	 * @param sequenceTemplate
+	 * @return
+	 */
+	public boolean executeSequenceFromTemplateSync(BigDataStackOperationSequence sequenceTemplate) {
+		
+		return executeSequenceFromTemplateSync(sequenceTemplate, new HashMap<String,String>());
+	}
+	
+	/**
+	 * Registers a new namespace with the database (this does not trigger the start of monitoring)
 	 * @param namespace
 	 * @return
 	 */
-	public boolean registerNamespace(BigDataStackNamespaceState namespace) {
+	public BigDataStackNamespaceState registerNamespace(String yaml) {
 		try {
+			BigDataStackNamespaceState namespace = yamlMapper.readValue(yaml, BigDataStackNamespaceState.class);
+			if (namespace.getClusterMonitoringHost()==null) namespace.setClusterMonitoringHost("");
+			if (namespace.getEventExchangeHost()==null) namespace.setEventExchangeHost("");
+			if (namespace.getLogSearchHost()==null) namespace.setLogSearchHost("");
+			if (namespace.getMetricStoreHost()==null) namespace.setMetricStoreHost("");
 			if (!namespaceStateClient.addNamespace(namespace)) {
 				eventUtil.registerEvent(
 						"GDT",
@@ -331,7 +404,7 @@ public class GDTManager implements Manager {
 						"Attempted to add a new namepace '"+namespace.getNamespace()+"', but the registry rejected it, there may already be a namespace with that name.",
 						namespace.getNamespace()
 						);
-				return false;
+				return null;
 			} else {
 				eventUtil.registerEvent(
 						"GDT",
@@ -343,12 +416,178 @@ public class GDTManager implements Manager {
 						"Successfully added a new namepace '"+namespace.getNamespace()+"'",
 						namespace.getNamespace()
 						);
-				return true;
+				return namespace;
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new namespace with the database (this does not trigger the start of monitoring)
+	 * @param yamlFile
+	 * @return
+	 */
+	public BigDataStackNamespaceState registerNamespace(File yamlFile) {
+		try {
+			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
+			return registerNamespace(yaml);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	
+	/**
+	 * Registers a new operation sequence with the database
+	 * @param namespace
+	 * @return
+	 */
+	public BigDataStackOperationSequence registerOperationSequence(String yaml) {
+		try {
+			BigDataStackOperationSequence sequence = GDTFileUtil.readSequenceFromString(GDTFileUtil.file2String(new File(yaml), "UTF-8"));
+			
+			if (!sequenceTemplateClient.addSequence(sequence)) {
+				eventUtil.registerEvent(
+						sequence.getAppID(),
+						sequence.getOwner(),
+						sequence.getNamespace(),
+						BigDataStackEventType.ObjectRegistry,
+						BigDataStackEventSeverity.Error,
+						"Failed adding operation sequence template : '"+sequence.getSequenceID()+"'",
+						"Attempted to add a new operation sequence template '"+sequence.getSequenceID()+"', but the registry rejected it, there may already be a template with that ID.",
+						sequence.getSequenceID()
+						);
+				return null;
+			} else {
+				eventUtil.registerEvent(
+						sequence.getAppID(),
+						sequence.getOwner(),
+						sequence.getNamespace(),
+						BigDataStackEventType.ObjectRegistry,
+						BigDataStackEventSeverity.Info,
+						"Registered operation sequence template : '"+sequence.getSequenceID()+"'",
+						"Added a new operation sequence template '"+sequence.getSequenceID()+"' to the registry",
+						sequence.getSequenceID()
+						);
+				return sequence;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new operation sequence with the database
+	 * @param yamlFile
+	 * @return
+	 */
+	public BigDataStackOperationSequence registerOperationSequence(File yamlFile) {
+		try {
+			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
+			return registerOperationSequence(yaml);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Attempts to start the monitoring service for a namespace
+	 * @param namespace
+	 * @param owner
+	 * @return
+	 */
+	public boolean startMonitoringNamespace(BigDataStackNamespaceState namespace, String owner) {
+		
+		try {
+			
+			// get or register the default app
+			BigDataStackApplication app = getAppClient().getApp("gdtdefaultapp", owner, namespace.getNamespace());
+			if (app == null) app = registerApplication(new File("resources/gdt/gdtdefault.app.yaml"), namespace.getNamespace());
+			if (app == null) {
+				
+				eventUtil.registerEvent(
+						"gdtdefaultapp",
+						owner,
+						namespace.getNamespace(),
+						BigDataStackEventType.GlobalDecisionTracker,
+						BigDataStackEventSeverity.Error,
+						"Failed to launch namespace monitoring for namespace: '"+namespace.getNamespace()+"'",
+						"Tried to get or register the GDT default application, but it was rejected by the registry",
+						namespace.getNamespace()
+						);
+				return false;
+			}
+			
+			
+			// get or register the monitor object
+			BigDataStackObjectDefinition monitorDC = getObjectTemplateClient().getObject("gdtdefaultapp-gdtmonitor", owner);
+			if (monitorDC == null) monitorDC = registerObject(new File("resources/gdt/gdtmain.dc.yaml"));
+			if (monitorDC == null) {
+				
+				eventUtil.registerEvent(
+						"gdtdefaultapp",
+						owner,
+						namespace.getNamespace(),
+						BigDataStackEventType.GlobalDecisionTracker,
+						BigDataStackEventSeverity.Error,
+						"Failed to launch namespace monitoring for namespace: '"+namespace.getNamespace()+"'",
+						"Tried to get or register the GDT Monitoring object, but it was rejected by the registry",
+						"gdtdefaultapp-gdtmonitor"
+						);
+				return false;
+			}
+			
+			// get or create the operation sequence
+			BigDataStackOperationSequence existingSequenceTemplate = getSequenceTemplateClient().getOperationSequence("gdtdefaultapp", "seq-gdtmonitor", 0);
+			if (existingSequenceTemplate==null) existingSequenceTemplate = registerOperationSequence("resources/gdt/gdtmonitor.seq.yaml");
+			if (existingSequenceTemplate==null) {
+				
+				eventUtil.registerEvent(
+						"gdtdefaultapp",
+						owner,
+						namespace.getNamespace(),
+						BigDataStackEventType.GlobalDecisionTracker,
+						BigDataStackEventSeverity.Error,
+						"Failed to launch namespace monitoring for namespace: '"+namespace.getNamespace()+"'",
+						"Tried to get or register the GDT Monitoring operation sequence template, but it was rejected by the registry",
+						"seq-gdtmonitor"
+						);
+				
+				return false;
+			}
+			
+			// Launch the Operation Sequence
+			Map<String,String> parameters = new HashMap<String,String>();
+			// database info
+			parameters.put("dbhost", gdtConfig.getDatabase().getHost());
+			parameters.put("dbport", String.valueOf(gdtConfig.getDatabase().getPort()));
+			parameters.put("dbname", gdtConfig.getDatabase().getName());
+			// database credentials
+			parameters.put("dbusername", databaseCredential.getUsername());
+			parameters.put("dbusername", databaseCredential.getPassword());
+			// openshift info
+			parameters.put("ochost", gdtConfig.getOpenshift().getHost());
+			parameters.put("ocport", String.valueOf(gdtConfig.getOpenshift().getPort()));
+			// openshift credentials
+			parameters.put("ocusername", openshiftCredential.getUsername());
+			parameters.put("ocusername", openshiftCredential.getPassword());
+			// rabbitmq info
+			parameters.put("rmqhost", gdtConfig.getRabbitmq().getHost());
+			parameters.put("rmqport", String.valueOf(gdtConfig.getRabbitmq().getPort()));
+			// rabbitmq credentials
+			parameters.put("rmqusername", rabbitMQCredential.getUsername());
+			parameters.put("rmqusername", rabbitMQCredential.getPassword());
+			return executeSequenceFromTemplateSync(existingSequenceTemplate, parameters);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
+
 	}
 	
 	
@@ -367,6 +606,11 @@ public class GDTManager implements Manager {
 	public BigDataStackOperationSequenceIO getSequenceTemplateClient() {
 		return sequenceTemplateClient;
 	}
+
+	public BigDataStackOperationSequenceIO getSequenceInstanceClient() {
+		return sequenceInstanceClient;
+	}
+
 	
 	
 	

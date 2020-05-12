@@ -3,6 +3,7 @@ package test;
 import java.sql.SQLException;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackApplicationIO;
+import eu.bigdatastack.gdt.lxdb.BigDataStackCredentialsIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackEventIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackMetricIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackNamespaceStateIO;
@@ -56,6 +57,9 @@ public class TestUtil {
 		
 		BigDataStackNamespaceStateIO namespaceStateClient = new BigDataStackNamespaceStateIO(database);
 		namespaceStateClient.clearTable();
+		
+		BigDataStackCredentialsIO namespaceCredentials = new BigDataStackCredentialsIO(database);
+		namespaceCredentials.clearTable();
 		
 	}
 	

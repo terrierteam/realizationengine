@@ -1,31 +1,69 @@
-apiVersion: apps.openshift.io/v1
-kind: DeploymentConfig
-metadata:
-  name: $appID$-$objectID$
-  namespace: $namespace$
-spec:
-  replicas: 1
-  strategy:
-    resources: {}
-  template:
-    metadata:
-      labels:
-        jobconfig: $objectID$
-        app: $appID$
-    spec:
-      containers:
-      - name: bash
-        image: "docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest"
-        resources:
-          limits:
-            cpu: "1000m"
-            memory: "2048Mi"
-        command:
-         - 'java'
-        args:
-         - '-jar'
-         - './target/BigDataStack-GDT-Data-0.0.1-SNAPSHOT.jar'
-         - 'namespaceMonitor'
-        imagePullPolicy: IfNotPresent
-      securityContext: {}
-      serviceAccount: default
+appID: "gdtdefaultapp"
+owner: "richardm"
+
+objectID: "gdtmonitor"
+type: DeploymentConfig
+
+yamlSource: 
+  apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: $appID$-$objectID$
+    namespace: $namespace$
+  spec:
+    replicas: 1
+    strategy:
+      resources: {}
+    template:
+      metadata:
+        labels:
+          jobconfig: $objectID$
+          app: $appID$
+      spec:
+        containers:
+        - name: bash
+          image: "docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest"
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "2048Mi"
+          command:
+           - 'java'
+          args:
+           - '-jar'
+           - './target/BigDataStack-GDT-Data-0.0.1-SNAPSHOT.jar'
+           - 'namespaceMonitor'
+          env:
+           - name: "owner"
+             value: "$owner$"
+           - name: "namespace"
+             value: "$namespace$"
+           - name: "dbhost"
+             value: "$dbhost$"
+           - name: "dbport"
+             value: "$dbport$"
+           - name: "dbname"
+             value: "$dbname$"
+           - name: "dbusername"
+             value: "$dbusername$"
+           - name: "dbpassword"
+             value: "$dbpassword$"
+           - name: "ochost"
+             value: "$ochost$"
+           - name: "ocport"
+             value: "$ocport$"
+           - name: "ocusername"
+             value: "$ocusername$"
+           - name: "ocpassword"
+             value: "$ocpassword$"
+           - name: "rmqhost"
+             value: "$rmqhost$"
+           - name: "rmqport"
+             value: "$rmqport$"
+           - name: "rmqusername"
+             value: "$rmqusername$"
+           - name: "rmqpassword"
+             value: "$rmqpassword$"
+          imagePullPolicy: IfNotPresent
+        securityContext: {}
+        serviceAccount: default

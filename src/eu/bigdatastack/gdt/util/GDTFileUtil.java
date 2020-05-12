@@ -6,15 +6,24 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
+import eu.bigdatastack.gdt.operations.BigDataStackOperation;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
+import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
+import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceMode;
 
 /**
  * Utility class that provides file operations to avoid redundant code
@@ -69,7 +78,7 @@ public class GDTFileUtil {
 			String objectID = node.get("objectID").asText();
 			String owner = node.get("owner").asText();
 			BigDataStackObjectType type = BigDataStackObjectType.valueOf(node.get("type").asText());
-			String yamlSource = node.get("yamlSource").toPrettyString();
+			String yamlSource = mapper.writeValueAsString(node.get("yamlSource"));
 			
 			BigDataStackObjectDefinition object = new BigDataStackObjectDefinition(objectID, owner, type,
 					yamlSource, new HashSet<String>());
@@ -80,6 +89,67 @@ public class GDTFileUtil {
 			return null;
 		}
 		
+	}
+	
+	/**
+	 * Reads in a BigDataStackOperationSequence from a yaml format string. Note that this relies on implementations of
+	 * initalizeFromJson within each Operation class to parse the contents of the operation definitions
+	 * @param yaml
+	 * @return
+	 */
+	public static BigDataStackOperationSequence readSequenceFromString(String yaml) {
+		try {
+			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+			JsonNode node = mapper.readTree(yaml);
+			
+			
+			String appID = node.get("appID").asText();
+			String owner = node.get("owner").asText();
+			String namespace = "";
+			if (node.has("namespace")) namespace = node.get("namespace").asText();
+			String sequenceID = node.get("sequenceID").asText();	
+			String name = "";
+			if (node.has("name")) name = node.get("name").asText();
+			String description = "";
+			if (node.has("description")) description = node.get("description").asText();
+			Map<String,String> parameters = new HashMap<String,String>();
+			if (node.has("parameters") && node.get("parameters").isArray()) {
+				Iterator<JsonNode> paramI = node.get("parameters").iterator();
+				while (paramI.hasNext()) {
+					JsonNode param = paramI.next();
+					if (param.has("name") && param.has("value")) parameters.put(param.get("name").asText(), param.get("value").asText());
+					if (param.has("key") && param.has("value")) parameters.put(param.get("key").asText(), param.get("value").asText());
+				}
+			}
+			
+			if (!node.has("operations") || !node.get("operations").isArray()) return null;
+			Iterator<JsonNode> operationI = node.get("operations").iterator();
+			List<BigDataStackOperation> operations = new ArrayList<BigDataStackOperation>(5);
+			while (operationI.hasNext()) {
+				JsonNode operationJson = operationI.next();
+				String className = operationJson.get("className").asText();
+				
+				
+				@SuppressWarnings("deprecation")
+				BigDataStackOperation operation = (BigDataStackOperation) Class.forName("eu.bigdatastack.gdt.operations."+className).newInstance();
+				operation.setAppID(appID);
+				operation.setNamespace(namespace);
+				operation.setOwner(owner);
+				operation.initalizeFromJson(operationJson);
+				operations.add(operation);
+			}
+ 
+			BigDataStackOperationSequenceMode mode = BigDataStackOperationSequenceMode.valueOf(node.get("mode").asText());
+			
+			BigDataStackOperationSequence sequence = new BigDataStackOperationSequence(appID, owner, namespace, sequenceID, name,
+					description, parameters, operations, mode);
+			
+			
+			return sequence;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 }

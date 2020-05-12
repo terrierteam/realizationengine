@@ -2,6 +2,8 @@ package eu.bigdatastack.gdt.operations;
 
 import org.apache.commons.lang.NotImplementedException;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
@@ -51,7 +53,7 @@ public class SetParameters extends BigDataStackOperation{
 	public String getNamespace() {
 		return namepace;
 	}
-	public void setNamepace(String namepace) {
+	public void setNamespace(String namepace) {
 		this.namepace = namepace;
 	}
 	
@@ -73,5 +75,11 @@ public class SetParameters extends BigDataStackOperation{
 			OpenshiftStatusClient openshiftStatusClient, RabbitMQClient mailboxClient,
 			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner) {
 		throw new NotImplementedException();
+	}
+	
+	@Override
+	public void initalizeFromJson(JsonNode configJson) {
+		// TODO Auto-generated method stub
+		
 	}
 }

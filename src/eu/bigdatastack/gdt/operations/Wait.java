@@ -1,5 +1,7 @@
 package eu.bigdatastack.gdt.operations;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
@@ -47,7 +49,7 @@ public class Wait extends BigDataStackOperation {
 		return namepace;
 	}
 
-	public void setNamepace(String namepace) {
+	public void setNamespace(String namepace) {
 		this.namepace = namepace;
 	}
 
@@ -82,6 +84,12 @@ public class Wait extends BigDataStackOperation {
 	@Override
 	public String getObjectID() {
 		return null;
+	}
+	
+	@Override
+	public void initalizeFromJson(JsonNode configJson) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

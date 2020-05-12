@@ -106,7 +106,7 @@ public class BigDataStackOperationSequenceIO {
 		
 			statement.setString(1, SQLUtils.prepareTextNoQuote(sequence.getAppID(),100));
 			statement.setString(2, SQLUtils.prepareTextNoQuote(sequence.getOwner(),140));
-			statement.setString(3, SQLUtils.prepareTextNoQuote(sequence.getNamepace(),140));
+			statement.setString(3, SQLUtils.prepareTextNoQuote(sequence.getNamespace(),140));
 			statement.setInt(4, sequence.getIndex());
 			statement.setString(5, SQLUtils.prepareTextNoQuote(sequence.getSequenceID(),100));
 			statement.setString(6, SQLUtils.prepareTextNoQuote(sequence.getName(),140));
@@ -215,7 +215,7 @@ public class BigDataStackOperationSequenceIO {
 			PreparedStatement statement = conn.prepareStatement("UPDATE "+tableName+" SET name=?, description=?, jsonOperations=?, mode=?"+
 					" WHERE appID="+SQLUtils.prepareText(sequence.getAppID(),100)+
 					" AND owner="+SQLUtils.prepareText(sequence.getOwner(),140)+
-					" AND namespace="+SQLUtils.prepareText(sequence.getNamepace(),140)+
+					" AND namespace="+SQLUtils.prepareText(sequence.getNamespace(),140)+
 					" AND sequenceID="+SQLUtils.prepareText(sequence.getSequenceID(),100)+
 					" AND instance="+sequence.getIndex());
 			
@@ -368,6 +368,67 @@ public class BigDataStackOperationSequenceIO {
 		conn.close();
 		
 		return retrievedSequences;
+	}
+	
+	/**
+	 * Returns a particular operation sequence for a particular application and sequenceID. 
+	 * @param appID
+	 * @param owner
+	 * @return
+	 * @throws SQLException
+	 */
+	public BigDataStackOperationSequence getOperationSequence(String appID, String sequenceID, int instance) throws SQLException {
+		Connection conn = client.openConnection();
+		
+		Statement statement = conn.createStatement();
+		
+		StringBuilder baseStatement = new StringBuilder();
+		baseStatement.append("SELECT * FROM "+tableName+" WHERE appID='"+appID+"' AND sequenceID='"+sequenceID+"' AND instance="+instance);
+		
+		statement.execute(baseStatement.toString());
+		ResultSet results = statement.getResultSet();
+		
+		BigDataStackOperationSequence sequence = null;
+			
+		 try {
+			while (results.next()) {
+				 
+				List<BigDataStackOperation> operations = new ArrayList<BigDataStackOperation>(5);
+				
+				Iterator<JsonNode> operationArray = mapper.readTree(results.getString("jsonOperations")).iterator();
+				while (operationArray.hasNext()) {
+					JsonNode node = operationArray.next();
+					
+					String className = node.get("className").asText();
+					
+					BigDataStackOperation operation = (BigDataStackOperation) mapper.readValue(node.toString(), Class.forName(className));
+					
+					operations.add(operation);
+				}
+				
+				sequence = new BigDataStackOperationSequence(
+						results.getString("appID"),
+						results.getString("owner"),
+						results.getString("namespace"),
+						results.getInt("instance"),
+						results.getString("sequenceID"),
+						results.getString("name"),
+						results.getString("description"),
+						operations,
+						BigDataStackOperationSequenceMode.valueOf(results.getString("mode"))
+					);
+				 
+				 
+			 }
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		 
+		
+		
+		conn.close();
+		
+		return sequence;
 	}
 	
 	/**

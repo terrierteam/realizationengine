@@ -29,16 +29,16 @@ public class BigDataStackNamespaceState {
 		this.host = host;
 		this.port = port;
 		clusterMonitoringActive = false;
-		clusterMonitoringHost = null;
+		clusterMonitoringHost = "";
 		clusterMonitoringPort = -1;
 		metricStoreActive = false;
-		metricStoreHost = null;
+		metricStoreHost = "";
 		metricStorePort = -1;
 		logSearchActive = false;
-		logSearchHost = null;
+		logSearchHost = "";
 		logSearchPort = -1;
 		eventExchangeActive = false;
-		eventExchangeHost = null;
+		eventExchangeHost = "";
 		eventExchangePort = -1;
 	}
 	

@@ -33,7 +33,7 @@ public class UnitTest1 {
 		assertNotNull(manager.registerApplication(new File("resources/bigdatastack/unitTest1/unitTest1.app.yaml")));
 		
 		// Get Application
-		BigDataStackApplication app = manager.getAppClient().getApp("unittest1", "richardm");
+		BigDataStackApplication app = manager.getAppClient().getApp("unittest1", "richardm", "richardmproject");
 		assertNotNull(app);
 		
 		// Create Hello World Pod Object

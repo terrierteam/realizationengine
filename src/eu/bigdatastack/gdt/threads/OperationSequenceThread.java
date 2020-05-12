@@ -2,6 +2,7 @@ package eu.bigdatastack.gdt.threads;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -40,6 +41,7 @@ public class OperationSequenceThread implements Runnable {
 	boolean kill = false;
 	boolean failed = false;
 
+	private Map<String,String> newParameters = null;
 
 	public OperationSequenceThread(LXDB database,
 			OpenshiftOperationClient openshiftOperationClient,
@@ -56,7 +58,22 @@ public class OperationSequenceThread implements Runnable {
 		this.sequence = sequence;
 	}
 
-
+	public OperationSequenceThread(LXDB database,
+			OpenshiftOperationClient openshiftOperationClient,
+			OpenshiftStatusClient openshiftStatusClient,
+			RabbitMQClient mailboxClient,
+			PrometheusDataClient prometheusDataClient, 
+			BigDataStackOperationSequence sequence,
+			Map<String,String> newParameters) {
+		super();
+		this.operationsClient = openshiftOperationClient;
+		this.statusClient = openshiftStatusClient;
+		this.mailboxClient =mailboxClient;
+		this.prometheusDataClient = prometheusDataClient;
+		this.database = database;
+		this.sequence = sequence;
+		this.newParameters = newParameters;
+	}
 
 	@Override
 	public void run() {
@@ -74,7 +91,7 @@ public class OperationSequenceThread implements Runnable {
 				eventUtil.registerEvent(
 						sequence.getAppID(),
 						sequence.getOwner(),
-						sequence.getNamepace(),
+						sequence.getNamespace(),
 						BigDataStackEventType.ObjectRegistry,
 						BigDataStackEventSeverity.Error,
 						"Operation Sequence Creation Failed for: '"+sequence.getSequenceID()+"'",
@@ -88,7 +105,7 @@ public class OperationSequenceThread implements Runnable {
 			eventUtil.registerEvent(
 					sequence.getAppID(),
 					sequence.getOwner(),
-					sequence.getNamepace(),
+					sequence.getNamespace(),
 					BigDataStackEventType.GlobalDecisionTracker,
 					BigDataStackEventSeverity.Info,
 					"New Operation Sequence Created: '"+sequence.getSequenceID()+"'",
@@ -151,11 +168,11 @@ public class OperationSequenceThread implements Runnable {
 					eventUtil.registerEvent(
 							sequence.getAppID(),
 							sequence.getOwner(),
-							sequence.getNamepace(),
+							sequence.getNamespace(),
 							BigDataStackEventType.Stage,
 							BigDataStackEventSeverity.Alert,
 							"Operation Sequence Failed for: '"+sequence.getSequenceID()+"' at Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getName(),
-							"Running operation '"+operation.getObjectID()+"' failed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
+							"Operation '"+operation.getObjectID()+"' failed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
 							sequence.getSequenceID()
 							);
 					return;
@@ -164,18 +181,67 @@ public class OperationSequenceThread implements Runnable {
 				eventUtil.registerEvent(
 						sequence.getAppID(),
 						sequence.getOwner(),
-						sequence.getNamepace(),
+						sequence.getNamespace(),
 						BigDataStackEventType.Stage,
 						BigDataStackEventSeverity.Info,
-						"Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getName()+" Complete within sequqnce '"+sequence.getSequenceID()+"'",
-						"Running operation '"+operation.getObjectID()+"' completed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
+						"Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" Complete within sequqnce '"+sequence.getSequenceID()+"'",
+						"Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" completed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
 						sequence.getSequenceID()
 						);
 				
 			} catch (Exception e) {
 				e.printStackTrace();
 				failed = true;
+				
+				try {
+					eventUtil.registerEvent(
+							sequence.getAppID(),
+							sequence.getOwner(),
+							sequence.getNamespace(),
+							BigDataStackEventType.GlobalDecisionTracker,
+							BigDataStackEventSeverity.Alert,
+							"Operation Sequence '"+sequence.getSequenceID()+"' Failed",
+							"Operation Sequence '"+sequence.getSequenceID()+"' failed during processing due to an internal exception '"+e.getMessage()+"'",
+							sequence.getSequenceID()
+							);
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+				
 				return;
+			}
+			
+			
+			if (failed) {
+				try {
+					eventUtil.registerEvent(
+							sequence.getAppID(),
+							sequence.getOwner(),
+							sequence.getNamespace(),
+							BigDataStackEventType.GlobalDecisionTracker,
+							BigDataStackEventSeverity.Alert,
+							"Operation Sequence '"+sequence.getSequenceID()+"' Failed",
+							"Operation Sequence '"+sequence.getSequenceID()+"' failed due to one of the contained operations failing",
+							sequence.getSequenceID()
+							);
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+			} else {
+				try {
+					eventUtil.registerEvent(
+							sequence.getAppID(),
+							sequence.getOwner(),
+							sequence.getNamespace(),
+							BigDataStackEventType.GlobalDecisionTracker,
+							BigDataStackEventSeverity.Alert,
+							"Operation Sequence '"+sequence.getSequenceID()+"' Completed Successfully",
+							"Operation Sequence '"+sequence.getSequenceID()+"' completed successfuly",
+							sequence.getSequenceID()
+							);
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
 			}
 
 		}
@@ -205,6 +271,12 @@ public class OperationSequenceThread implements Runnable {
 			int newIndex = highestIndex+1;
 			sequence = sequence.clone();
 			sequence.setIndex(newIndex);
+			
+			if (newParameters!=null) {
+				for (String paramKey : newParameters.keySet()) {
+					sequence.getParameters().put(paramKey, newParameters.get(paramKey));
+				}
+			}
 
 			sequenceAdded = sequenceIO.addSequence(sequence);
 			if (!sequenceAdded) {

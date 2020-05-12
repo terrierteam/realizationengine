@@ -19,6 +19,7 @@ public class BigDataStackCredentials {
 		this.username = username;
 		this.password = password;
 		tokens = new HashMap<String,Long>();
+		this.type = type;
 	}
 
 	public BigDataStackCredentials(String owner, String username, String password, Map<String, Long> tokens, BigDataStackCredentialsType type) {

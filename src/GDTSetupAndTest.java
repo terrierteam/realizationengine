@@ -56,12 +56,12 @@ public class GDTSetupAndTest {
 		
 		System.err.println(appClient.addApplication(app));
 		
-		System.err.println(mapper.writeValueAsString(appClient.getApp("app-01", "richardm")));
+		System.err.println(mapper.writeValueAsString(appClient.getApp("app-01", "richardm", "richardmproject")));
 		
 		app.setName("my updated app");
 		System.err.println(appClient.updateApp(app));
 		
-		System.err.println(mapper.writeValueAsString(appClient.getApp("app-01", "richardm")));
+		System.err.println(mapper.writeValueAsString(appClient.getApp("app-01", "richardm", "richardmproject")));
 		
 		Set<String> oStatus = new HashSet<String>();
 		oStatus.add("Starting");

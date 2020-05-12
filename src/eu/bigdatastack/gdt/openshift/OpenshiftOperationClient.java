@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.openshift.restclient.ClientBuilder;
 import com.openshift.restclient.IClient;
+import com.openshift.restclient.model.IDeploymentConfig;
 import com.openshift.restclient.model.IResource;
 
 
@@ -61,7 +62,7 @@ public class OpenshiftOperationClient {
 	 * @return connection was successful;
 	 */
 	public boolean connectToOpenshift() {
-
+		
 		if (host==null) return false;
 		
 		try {
@@ -91,8 +92,10 @@ public class OpenshiftOperationClient {
 			IResource resource;
 			switch (object.getType()) {
 				case DeploymentConfig:
+					System.err.println(object.getYamlSource());
 					resource = client.getResourceFactory().create(yaml2Json(object.getYamlSource()));
-					client.create(resource);
+					IDeploymentConfig deploymentConfig = (IDeploymentConfig)resource;
+					client.create(deploymentConfig);
 					return true;
 				case Service:
 					resource = client.getResourceFactory().create(yaml2Json(object.getYamlSource()));

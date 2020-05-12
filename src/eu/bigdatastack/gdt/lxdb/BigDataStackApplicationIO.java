@@ -60,9 +60,9 @@ public class BigDataStackApplicationIO {
 					"name VARCHAR(140), "+
 					"description VARCHAR(65535), "+
 					"owner VARCHAR(140), "+
-					"namepace VARCHAR(140), "+
+					"namespace VARCHAR(140), "+
 					"types VARCHAR(1000), "+
-					"PRIMARY KEY (appID,owner)"+
+					"PRIMARY KEY (appID,owner,namespace)"+
 					")");
 
 			conn.commit();
@@ -84,7 +84,7 @@ public class BigDataStackApplicationIO {
 
 		Statement statement = conn.createStatement();
 		try {
-			statement.executeUpdate("INSERT INTO "+tableName+" (appID, name, description, owner, namepace, types)"+
+			statement.executeUpdate("INSERT INTO "+tableName+" (appID, name, description, owner, namespace, types)"+
 					" VALUES ( "+
 					SQLUtils.prepareText(app.getAppID(),100)+", "+
 					SQLUtils.prepareText(app.getName(),140)+", "+
@@ -115,11 +115,11 @@ public class BigDataStackApplicationIO {
 	 * @throws IOException
 	 */
 	@SuppressWarnings("unchecked")
-	public BigDataStackApplication getApp(String appID, String owner) throws SQLException {
+	public BigDataStackApplication getApp(String appID, String owner, String namepace) throws SQLException {
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
-		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE appID='"+appID+"' AND owner='"+owner+"'");
+		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE appID='"+appID+"' AND owner='"+owner+"' AND namespace='"+namepace+"'");
 		ResultSet results = statement.getResultSet();
 
 		BigDataStackApplication app = null;
@@ -136,7 +136,7 @@ public class BigDataStackApplicationIO {
 						results.getString("name"),
 						results.getString("description"),
 						results.getString("owner"),
-						results.getString("namepace"),
+						results.getString("namespace"),
 						types);
 
 
@@ -166,9 +166,8 @@ public class BigDataStackApplicationIO {
 			statement.executeUpdate("UPDATE "+tableName+" SET "+
 					"name="+SQLUtils.prepareText(app.getName(),140)+", "+
 					"description="+SQLUtils.prepareText(app.getDescription(),65535)+", "+
-					"namepace="+SQLUtils.prepareText(app.getNamespace(),140)+", "+
 					"types="+SQLUtils.prepareText(mapper.writeValueAsString(app.getTypes()),1000)+
-					" WHERE appID="+SQLUtils.prepareText(app.getAppID(),100)+" AND owner="+SQLUtils.prepareText(app.getOwner(),140));
+					" WHERE appID="+SQLUtils.prepareText(app.getAppID(),100)+" AND owner="+SQLUtils.prepareText(app.getOwner(),140)+" AND namespace="+SQLUtils.prepareText(app.getNamespace(),140));
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
@@ -215,7 +214,7 @@ public class BigDataStackApplicationIO {
 						results.getString("name"),
 						results.getString("description"),
 						results.getString("owner"),
-						results.getString("namepace"),
+						results.getString("namespace"),
 						types);
 
 				retrievedApplications.add(app);

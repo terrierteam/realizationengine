@@ -103,7 +103,7 @@ public class BigDataStackNamespaceStateIO {
 					namespace.getEventExchangePort()+
 					" )");
 		} catch (Exception e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 			conn.close();
 			return false;
 		}

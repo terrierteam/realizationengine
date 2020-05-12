@@ -2,11 +2,11 @@
 appID: "DeepRecSys"
 owner: "richardm"
 namespace: "richardmproject"
-	
+
 sequenceID: "learnmodel"
 name: "Learn Single Model"
 description: "Performs training of a single machine learned model for grocery recommendation, is parameterized"
-	
+
 parameters: {}
 
 operations:

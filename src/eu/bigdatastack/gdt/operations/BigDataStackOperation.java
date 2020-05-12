@@ -1,5 +1,7 @@
 package eu.bigdatastack.gdt.operations;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
@@ -16,6 +18,7 @@ public abstract class BigDataStackOperation {
 
 	private BigDataStackOperationState state = BigDataStackOperationState.NotStarted;
 	protected String className;
+	protected String objectID = null;
 	
 	public abstract String getAppID();
 
@@ -27,7 +30,9 @@ public abstract class BigDataStackOperation {
 	 * Gets the target objectID of this operation, not all operations have a target, and hence may return null
 	 * @return
 	 */
-	public abstract String getObjectID();
+	public String getObjectID() {
+		return objectID;
+	}
 	
 	public abstract String describeOperation();
 	
@@ -65,5 +70,15 @@ public abstract class BigDataStackOperation {
 			PrometheusDataClient prometheusDataClient,
 			OperationSequenceThread parentSequenceRunner);
 	
+	/**
+	 * Configures this operation from a provided json definition
+	 * @return
+	 */
+	public abstract void initalizeFromJson(JsonNode configJson);
 	
+	public abstract void setAppID(String appID);
+	
+	public abstract void setOwner(String owner);
+	
+	public abstract void setNamespace(String namespace);
 }

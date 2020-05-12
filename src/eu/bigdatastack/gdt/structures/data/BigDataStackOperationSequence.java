@@ -106,11 +106,11 @@ public class BigDataStackOperationSequence {
 		this.owner = owner;
 	}
 
-	public String getNamepace() {
+	public String getNamespace() {
 		return namepace;
 	}
 
-	public void setNamepace(String namepace) {
+	public void setNamespace(String namepace) {
 		this.namepace = namepace;
 	}
 

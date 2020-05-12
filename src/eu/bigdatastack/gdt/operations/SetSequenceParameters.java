@@ -1,6 +1,6 @@
 package eu.bigdatastack.gdt.operations;
 
-import java.sql.SQLException;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -16,26 +16,24 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.threads.OperationSequenceThread;
 import eu.bigdatastack.gdt.util.EventUtil;
 
-public class Apply extends BigDataStackOperation{
+public class SetSequenceParameters extends BigDataStackOperation{
 
-	private String instanceRef;
 	private String appID;
 	private String owner;
-	private String namespace;
+	private String namepace;
 	
-	public Apply() {}
+	private String instanceRef;
 	
-	public Apply(String appID, String owner, String namepace, String instanceRef) {
+	public SetSequenceParameters() {}
+	
+	public SetSequenceParameters(String appID, String owner, String namepace, String instanceRef) {
 		super();
-		this.instanceRef = instanceRef;
 		this.appID = appID;
 		this.owner = owner;
-		this.namespace = namepace;
+		this.namepace = namepace;
+		this.instanceRef = instanceRef;
 		
 		this.className = this.getClass().getName();
-	}
-	public String getObjectID() {
-		return instanceRef;
 	}
 
 	public String getAppID() {
@@ -51,22 +49,31 @@ public class Apply extends BigDataStackOperation{
 		this.owner = owner;
 	}
 	public String getNamespace() {
-		return namespace;
+		return namepace;
 	}
 	public void setNamespace(String namepace) {
-		this.namespace = namepace;
+		this.namepace = namepace;
+	}
+
+	public String getInstanceRef() {
+		return instanceRef;
+	}
+
+	public void setInstanceRef(String instanceRef) {
+		this.instanceRef = instanceRef;
 	}
 
 	@Override
 	public String describeOperation() {
-		return "Creates object with ref "+instanceRef+" on the Openshift Cluster in "+namespace+".";
+		return "Replaces any parameter placeholders for '"+instanceRef+"' with values set the operation sequence this is part of.";
 	}
 
 	@Override
 	public boolean execute(LXDB database, OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient, RabbitMQClient mailboxClient,
 			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner) {
-
+		
+		
 		try {
 			EventUtil eventUtil = new EventUtil(database, mailboxClient);
 			
@@ -77,9 +84,9 @@ public class Apply extends BigDataStackOperation{
 						getNamespace(),
 						BigDataStackEventType.Stage,
 						BigDataStackEventSeverity.Error,
-						"Apply Operation Failed: '"+instanceRef+"'",
-						"Attempted to find an instance with within-sequence reference '"+instanceRef+"', but the parent sequence did not have an appropriate instance reference (did you Instantiate first?)",
-						getObjectID()
+						"Set Sequence Parameters Operation Failed: '"+getObjectID()+"'",
+						"Attempted to find an instance with within-sequence reference '"+getObjectID()+"', but the parent sequence did not have an appropriate instance reference (did you Instantiate first?)",
+						instanceRef
 						);
 				return false;
 			}
@@ -97,27 +104,31 @@ public class Apply extends BigDataStackOperation{
 						getNamespace(),
 						BigDataStackEventType.Stage,
 						BigDataStackEventSeverity.Error,
-						"Apply Operation Failed: '"+sourceObjectID+"'",
-						"Attempted to get an instance '"+sourceObjectID+"("+instance+")', but was unable to find an associated object definition from available instances.",
+						"Set Sequence Parameters Operation Failed: '"+sourceObjectID+"("+instance+")'",
+						"Attempted to set paramters for object instance '"+sourceObjectID+"("+instance+")', but was unable to find an associated object definition from available instances.",
 						sourceObjectID
 						);
 				return false;
 			}
 			
+			// Stage 2: Set Parameters
+			Map<String,String> parameters = parentSequenceRunner.getSequence().getParameters();
+			String yaml = instanceObject.getYamlSource();
+			for (String paramKey : parameters.keySet()) {
+				yaml = yaml.replaceAll("\\$"+paramKey+"\\$", parameters.get(paramKey));
+			}
+			instanceObject.setYamlSource(yaml);
 			
-			
-			// Stage 5: Apply Object
-			boolean applySuccessful = openshiftOperationClient.applyOperation(instanceObject);
-			if (applySuccessful) {
+			if (objectInstanceClient.updateObject(instanceObject)) {
 				eventUtil.registerEvent(
 						getAppID(),
 						getOwner(),
 						getNamespace(),
 						BigDataStackEventType.Stage,
 						BigDataStackEventSeverity.Info,
-						"Apply Operation Excecuted for: '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"', instance "+instanceObject.getInstance(),
-						"Executed an apply operation for '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"' instance "+instanceObject.getInstance(),
-						getObjectID()
+						"Set Sequence Parameters Operation Completed: '"+sourceObjectID+"("+instance+")'",
+						"Set paramters for object instance '"+sourceObjectID+"("+instance+")' based on operation sequence '"+parentSequenceRunner.getSequence().getSequenceID()+"'",
+						sourceObjectID
 						);
 			} else {
 				eventUtil.registerEvent(
@@ -126,41 +137,29 @@ public class Apply extends BigDataStackOperation{
 						getNamespace(),
 						BigDataStackEventType.Stage,
 						BigDataStackEventSeverity.Error,
-						"Apply Operation Failed: '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"'",
-						"Attempted to apply an object '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"', failed when communicating with Openshift, the object may already exist and cannot be replaced, or the request was otherwise rejected",
-						getObjectID()
+						"Set Sequence Parameters Operation Failed: '"+sourceObjectID+"("+instance+")'",
+						"Attempted to set paramters for object instance '"+sourceObjectID+"("+instance+")', but was unable to write the instance back to the database.",
+						sourceObjectID
 						);
 				return false;
 			}
 			
 			
-			
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
-			return false;
 		}
 		
-
 		return true;
 		
-		
-		
 	}
-
+	
 	@Override
 	public void initalizeFromJson(JsonNode configJson) {
 		instanceRef = configJson.get("instanceRef").asText();
 	}
 
-	public String getInstanceRef() {
+	@Override
+	public String getObjectID() {
 		return instanceRef;
 	}
-
-	public void setInstanceRef(String instanceRef) {
-		this.instanceRef = instanceRef;
-	}
-
-	
-	
-	
 }
