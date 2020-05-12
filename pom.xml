@@ -47,7 +47,21 @@
     <version>5.6.2</version>
 </dependency>
 
-  
+    <dependency>
+      <groupId>com.leanxcale</groupId>
+      <artifactId>kivi-api</artifactId>
+      <version>0.500</version>
+      <scope>system</scope>
+      <systemPath>/gdt/lib/kivi-api-0.500-20200407.124711-4-direct-client.jar</systemPath>
+    </dependency>
+    
+      <dependency>
+      <groupId>com.leanxcale</groupId>
+      <artifactId>qe-driver</artifactId>
+      <version>0.500</version>
+      <scope>system</scope>
+      <systemPath>/gdt/lib/qe-driver-0.500-20200406.151302-4-jdbc-client.jar</systemPath>
+    </dependency>
   
   </dependencies>
   
