@@ -124,8 +124,8 @@ public class BigDataStackPodStatusIO {
 						results.getString("objectID"),
 						results.getString("podID"),
 						results.getString("status"),
-						results.getString("podIP"),
-						results.getString("hostIP")
+						results.getString("hostIP"),
+						results.getString("podIP")
 						);
 
 			 }
