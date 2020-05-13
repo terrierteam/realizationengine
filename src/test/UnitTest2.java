@@ -60,8 +60,26 @@ public class UnitTest2 {
 		String namespaceName =  namespace.getNamespace();
 		
 		OpenshiftProjectMonitoringThread monitorThread = new OpenshiftProjectMonitoringThread(openshiftStatus, rabbitMQClient, database, owner, namespaceName);
-		monitorThread.run();
+		Thread thread = new Thread(monitorThread);
+		thread.start();
 		
+		// Create Application
+		BigDataStackApplication app = manager.registerApplication(new File("resources/bigdatastack/unitTest2/unitTest2.app.yaml"));
+		assertNotNull(app);
+
+		// Create Object Template
+		BigDataStackObjectDefinition object = manager.registerObject(new File("resources/bigdatastack/unitTest2/sleep.job.yaml"));
+		assertNotNull(object);
+		
+		// Create Sequence
+		BigDataStackOperationSequence seq = manager.registerOperationSequence(new File("resources/bigdatastack/unitTest2/sleep.seq.yaml"));
+		assertNotNull(seq);
+		
+		assertTrue(manager.executeSequenceFromTemplateSync(seq));
+		
+		Thread.sleep(50000);
+		
+		monitorThread.kill();
 		
 		manager.shutdown();
 		

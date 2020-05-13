@@ -7,6 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
 
 public class BigDataStackPodStatusIO {
@@ -117,9 +120,9 @@ public class BigDataStackPodStatusIO {
 				status = new BigDataStackPodStatus(
 						results.getString("appID"),
 						results.getString("owner"),
-						results.getString("podID"),
-						results.getString("objectID"),
 						results.getString("namespace"),
+						results.getString("objectID"),
+						results.getString("podID"),
 						results.getString("status"),
 						results.getString("podIP"),
 						results.getString("hostIP")

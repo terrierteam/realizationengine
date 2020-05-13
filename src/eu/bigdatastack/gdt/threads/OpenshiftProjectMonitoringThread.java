@@ -94,9 +94,14 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 
 					for (BigDataStackObjectDefinition objectDef : objectInstances) {
 						
-						if (objectDef.getType() == BigDataStackObjectType.DeploymentConfig) processDeploymentConfig(project, app, objectDef);
-						
-						if (objectDef.getType() == BigDataStackObjectType.Job) processJob(project, app, objectDef);
+						try {
+							if (objectDef.getType() == BigDataStackObjectType.DeploymentConfig) processDeploymentConfig(project, app, objectDef);
+							
+							if (objectDef.getType() == BigDataStackObjectType.Job) processJob(project, app, objectDef);
+						} catch (com.openshift.restclient.NotFoundException e) {
+							// TODO Auto-generated catch block
+							System.err.println(e.getMessage());
+						}
 
 					}
 
