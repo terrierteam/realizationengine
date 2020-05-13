@@ -146,7 +146,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	 * @throws Exception
 	 */
 	protected void processJob(IProject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
-		IJob job = openshiftStatus.getJob(project, objectDef.getObjectID());
+		IJob job = openshiftStatus.getJob(project, objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 
 		// Stage 1: check whether the high-level object has changed state
 		Set<String> jobStatuses = job.getJobStatuses();
@@ -221,7 +221,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	 * @throws Exception
 	 */
 	protected void processDeploymentConfig(IProject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
-		IDeploymentConfig deploymentConfig = openshiftStatus.getDeploymentConfig(project, objectDef.getObjectID());
+		IDeploymentConfig deploymentConfig = openshiftStatus.getDeploymentConfig(project, objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 
 		// Stage 1: check whether the high-level object has changed state		
 		Set<String> deploymentStatuses = OpenshiftUtil.getDeploymentConfigStatuses(deploymentConfig);
