@@ -24,7 +24,7 @@ public class OpenshiftStatusTest {
 		
 		IProject project2 = statusClient.getProject("carolproject");
 		
-		List<IPod> jobPods = statusClient.getPods(project2, "autofocus-test-9");
+		List<IPod> jobPods = statusClient.getPodsForJob(project2, "autofocus-test-9");
 		for (IPod pod : jobPods) {
 			System.err.println(pod.getName());
 		}

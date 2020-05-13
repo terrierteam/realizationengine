@@ -249,7 +249,7 @@ public class OpenshiftStatusClient {
 	 * @param jobName
 	 * @return List<IPod>
 	 */
-	public List<IPod> getPods(IProject project, String jobName) {
+	public List<IPod> getPodsForJob(IProject project, String jobName) {
 
 
 		try {
@@ -265,6 +265,27 @@ public class OpenshiftStatusClient {
 
 	}
 	
+	/**
+	 * Returns all pods for a specified project with a deployment config name. Returns null if the request fails.
+	 * @param project
+	 * @param deploymentConfigName
+	 * @return List<IPod>
+	 */
+	public List<IPod> getPodsForDeploymentConfig(IProject project, String deploymentConfigName) {
+
+
+		try {
+			List<IPod> pods = client.list("pod", project.getName(), "deploymentconfig="+deploymentConfigName);
+
+			return pods;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
+
+	}
 	
 
 	public void close() {

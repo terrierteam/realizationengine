@@ -179,7 +179,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		Set<String> removedStatuses = new HashSet<>(objectDef.getStatus());
 		removedStatuses.removeAll(jobStatuses);
 
-		for (String newStatus : newStatuses) {
+		for (String removedStatus : removedStatuses) {
 			BigDataStackEventSeverity severity = BigDataStackEventSeverity.Info;
 
 			int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
@@ -191,8 +191,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					namespace,
 					BigDataStackEventType.Openshift,
 					severity,
-					"Job '"+objectDef.getObjectID()+"' Status Removed: "+objectDef.getStatus()+" -> "+newStatus,
-					"Openshift project monitoring for '"+namespace+"' detected a status change in Job '"+objectDef.getObjectID()+"', which changed status from '"+objectDef.getStatus()+"' to '"+newStatus+"'",
+					"Job '"+objectDef.getObjectID()+"' Status Removed: "+objectDef.getStatus()+" -> "+removedStatus,
+					"Openshift project monitoring for '"+namespace+"' detected a status change in Job '"+objectDef.getObjectID()+"', which changed status from '"+objectDef.getStatus()+"' to '"+removedStatus+"'",
 					objectDef.getObjectID()
 					);
 
@@ -206,7 +206,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		}
 
 		// Stage 2: check whether the underlying pods have changed state
-		List<IPod> pods = openshiftStatus.getPods(project, objectDef.getObjectID());
+		List<IPod> pods = openshiftStatus.getPodsForJob(project, objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 		for (IPod pod : pods) {
 			updatePodStatus(project, app, objectDef, pod);
 		}
@@ -254,7 +254,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		Set<String> removedStatuses = new HashSet<>(objectDef.getStatus());
 		removedStatuses.removeAll(deploymentStatuses);
 
-		for (String newStatus : newStatuses) {
+		for (String removedStatus : removedStatuses) {
 			BigDataStackEventSeverity severity = BigDataStackEventSeverity.Info;
 
 			int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
@@ -266,8 +266,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					namespace,
 					BigDataStackEventType.Openshift,
 					severity,
-					"Deployment Config '"+objectDef.getObjectID()+"' Status Removed: "+objectDef.getStatus()+" -> "+newStatus,
-					"Openshift project monitoring for '"+namespace+"' detected a status change in Deployment Config '"+objectDef.getObjectID()+"', which changed status from '"+objectDef.getStatus()+"' to '"+newStatus+"'",
+					"Deployment Config '"+objectDef.getObjectID()+"' Status Removed: "+objectDef.getStatus()+" -> "+removedStatus,
+					"Openshift project monitoring for '"+namespace+"' detected a status change in Deployment Config '"+objectDef.getObjectID()+"', which changed status from '"+objectDef.getStatus()+"' to '"+removedStatus+"'",
 					objectDef.getObjectID()
 					);
 
@@ -281,7 +281,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		}
 
 		// Stage 2: check whether the underlying pods have changed state
-		List<IPod> pods = openshiftStatus.getPods(project, objectDef.getObjectID());
+		List<IPod> pods = openshiftStatus.getPodsForDeploymentConfig(project, objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 		for (IPod pod : pods) {
 			updatePodStatus(project, app, objectDef, pod);
 		}
