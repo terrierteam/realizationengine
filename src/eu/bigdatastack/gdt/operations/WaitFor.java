@@ -1,15 +1,20 @@
 package eu.bigdatastack.gdt.operations;
 
-import org.apache.commons.lang.NotImplementedException;
+import java.sql.SQLException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
 import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.prometheus.PrometheusDataClient;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
+import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.threads.OperationSequenceThread;
+import eu.bigdatastack.gdt.util.EventUtil;
 
 public class WaitFor extends BigDataStackOperation{
 
@@ -17,19 +22,19 @@ public class WaitFor extends BigDataStackOperation{
 	private String owner;
 	private String namepace;
 	
-	private String objectID;
+	private String instanceRef;
 	private String waitForStatus;
 	
 	public WaitFor() {
 		this.className = this.getClass().getName();
 	}
 	
-	public WaitFor(String appID, String owner, String namepace, String objectID, String waitForStatus) {
+	public WaitFor(String appID, String owner, String namepace, String instanceRef, String waitForStatus) {
 		super();
 		this.appID = appID;
 		this.owner = owner;
 		this.namepace = namepace;
-		this.objectID = objectID;
+		this.instanceRef = instanceRef;
 		this.waitForStatus = waitForStatus;
 		
 		this.className = this.getClass().getName();
@@ -53,10 +58,7 @@ public class WaitFor extends BigDataStackOperation{
 		this.namepace = namepace;
 	}
 	public String getObjectID() {
-		return objectID;
-	}
-	public void setObjectID(String objectID) {
-		this.objectID = objectID;
+		return instanceRef;
 	}
 	public String getWaitForStatus() {
 		return waitForStatus;
@@ -65,22 +67,89 @@ public class WaitFor extends BigDataStackOperation{
 		this.waitForStatus = waitForStatus;
 	}
 	
+	public String getNamepace() {
+		return namepace;
+	}
+
+	public void setNamepace(String namepace) {
+		this.namepace = namepace;
+	}
+
+	public String getInstanceRef() {
+		return instanceRef;
+	}
+
+	public void setInstanceRef(String instanceRef) {
+		this.instanceRef = instanceRef;
+	}
+
 	@Override
 	public String describeOperation() {
-		return "Waits until "+objectID+" reaches "+waitForStatus+" status.";
+		return "Waits until "+instanceRef+" reaches "+waitForStatus+" status.";
 	}
 
 	@Override
 	public boolean execute(LXDB database, OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient, RabbitMQClient mailboxClient,
 			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner) {
-		throw new NotImplementedException();
+		
+		try {
+			EventUtil eventUtil = new EventUtil(database, mailboxClient);
+			
+			if (!parentSequenceRunner.getSequence().getParameters().containsKey(instanceRef)) {
+				eventUtil.registerEvent(
+						getAppID(),
+						getOwner(),
+						getNamespace(),
+						BigDataStackEventType.Stage,
+						BigDataStackEventSeverity.Error,
+						"Wait-For Operation Failed: '"+instanceRef+"'",
+						"Attempted to find an instance with within-sequence reference '"+instanceRef+"', but the parent sequence did not have an appropriate instance reference (did you Instantiate first?)",
+						getObjectID()
+						);
+				return false;
+			}
+			
+			String sourceObjectID = parentSequenceRunner.getSequence().getParameters().get(instanceRef).split(":")[0];
+			int instance = Integer.valueOf(parentSequenceRunner.getSequence().getParameters().get(instanceRef).split(":")[1]);
+			
+			BigDataStackObjectIO objectInstanceClient = new BigDataStackObjectIO(database, false);
+			boolean inTargetState = false;
+			while (!inTargetState) {
+				BigDataStackObjectDefinition instanceObject = objectInstanceClient.getObject(sourceObjectID, getOwner(), instance);
+				if (instanceObject==null) {
+					eventUtil.registerEvent(
+							getAppID(),
+							getOwner(),
+							getNamespace(),
+							BigDataStackEventType.Stage,
+							BigDataStackEventSeverity.Error,
+							"Wait-For Operation Failed: '"+sourceObjectID+"("+instance+")'",
+							"Attempted to get an instance '"+sourceObjectID+"("+instance+")', but was unable to find an associated object definition from available instances.",
+							sourceObjectID
+							);
+					return false;
+				}
+				
+				for (String status : instanceObject.getStatus()) {
+					if (status.equalsIgnoreCase(waitForStatus)) inTargetState=true;
+				}
+				
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+
+		return true;
 	}
 	
 	@Override
 	public void initalizeFromJson(JsonNode configJson) {
-		// TODO Auto-generated method stub
-		
+		instanceRef = configJson.get("instanceRef").asText();
+		waitForStatus = configJson.get("waitForStatus").asText();
 	}
 	
 }

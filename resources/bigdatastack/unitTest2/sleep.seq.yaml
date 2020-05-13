@@ -12,4 +12,9 @@ operations:
     defineInstanceRef: "sleepjobInstance"
   - className: Apply
     instanceRef: "sleepjobInstance"
+  - className: WaitFor
+    instanceRef: "sleepjobInstance"
+    waitForStatus: "Complete"
+  - className: Delete
+    instanceRef: "sleepjobInstance"
 mode: Continue

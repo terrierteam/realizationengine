@@ -8,6 +8,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.openshift.restclient.ClientBuilder;
 import com.openshift.restclient.IClient;
 import com.openshift.restclient.model.IDeploymentConfig;
+import com.openshift.restclient.model.IProject;
 import com.openshift.restclient.model.IResource;
 
 
@@ -130,6 +131,49 @@ public class OpenshiftOperationClient {
 		return false;
 		
 	}
+	
+	/**
+	 * Deletes an object from openshift
+	 * @param object
+	 * @return
+	 */
+	public boolean deleteOperation(BigDataStackObjectDefinition object) {
+		try {
+			
+			// create a copy of status client so we can more easily get existing objects
+			OpenshiftStatusClient statusClient = new OpenshiftStatusClient(client);
+			
+			IProject project = statusClient.getProject(object.getNamespace());
+			
+			IResource resource;
+			switch (object.getType()) {
+				case DeploymentConfig:
+					resource = statusClient.getDeploymentConfig(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+					client.delete(resource);
+					return true;
+				case Service:
+					return false;
+				case Job:
+					resource = client.get("job", object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), project.getName());
+					client.delete(resource);
+					return true;
+				case Route:
+					return false;
+				case Volume:
+					return false;
+				case VolumeClaim:
+					return false;
+				case Pod:
+					return false;
+				case Playbook:
+					return false;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
 	
 	public String yaml2Json(String yaml) throws JsonMappingException, JsonProcessingException {
 		JsonNode node = yamlMapper.readTree(yaml);
