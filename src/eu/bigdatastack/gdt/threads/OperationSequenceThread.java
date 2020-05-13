@@ -210,42 +210,41 @@ public class OperationSequenceThread implements Runnable {
 				
 				return;
 			}
-			
-			
-			if (failed) {
-				try {
-					eventUtil.registerEvent(
-							sequence.getAppID(),
-							sequence.getOwner(),
-							sequence.getNamespace(),
-							BigDataStackEventType.GlobalDecisionTracker,
-							BigDataStackEventSeverity.Alert,
-							"Operation Sequence '"+sequence.getSequenceID()+"' Failed",
-							"Operation Sequence '"+sequence.getSequenceID()+"' failed due to one of the contained operations failing",
-							sequence.getSequenceID()
-							);
-				} catch (SQLException e1) {
-					e1.printStackTrace();
-				}
-			} else {
-				try {
-					eventUtil.registerEvent(
-							sequence.getAppID(),
-							sequence.getOwner(),
-							sequence.getNamespace(),
-							BigDataStackEventType.GlobalDecisionTracker,
-							BigDataStackEventSeverity.Alert,
-							"Operation Sequence '"+sequence.getSequenceID()+"' Completed Successfully",
-							"Operation Sequence '"+sequence.getSequenceID()+"' completed successfuly",
-							sequence.getSequenceID()
-							);
-				} catch (SQLException e1) {
-					e1.printStackTrace();
-				}
-			}
 
 		}
 
+		
+		if (failed) {
+			try {
+				eventUtil.registerEvent(
+						sequence.getAppID(),
+						sequence.getOwner(),
+						sequence.getNamespace(),
+						BigDataStackEventType.GlobalDecisionTracker,
+						BigDataStackEventSeverity.Alert,
+						"Operation Sequence '"+sequence.getSequenceID()+"' Failed",
+						"Operation Sequence '"+sequence.getSequenceID()+"' failed due to one of the contained operations failing",
+						sequence.getSequenceID()
+						);
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		} else {
+			try {
+				eventUtil.registerEvent(
+						sequence.getAppID(),
+						sequence.getOwner(),
+						sequence.getNamespace(),
+						BigDataStackEventType.GlobalDecisionTracker,
+						BigDataStackEventSeverity.Alert,
+						"Operation Sequence '"+sequence.getSequenceID()+"' Completed Successfully",
+						"Operation Sequence '"+sequence.getSequenceID()+"' completed successfuly",
+						sequence.getSequenceID()
+						);
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		}
 
 	}
 

@@ -167,8 +167,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					namespace,
 					BigDataStackEventType.Openshift,
 					severity,
-					"Job '"+objectDef.getObjectID()+"' Status Added: "+objectDef.getStatus()+" -> "+newStatus,
-					"Openshift project monitoring for '"+namespace+"' detected a status change in Job '"+objectDef.getObjectID()+"', which changed status from '"+objectDef.getStatus()+"' to '"+newStatus+"'",
+					"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' Status Added: "+objectDef.getStatus()+" -> "+newStatus,
+					"Openshift project monitoring for '"+namespace+"' detected a status change in Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', which changed status from '"+objectDef.getStatus()+"' to '"+newStatus+"'",
 					objectDef.getObjectID()
 					);
 
@@ -191,8 +191,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					namespace,
 					BigDataStackEventType.Openshift,
 					severity,
-					"Job '"+objectDef.getObjectID()+"' Status Removed: "+objectDef.getStatus()+" -> "+removedStatus,
-					"Openshift project monitoring for '"+namespace+"' detected a status change in Job '"+objectDef.getObjectID()+"', which changed status from '"+objectDef.getStatus()+"' to '"+removedStatus+"'",
+					"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' Status Removed: "+removedStatus,
+					"Openshift project monitoring for '"+namespace+"' detected a status change in Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', which removed status '"+removedStatus+"'",
 					objectDef.getObjectID()
 					);
 
@@ -210,6 +210,25 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		for (IPod pod : pods) {
 			updatePodStatus(project, app, objectDef, pod);
 		}
+		
+		for (String newStatus : newStatuses) {
+			if (newStatus.equalsIgnoreCase("Complete")) {
+				int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
+				
+				BigDataStackEvent newEvent = new BigDataStackEvent(
+						app.getAppID(),
+						owner,
+						previousEvents,
+						namespace,
+						BigDataStackEventType.GlobalDecisionTracker,
+						BigDataStackEventSeverity.Alert,
+						"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' Completed",
+						"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' reached a completed status",
+						objectDef.getObjectID()
+						);
+			}
+		}
+		
 
 	}
 
@@ -242,8 +261,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					namespace,
 					BigDataStackEventType.Openshift,
 					severity,
-					"Deployment Config '"+objectDef.getObjectID()+"' Status Added: "+objectDef.getStatus()+" -> "+newStatus,
-					"Openshift project monitoring for '"+namespace+"' detected a status change in Deployment Config '"+objectDef.getObjectID()+"', which changed status from '"+objectDef.getStatus()+"' to '"+newStatus+"'",
+					"Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' Status Added: "+objectDef.getStatus()+" -> "+newStatus,
+					"Openshift project monitoring for '"+namespace+"' detected a status change in Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', which changed status from '"+objectDef.getStatus()+"' to '"+newStatus+"'",
 					objectDef.getObjectID()
 					);
 
@@ -266,8 +285,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					namespace,
 					BigDataStackEventType.Openshift,
 					severity,
-					"Deployment Config '"+objectDef.getObjectID()+"' Status Removed: "+objectDef.getStatus()+" -> "+removedStatus,
-					"Openshift project monitoring for '"+namespace+"' detected a status change in Deployment Config '"+objectDef.getObjectID()+"', which changed status from '"+objectDef.getStatus()+"' to '"+removedStatus+"'",
+					"Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' Status Removed: "+objectDef.getStatus()+" -> "+removedStatus,
+					"Openshift project monitoring for '"+namespace+"' detected a status change in Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', which changed status from '"+objectDef.getStatus()+"' to '"+removedStatus+"'",
 					objectDef.getObjectID()
 					);
 
@@ -332,7 +351,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					BigDataStackEventType.Openshift,
 					BigDataStackEventSeverity.Info,
 					"Pod Created: '"+podID+"'",
-					"Openshift project monitoring for '"+namespace+"' detected a new pod connected to object '"+objectDef.getObjectID()+"', which has status status '"+status+"'",
+					"Openshift project monitoring for '"+namespace+"' detected a new pod connected to object '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', which has status status '"+status+"'",
 					objectDef.getObjectID()
 					);
 
@@ -356,7 +375,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 						BigDataStackEventType.Openshift,
 						BigDataStackEventSeverity.Info,
 						"Pod '"+podID+"' Status Change: '"+savedStatus.getStatus()+"' -> '"+status+"'",
-						"Openshift project monitoring for '"+namespace+"' detected a change in pod '"+podID+"' connected to object '"+objectDef.getObjectID()+"', its status changed from '"+savedStatus.getStatus()+"' -> '"+status+"'",
+						"Openshift project monitoring for '"+namespace+"' detected a change in pod '"+podID+"' connected to object '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', its status changed from '"+savedStatus.getStatus()+"' -> '"+status+"'",
 						objectDef.getObjectID()
 						);
 
@@ -381,7 +400,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 						BigDataStackEventType.Openshift,
 						BigDataStackEventSeverity.Info,
 						"Pod '"+podID+"' Hosting Change: Host ['"+savedStatus.getHostIP()+"' -> '"+hostIP+"'], Pod IP ['"+savedStatus.getPodIP()+"' -> '"+podIP+"']",
-						"Openshift project monitoring for '"+namespace+"' detected a change in pod '"+podID+"' connected to object '"+objectDef.getObjectID()+"', its status changed from '"+savedStatus.getStatus()+"' -> '"+status+"'",
+						"Openshift project monitoring for '"+namespace+"' detected a change in pod '"+podID+"' connected to object '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', its status changed from '"+savedStatus.getStatus()+"' -> '"+status+"'",
 						objectDef.getObjectID()
 						);
 

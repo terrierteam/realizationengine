@@ -1,0 +1,31 @@
+# ------------------------------------------------------
+# Unit Test 1, Deploy Sleep Job Example
+# ------------------------------------------------------
+owner: richardm
+objectID: "sleepjob"
+type: Job
+
+yamlSource:
+  apiVersion: "batch/v1"
+  kind: "Job"
+  metadata:
+    name: $appID$-$objectID$
+    namespace: $namespace$
+  spec:
+    parallelism: 1
+    completions: 1
+    template:
+      metadata:
+        labels:
+          jobconfig: $appID$-$objectID$
+          app: $appID$
+      spec:
+        containers:
+        - name: "sleep"
+          image: "rsippl/centos-dev:latest"
+          imagePullPolicy: "IfNotPresent"
+          command:
+          - "sleep"
+          args:
+          - "30s"
+        restartPolicy: Never

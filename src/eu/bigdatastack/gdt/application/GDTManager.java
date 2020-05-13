@@ -447,7 +447,7 @@ public class GDTManager implements Manager {
 	 */
 	public BigDataStackOperationSequence registerOperationSequence(String yaml) {
 		try {
-			BigDataStackOperationSequence sequence = GDTFileUtil.readSequenceFromString(GDTFileUtil.file2String(new File(yaml), "UTF-8"));
+			BigDataStackOperationSequence sequence = GDTFileUtil.readSequenceFromString(yaml);
 			
 			if (!sequenceTemplateClient.addSequence(sequence)) {
 				eventUtil.registerEvent(
@@ -544,7 +544,7 @@ public class GDTManager implements Manager {
 			
 			// get or create the operation sequence
 			BigDataStackOperationSequence existingSequenceTemplate = getSequenceTemplateClient().getOperationSequence("gdtdefaultapp", "seq-gdtmonitor", 0);
-			if (existingSequenceTemplate==null) existingSequenceTemplate = registerOperationSequence("resources/gdt/gdtmonitor.seq.yaml");
+			if (existingSequenceTemplate==null) existingSequenceTemplate = registerOperationSequence(new File("resources/gdt/gdtmonitor.seq.yaml"));
 			if (existingSequenceTemplate==null) {
 				
 				eventUtil.registerEvent(

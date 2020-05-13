@@ -92,7 +92,7 @@ public class OpenshiftOperationClient {
 			IResource resource;
 			switch (object.getType()) {
 				case DeploymentConfig:
-					System.err.println(object.getYamlSource());
+					//System.err.println(object.getYamlSource());
 					resource = client.getResourceFactory().create(yaml2Json(object.getYamlSource()));
 					IDeploymentConfig deploymentConfig = (IDeploymentConfig)resource;
 					client.create(deploymentConfig);
