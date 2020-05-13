@@ -2,6 +2,7 @@ package eu.bigdatastack.gdt.lxdb;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -146,20 +147,26 @@ public class BigDataStackPodStatusIO {
 		Connection conn = client.openConnection();
 		
 		try {
-			Statement statement = conn.createStatement();
-			statement.executeUpdate("UPDATE "+tableName+" SET "+
-					"status="+SQLUtils.prepareText(status.getStatus(),100)+", "+
-					"podIP="+SQLUtils.prepareText(status.getPodIP(),50)+", "+
-					"hostIP="+SQLUtils.prepareText(status.getHostIP(),50)+
-					" WHERE appID="+SQLUtils.prepareText(status.getAppID(),100)+" AND objectID="+SQLUtils.prepareText(status.getObjectID(),100)+" AND podID="+SQLUtils.prepareText(status.getPodID(),100));
+			
+			PreparedStatement statement = conn.prepareStatement("UPDATE "+tableName+" SET status=?, podIP=?, hostIP=?"+
+					" WHERE appID="+SQLUtils.prepareText(status.getAppID(),100)+
+					" AND objectID="+SQLUtils.prepareText(status.getObjectID(),100)+
+					" AND podID="+SQLUtils.prepareText(status.getPodID(),100));
+			
+			statement.setNString(1, SQLUtils.prepareTextNoQuote(status.getStatus(),100));
+			statement.setNString(2, SQLUtils.prepareTextNoQuote(status.getPodIP(),50));
+			statement.setNString(3, SQLUtils.prepareTextNoQuote(status.getHostIP(),50));
+			
+
+			statement.executeUpdate();
+			conn.commit();
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
 			return false;
 		}
 		
-		
-		conn.commit();
 		conn.close();
 		
 		return true;
