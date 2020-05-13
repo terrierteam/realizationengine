@@ -16,10 +16,6 @@ import eu.bigdatastack.gdt.lxdb.BigDataStackOperationSequenceIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackPodStatusIO;
 import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
-import eu.bigdatastack.gdt.operations.Apply;
-import eu.bigdatastack.gdt.operations.BigDataStackOperation;
-import eu.bigdatastack.gdt.operations.Build;
-import eu.bigdatastack.gdt.operations.ExecuteCMD;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
@@ -27,7 +23,6 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
-import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
 import eu.bigdatastack.gdt.structures.openshift.IJob;
 import eu.bigdatastack.gdt.util.OpenshiftUtil;
@@ -94,45 +89,17 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 				List<BigDataStackApplication> applications = applicationIO.getApplications(owner);
 
 				for (BigDataStackApplication app : applications) {
-					List<BigDataStackOperationSequence> sequences = operationSequenceIO.getOperationSequences(app.getAppID());
 
-					for (BigDataStackOperationSequence sequence : sequences) {
+					List<BigDataStackObjectDefinition> objectInstances = objectIO.getObjectList(owner, namespace, app.getAppID());
 
-						for (BigDataStackOperation operation : sequence.getOperations()) {
-
-							String targetObjectID = null;
-							// check operation type to see if it has a target object on the cluster
-							if (operation instanceof Apply) {
-								Apply applyOperation = (Apply)operation;
-								targetObjectID = applyOperation.getObjectID();
-							}
-							if (operation instanceof Build) {
-								Build applyOperation = (Build)operation;
-								targetObjectID = applyOperation.getObjectID();
-							}
-							if (operation instanceof ExecuteCMD) {
-								ExecuteCMD applyOperation = (ExecuteCMD)operation;
-								targetObjectID = applyOperation.getObjectID();
-							}
-
-							if (targetObjectID!=null) {
-								// check that we have an object registered with the found id
-								BigDataStackObjectDefinition objectDef = objectIO.getObject(targetObjectID, owner, 0); //TODO Change for instances
-								if (objectDef==null) continue;
-
-								// only some objects have state and associated pods
-
-								// If JOB Type
-								if ( objectDef.getType() == BigDataStackObjectType.Job ) processJob(project, app, objectDef);
-								
-								// If DEPLOYMENT CONFIG Type
-								if ( objectDef.getType() == BigDataStackObjectType.DeploymentConfig ) processDeploymentConfig(project, app, objectDef);
-
-							}
-
-						}
+					for (BigDataStackObjectDefinition objectDef : objectInstances) {
+						
+						if (objectDef.getType() == BigDataStackObjectType.DeploymentConfig) processDeploymentConfig(project, app, objectDef);
+						
+						if (objectDef.getType() == BigDataStackObjectType.Job) processJob(project, app, objectDef);
 
 					}
+
 				}
 
 			} catch (Exception e) {
@@ -146,12 +113,12 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			
+
 		}
 
 		// remember to close the thread pool used for communication with openshift
 		openshiftStatus.close();
-		
+
 	}
 
 
@@ -183,10 +150,10 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 
 		// Stage 1: check whether the high-level object has changed state
 		Set<String> jobStatuses = job.getJobStatuses();
-		
+
 		Set<String> newStatuses = new HashSet<>(jobStatuses);
 		newStatuses.removeAll(objectDef.getStatus());
-		
+
 		for (String newStatus : newStatuses) {
 			BigDataStackEventSeverity severity = BigDataStackEventSeverity.Info;
 			if (newStatus.equalsIgnoreCase("Failed")) severity = BigDataStackEventSeverity.Alert;
@@ -208,10 +175,10 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 			eventIO.addEvent(newEvent);
 			rabbitMQClient.publishEvent(newEvent);
 		}
-		
+
 		Set<String> removedStatuses = new HashSet<>(objectDef.getStatus());
 		removedStatuses.removeAll(jobStatuses);
-		
+
 		for (String newStatus : newStatuses) {
 			BigDataStackEventSeverity severity = BigDataStackEventSeverity.Info;
 
@@ -232,7 +199,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 			eventIO.addEvent(newEvent);
 			rabbitMQClient.publishEvent(newEvent);
 		}
-		
+
 		if (newStatuses.size()>0 || removedStatuses.size()==0) {
 			objectDef.setStatus(jobStatuses);
 			objectIO.updateObject(objectDef);
@@ -245,7 +212,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		}
 
 	}
-	
+
 	/**
 	 * Checks and performs an update if needed for a specified object definition
 	 * @param project
@@ -258,10 +225,10 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 
 		// Stage 1: check whether the high-level object has changed state		
 		Set<String> deploymentStatuses = OpenshiftUtil.getDeploymentConfigStatuses(deploymentConfig);
-		
+
 		Set<String> newStatuses = new HashSet<>(deploymentStatuses);
 		newStatuses.removeAll(objectDef.getStatus());
-		
+
 		for (String newStatus : newStatuses) {
 			BigDataStackEventSeverity severity = BigDataStackEventSeverity.Info;
 			if (newStatus.equalsIgnoreCase("Failed")) severity = BigDataStackEventSeverity.Alert;
@@ -283,10 +250,10 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 			eventIO.addEvent(newEvent);
 			rabbitMQClient.publishEvent(newEvent);
 		}
-		
+
 		Set<String> removedStatuses = new HashSet<>(objectDef.getStatus());
 		removedStatuses.removeAll(deploymentStatuses);
-		
+
 		for (String newStatus : newStatuses) {
 			BigDataStackEventSeverity severity = BigDataStackEventSeverity.Info;
 
@@ -307,7 +274,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 			eventIO.addEvent(newEvent);
 			rabbitMQClient.publishEvent(newEvent);
 		}
-		
+
 		if (newStatuses.size()>0 || removedStatuses.size()==0) {
 			objectDef.setStatus(deploymentStatuses);
 			objectIO.updateObject(objectDef);
@@ -320,9 +287,9 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		}
 
 	}
-	
 
-	
+
+
 
 	/**
 	 * This method processes any changes detected to a particular pod, updating both the database as well as generating events
@@ -353,8 +320,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					status,
 					podIP,
 					hostIP
-			);
-			
+					);
+
 			int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
 
 			BigDataStackEvent newEvent = new BigDataStackEvent(
@@ -372,13 +339,13 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 			podStatusIO.addPodStatus(newStatus);
 			eventIO.addEvent(newEvent);
 			rabbitMQClient.publishEvent(newEvent);
-			
-		// if we know about this pod already, check to see if anything has changed 
+
+			// if we know about this pod already, check to see if anything has changed 
 		} else {
-			
+
 			// if pod status has changed, update the pod status and report the event
 			if (!savedStatus.getStatus().equalsIgnoreCase(status)) {
-				
+
 				int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
 
 				BigDataStackEvent newEvent = new BigDataStackEvent(
@@ -392,7 +359,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 						"Openshift project monitoring for '"+namespace+"' detected a change in pod '"+podID+"' connected to object '"+objectDef.getObjectID()+"', its status changed from '"+savedStatus.getStatus()+"' -> '"+status+"'",
 						objectDef.getObjectID()
 						);
-				
+
 				savedStatus.setStatus(status);
 				savedStatus.setHostIP(hostIP);
 				savedStatus.setPodIP(podIP);
@@ -400,10 +367,10 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 				podStatusIO.updatePodStatus(savedStatus);
 				eventIO.addEvent(newEvent);
 				rabbitMQClient.publishEvent(newEvent);
-				
-			// if pod IP addresses has changed, update the pod status and report the event
+
+				// if pod IP addresses has changed, update the pod status and report the event
 			} else if (!savedStatus.getHostIP().equalsIgnoreCase(hostIP) || !savedStatus.getPodIP().equalsIgnoreCase(podIP)) {
-				
+
 				int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
 
 				BigDataStackEvent newEvent = new BigDataStackEvent(
@@ -417,7 +384,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 						"Openshift project monitoring for '"+namespace+"' detected a change in pod '"+podID+"' connected to object '"+objectDef.getObjectID()+"', its status changed from '"+savedStatus.getStatus()+"' -> '"+status+"'",
 						objectDef.getObjectID()
 						);
-				
+
 				savedStatus.setStatus(status);
 				savedStatus.setHostIP(hostIP);
 				savedStatus.setPodIP(podIP);
@@ -427,8 +394,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 				rabbitMQClient.publishEvent(newEvent);
 			}
 			// otherwise nothing happens
-			
-			
+
+
 		}
 	}
 

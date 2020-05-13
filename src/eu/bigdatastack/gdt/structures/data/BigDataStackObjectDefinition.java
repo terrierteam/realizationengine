@@ -14,6 +14,8 @@ public class BigDataStackObjectDefinition {
 
 	private String objectID;
 	private String owner;
+	private String namespace;
+	private String appID;
 	private BigDataStackObjectType type;
 	private String yamlSource;
 	private Set<String> status;
@@ -29,7 +31,9 @@ public class BigDataStackObjectDefinition {
 		this.type = type;
 		this.yamlSource = yamlSource;
 		this.status = status;
+		this.namespace = "";
 		instance = 0;
+		this.appID = "";
 	}
 	
 	public BigDataStackObjectDefinition(String objectID, String owner, BigDataStackObjectType type,
@@ -40,7 +44,35 @@ public class BigDataStackObjectDefinition {
 		this.type = type;
 		this.yamlSource = yamlSource;
 		this.status = status;
+		this.namespace = "";
 		this.instance = instance;
+		this.appID = "";
+	}
+	
+	public BigDataStackObjectDefinition(String objectID, String owner, BigDataStackObjectType type,
+			String yamlSource, Set<String> status, String namespace, String appID) {
+		super();
+		this.objectID = objectID;
+		this.owner = owner;
+		this.type = type;
+		this.yamlSource = yamlSource;
+		this.status = status;
+		this.namespace = namespace;
+		this.appID = appID;
+		instance = 0;
+	}
+	
+	public BigDataStackObjectDefinition(String objectID, String owner, BigDataStackObjectType type,
+			String yamlSource, Set<String> status, int instance, String namespace, String appID) {
+		super();
+		this.objectID = objectID;
+		this.owner = owner;
+		this.type = type;
+		this.yamlSource = yamlSource;
+		this.status = status;
+		this.namespace = namespace;
+		this.instance = instance;
+		this.appID = appID;
 	}
 	
 	public String getObjectID() {
@@ -84,9 +116,25 @@ public class BigDataStackObjectDefinition {
 		this.instance = instance;
 	}
 
+	public String getNamespace() {
+		return namespace;
+	}
+
+	public void setNamespace(String namespace) {
+		this.namespace = namespace;
+	}
+
+	public String getAppID() {
+		return appID;
+	}
+
+	public void setAppID(String appID) {
+		this.appID = appID;
+	}
+
 	public BigDataStackObjectDefinition clone() {
 		return new BigDataStackObjectDefinition(objectID, owner, type,
-			yamlSource, status, instance);
+			yamlSource, status, instance, namespace, appID);
 	}
 	
 	

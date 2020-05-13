@@ -106,6 +106,8 @@ public class Instantiate extends BigDataStackOperation{
 
 			// Stage 2: Create a new object from the template
 			BigDataStackObjectDefinition instanceObject = templateObject.clone();
+			instanceObject.setNamespace(namespace);
+			instanceObject.setAppID(appID);
 
 			// Stage 3: Register object instance
 			BigDataStackObjectIO objectInstanceClient = new BigDataStackObjectIO(database, false);

@@ -7,6 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -59,6 +61,8 @@ public class BigDataStackObjectIO {
 			"status VARCHAR(1000), "+
 			"yamlSource VARCHAR(65535), "+
 			"instance INT, "+
+			"namespace VARCHAR(140), "+
+			"appID VARCHAR(100), "+
 			"PRIMARY KEY (objectID,owner,instance)"+
 			")");
 			
@@ -85,8 +89,8 @@ public class BigDataStackObjectIO {
 		
 		try {
 			PreparedStatement statement = conn.prepareStatement(
-				"INSERT INTO "+tableName+" (objectID, owner, type, status, yamlSource, instance)"+
-				" VALUES ( ?, ?, ?, ?, ?, ? )");
+				"INSERT INTO "+tableName+" (objectID, owner, type, status, yamlSource, instance, namespace, appID)"+
+				" VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )");
 
 		
 			statement.setString(1, SQLUtils.prepareTextNoQuote(object.getObjectID(),100));
@@ -95,6 +99,8 @@ public class BigDataStackObjectIO {
 			statement.setString(4, SQLUtils.prepareTextNoQuote(mapper.writeValueAsString(object.getStatus()),1000));
 			statement.setString(5, object.getYamlSource());
 			statement.setInt(6, object.getInstance());
+			statement.setString(7, SQLUtils.prepareTextNoQuote(object.getNamespace(),140));
+			statement.setString(8, SQLUtils.prepareTextNoQuote(object.getAppID(),100));
 			statement.executeUpdate();
 			
 			conn.commit();
@@ -142,7 +148,9 @@ public class BigDataStackObjectIO {
 						 BigDataStackObjectType.valueOf(results.getString("type")),
 						 results.getString("yamlSource"),
 						 status,
-						 results.getInt("instance"));
+						 results.getInt("instance"),
+						 results.getString("namespace"),
+						 results.getString("appID"));
 
 			 }
 		} catch (Exception e) {
@@ -155,6 +163,56 @@ public class BigDataStackObjectIO {
 		
 		return object;
 	}
+	
+	/**
+	 * Gets all objects stored for an owner, namespace and appID
+	 * @return
+	 * @throws SQLException
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	public List<BigDataStackObjectDefinition> getObjectList(String owner, String namespace, String appID) throws SQLException {
+		Connection conn = client.openConnection();
+		
+		Statement statement = conn.createStatement();
+		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE namespace='"+namespace+"' AND owner='"+owner+"' AND appID='"+appID+"'");
+		ResultSet results = statement.getResultSet();
+		
+		List<BigDataStackObjectDefinition> objectList = new ArrayList<BigDataStackObjectDefinition>(10);
+		
+		 try {
+			while (results.next()) {
+
+				//System.err.println(results.getString("status"));
+				
+				@SuppressWarnings("unchecked")
+				Set<String> status = mapper.readValue(results.getString("status"), Set.class);
+			
+				BigDataStackObjectDefinition object = new BigDataStackObjectDefinition(
+						 results.getString("objectID"),
+						 results.getString("owner"),
+						 BigDataStackObjectType.valueOf(results.getString("type")),
+						 results.getString("yamlSource"),
+						 status,
+						 results.getInt("instance"),
+						 results.getString("namespace"),
+						 results.getString("appID"));
+				
+				objectList.add(object);
+
+			 }
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		 
+		
+		
+		conn.close();
+		
+		return objectList;
+	}
+	
 	
 	/**
 	 * Returns a previously stored BigDataStack Application with a particular appID (first instance, or template). 
@@ -182,7 +240,7 @@ public class BigDataStackObjectIO {
 		
 		try {
 			
-			PreparedStatement statement = conn.prepareStatement("UPDATE "+tableName+" SET type=?, status=?, yamlSource=?"+
+			PreparedStatement statement = conn.prepareStatement("UPDATE "+tableName+" SET type=?, status=?, yamlSource=?, namespace=?, appID=?"+
 					" WHERE owner="+SQLUtils.prepareText(object.getOwner(),140)+
 					" AND objectID="+SQLUtils.prepareText(object.getObjectID(),100)+
 					" AND instance="+object.getInstance());
@@ -190,6 +248,8 @@ public class BigDataStackObjectIO {
 			statement.setNString(1, SQLUtils.prepareTextNoQuote(object.getType().name(),100));
 			statement.setNString(2, SQLUtils.prepareTextNoQuote(mapper.writeValueAsString(object.getStatus()),1000));
 			statement.setNString(3, object.getYamlSource());
+			statement.setNString(4, SQLUtils.prepareTextNoQuote(object.getNamespace(),140));
+			statement.setNString(5, SQLUtils.prepareTextNoQuote(object.getAppID(),100));
 			
 			statement.executeUpdate();
 			conn.commit();
