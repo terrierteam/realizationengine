@@ -223,9 +223,12 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Alert,
 						"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' Completed",
-						"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' reached a completed status",
+						"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' reached Completed status",
 						objectDef.getObjectID()
 						);
+				
+				eventIO.addEvent(newEvent);
+				rabbitMQClient.publishEvent(newEvent);
 			}
 		}
 		
