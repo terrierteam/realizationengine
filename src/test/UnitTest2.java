@@ -86,7 +86,7 @@ public class UnitTest2 {
 	}*/
 
 	@Test
-	public void monitoringClusterDeploy() throws Exception{
+	public void monitoringClusterDeploySync() throws Exception{
 
 		// Config
 		GDTConfig config = new GDTConfig(new File("gdt.config.json"));
@@ -114,7 +114,52 @@ public class UnitTest2 {
 		BigDataStackOperationSequence seq = manager.registerOperationSequence(new File("resources/bigdatastack/unitTest2/sleep.seq.yaml"));
 		assertNotNull(seq);
 		
+		// Run test sequence
 		assertTrue(manager.executeSequenceFromTemplateSync(seq));
+		
+		// Shut down monitoring
+		assertTrue(manager.stopMonitoringNamespace(namespace, "richardm"));
+		
+		manager.shutdown();
+
+
+	}
+	
+	
+	@Test
+	public void monitoringClusterDeployASync() throws Exception{
+
+		// Config
+		GDTConfig config = new GDTConfig(new File("gdt.config.json"));
+		TestUtil.clearDatabase(config.getDatabase());
+
+		// Manager
+		GDTManager manager = new GDTManager(config);
+
+		// Register Namespace
+		BigDataStackNamespaceState namespace = manager.registerNamespace(new File("resources/bigdatastack/unitTest2/unitTest2.namespace,yaml"));
+		assertNotNull(namespace);
+
+		// Start Namespace Monitoring
+		assertTrue(manager.startMonitoringNamespace(namespace, "richardm"));
+		
+		// Create Application
+		BigDataStackApplication app = manager.registerApplication(new File("resources/bigdatastack/unitTest2/unitTest2.app.yaml"));
+		assertNotNull(app);
+
+		// Create Object Template
+		BigDataStackObjectDefinition object = manager.registerObject(new File("resources/bigdatastack/unitTest2/sleep.job.yaml"));
+		assertNotNull(object);
+		
+		// Create Sequence
+		BigDataStackOperationSequence seq = manager.registerOperationSequence(new File("resources/bigdatastack/unitTest2/sleep.seq.yaml"));
+		assertNotNull(seq);
+		
+		// Run test sequence
+		assertTrue(manager.executeSequenceFromTemplate(seq));
+		
+		// Shut down monitoring
+		//assertTrue(manager.stopMonitoringNamespace(namespace, "richardm"));
 		
 		manager.shutdown();
 

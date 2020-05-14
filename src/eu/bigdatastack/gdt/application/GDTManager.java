@@ -590,6 +590,191 @@ public class GDTManager implements Manager {
 
 	}
 	
+	/**
+	 * Halts monitoring of a namespace
+	 * @param namespace
+	 * @param owner
+	 * @return
+	 */
+	public boolean stopMonitoringNamespace(BigDataStackNamespaceState namespace, String owner) {
+		
+		try {
+			List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects("gdtdefaultapp-gdtmonitor", owner, namespace.getNamespace(), "gdtdefaultapp");
+			if (objects.size()==0) return false;
+			
+			int succeeded = 0;
+			int failures = 0;
+			for (BigDataStackObjectDefinition object : objects) {
+				if (!openshiftOperationClient.deleteOperation(object)) {
+					eventUtil.registerEvent(
+							"gdtdefaultapp",
+							owner,
+							namespace.getNamespace(),
+							BigDataStackEventType.Openshift,
+							BigDataStackEventSeverity.Error,
+							"Failed to halt namespace monitoring for namespace: '"+namespace.getNamespace()+"' via "+object.getObjectID()+"'("+object.getInstance()+")'",
+							"Tried to delete the deployment config for the monitoring process as listed in the registry: "+object.getObjectID()+"'("+object.getInstance()+", but openshift rejected it",
+							namespace.getNamespace()
+							);
+					failures++;
+				} else {
+					eventUtil.registerEvent(
+							"gdtdefaultapp",
+							owner,
+							namespace.getNamespace(),
+							BigDataStackEventType.Openshift,
+							BigDataStackEventSeverity.Info,
+							"Halted namespace monitoring for namespace: '"+namespace.getNamespace()+"' via '"+object.getObjectID()+"("+object.getInstance()+")'",
+							"Deleted the deployment config for the monitoring process as listed in the registry: '"+object.getObjectID()+"("+object.getInstance()+")'",
+							namespace.getNamespace()
+							);
+					succeeded++;
+				}
+			}
+			
+			if (succeeded>0) {
+				eventUtil.registerEvent(
+						"gdtdefaultapp",
+						owner,
+						namespace.getNamespace(),
+						BigDataStackEventType.GlobalDecisionTracker,
+						BigDataStackEventSeverity.Info,
+						"Halted namespace monitoring for namespace: '"+namespace.getNamespace()+"'",
+						"Monitoring of the namespace '"+namespace.getNamespace()+"' has stopped.",
+						namespace.getNamespace()
+						);
+			} else if (failures>0) {
+				eventUtil.registerEvent(
+						"gdtdefaultapp",
+						owner,
+						namespace.getNamespace(),
+						BigDataStackEventType.GlobalDecisionTracker,
+						BigDataStackEventSeverity.Warning,
+						"Failed to halt namespace monitoring for namespace: '"+namespace.getNamespace()+"'",
+						"Tried to delete the deployed monitoring instance(s) for the namespace '"+namespace.getNamespace()+"', but no request succeeded, likely this means that monitoring is now not running.",
+						namespace.getNamespace()
+						);
+				return false;
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+		
+	}
+	
+	
+	/**
+	 * Triggers the execution of an operation sequence from an existing sequence template. This will
+	 * generate a sequence instance, and as needed, object instances. 
+	 * 
+	 * This is the asynchronous version of the call, i.e. it will generate a pod to orchestrate the sequence.
+	 * @param sequenceTemplate
+	 * @param parameters
+	 * @return
+	 */
+	public boolean executeSequenceFromTemplate(BigDataStackOperationSequence sequenceTemplate, Map<String,String> parameters) {
+		
+		// attempt to create the instance now rather than creating it later in the operation sequence thread as we need
+		// to set parameters now rather than pass them to the container
+		int failedAttempts = 0;
+		boolean sequenceAdded = false;
+
+		BigDataStackOperationSequence newSequenceInstance = null;
+		
+		try {
+			while (!sequenceAdded) {
+				List<BigDataStackOperationSequence> existingSequenceInstances = sequenceInstanceClient.getOperationSequences(sequenceTemplate.getAppID(), sequenceTemplate.getSequenceID());
+				int highestIndex = 0;
+				for (BigDataStackOperationSequence sequenceInstance : existingSequenceInstances) {
+					if (sequenceInstance.getIndex()>highestIndex) highestIndex = sequenceInstance.getIndex();
+				}
+
+				int newIndex = highestIndex+1;
+				newSequenceInstance = sequenceTemplate.clone();
+				newSequenceInstance.setIndex(newIndex);
+				
+				if (parameters!=null) {
+					for (String paramKey : parameters.keySet()) {
+						newSequenceInstance.getParameters().put(paramKey, parameters.get(paramKey));
+					}
+				}
+
+				sequenceAdded = sequenceInstanceClient.addSequence(newSequenceInstance);
+				if (!sequenceAdded) {
+					failedAttempts++;
+					if (failedAttempts>=5) {
+						return false;
+					} else continue;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		try {
+			if (sequenceAdded) {
+				// now try launching the operation sequence pod
+				eventUtil.registerEvent(
+						newSequenceInstance.getAppID(),
+						newSequenceInstance.getOwner(),
+						newSequenceInstance.getNamespace(),
+						BigDataStackEventType.GlobalDecisionTracker,
+						BigDataStackEventSeverity.Info,
+						"New Operation Sequence Created: '"+newSequenceInstance.getSequenceID()+"'",
+						"The user created a new operation sequence for app '"+newSequenceInstance.getAppID()+"', it has been registered and is being processed (SequenceID='"+newSequenceInstance.getSequenceID()+"', Index='"+newSequenceInstance.getIndex()+"')",
+						newSequenceInstance.getSequenceID()
+						);
+				
+				BigDataStackObjectDefinition operationsequenceDef = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/gdt/operationsequence.pod.yaml"), "UTF-8"));
+				
+				String yaml = operationsequenceDef.getYamlSource();
+				for (String paramKey : parameters.keySet()) {
+					yaml = yaml.replaceAll("\\$"+paramKey+"\\$", parameters.get(paramKey));
+				}
+				operationsequenceDef.setYamlSource(yaml);
+				
+				openshiftOperationClient.applyOperation(operationsequenceDef);
+				
+				
+			} else {
+				eventUtil.registerEvent(
+						newSequenceInstance.getAppID(),
+						newSequenceInstance.getOwner(),
+						newSequenceInstance.getNamespace(),
+						BigDataStackEventType.ObjectRegistry,
+						BigDataStackEventSeverity.Error,
+						"Operation Sequence Creation Failed for: '"+newSequenceInstance.getSequenceID()+"'",
+						"Tried to create a new operation sequence for app '"+newSequenceInstance.getAppID()+"' but failed when adding to the Object Registry (SequenceID='"+newSequenceInstance.getSequenceID()+"', Index='"+newSequenceInstance.getIndex()+"')",
+						newSequenceInstance.getSequenceID()
+						);
+				return false;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * Triggers the execution of an operation sequence from an existing sequence template. This will
+	 * generate a sequence instance, and as needed, object instances. 
+	 * 
+	 * This is the asynchronous version of the call, i.e. it will generate a pod to orchestrate the sequence.
+	 * @param sequenceTemplate
+	 * @return
+	 */
+	public boolean executeSequenceFromTemplate(BigDataStackOperationSequence sequenceTemplate) {
+		Map<String,String> params = new HashMap<String,String>();
+		return executeSequenceFromTemplate(sequenceTemplate, params);
+		
+	}
+	
 	
 	public void shutdown() {
 		openshiftOperationClient.close();

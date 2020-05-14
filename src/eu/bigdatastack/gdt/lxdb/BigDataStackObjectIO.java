@@ -165,6 +165,55 @@ public class BigDataStackObjectIO {
 	}
 	
 	/**
+	 * Returns a set of previously stored BigDataStack Objects. 
+	 * @return
+	 * @throws SQLException
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	public List<BigDataStackObjectDefinition> getObjects(String objectID, String owner, String namespace, String appID) throws SQLException {
+		Connection conn = client.openConnection();
+		
+		Statement statement = conn.createStatement();
+		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE objectID='"+objectID+"' AND owner='"+owner+"' AND namespace='"+namespace+"'"+" AND appID='"+appID+"'");
+		ResultSet results = statement.getResultSet();
+		
+		List<BigDataStackObjectDefinition> objectList = new ArrayList<BigDataStackObjectDefinition>(3);
+		
+		 try {
+			while (results.next()) {
+
+				//System.err.println(results.getString("status"));
+				
+				@SuppressWarnings("unchecked")
+				Set<String> status = mapper.readValue(results.getString("status"), Set.class);
+			
+				BigDataStackObjectDefinition object = new BigDataStackObjectDefinition(
+						 results.getString("objectID"),
+						 results.getString("owner"),
+						 BigDataStackObjectType.valueOf(results.getString("type")),
+						 results.getString("yamlSource"),
+						 status,
+						 results.getInt("instance"),
+						 results.getString("namespace"),
+						 results.getString("appID"));
+				
+				objectList.add(object);
+
+			 }
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		 
+		
+		
+		conn.close();
+		
+		return objectList;
+	}
+	
+	/**
 	 * Gets all objects stored for an owner, namespace and appID
 	 * @return
 	 * @throws SQLException

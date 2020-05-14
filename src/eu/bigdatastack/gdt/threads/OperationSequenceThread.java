@@ -86,32 +86,37 @@ public class OperationSequenceThread implements Runnable {
 
 			BigDataStackOperationSequenceIO sequenceIO = new BigDataStackOperationSequenceIO(database, false);
 			
-			boolean sequenceAddedOK = tryAddSequence(sequenceIO);
-			if (!sequenceAddedOK) {
+			if (sequence.getIndex()<=0) {
+				// this is a template, so we need to instantiate
+				boolean sequenceAddedOK = tryAddSequence(sequenceIO);
+				if (!sequenceAddedOK) {
+					eventUtil.registerEvent(
+							sequence.getAppID(),
+							sequence.getOwner(),
+							sequence.getNamespace(),
+							BigDataStackEventType.ObjectRegistry,
+							BigDataStackEventSeverity.Error,
+							"Operation Sequence Creation Failed for: '"+sequence.getSequenceID()+"'",
+							"Tried to create a new operation sequence for app '"+sequence.getAppID()+"' but failed when adding to the Object Registry (SequenceID='"+sequence.getSequenceID()+"', Index='"+sequence.getIndex()+"')",
+							sequence.getSequenceID()
+							);
+					failed = true;
+					return;
+				}
+				
 				eventUtil.registerEvent(
 						sequence.getAppID(),
 						sequence.getOwner(),
 						sequence.getNamespace(),
-						BigDataStackEventType.ObjectRegistry,
-						BigDataStackEventSeverity.Error,
-						"Operation Sequence Creation Failed for: '"+sequence.getSequenceID()+"'",
-						"Tried to create a new operation sequence for app '"+sequence.getAppID()+"' but failed when adding to the Object Registry (SequenceID='"+sequence.getSequenceID()+"', Index='"+sequence.getIndex()+"')",
+						BigDataStackEventType.GlobalDecisionTracker,
+						BigDataStackEventSeverity.Info,
+						"New Operation Sequence Created: '"+sequence.getSequenceID()+"'",
+						"The user created a new operation sequence for app '"+sequence.getAppID()+"', it has been registered and is being processed (SequenceID='"+sequence.getSequenceID()+"', Index='"+sequence.getIndex()+"')",
 						sequence.getSequenceID()
 						);
-				failed = true;
-				return;
 			}
 			
-			eventUtil.registerEvent(
-					sequence.getAppID(),
-					sequence.getOwner(),
-					sequence.getNamespace(),
-					BigDataStackEventType.GlobalDecisionTracker,
-					BigDataStackEventSeverity.Info,
-					"New Operation Sequence Created: '"+sequence.getSequenceID()+"'",
-					"The user created a new operation sequence for app '"+sequence.getAppID()+"', it has been registered and is being processed (SequenceID='"+sequence.getSequenceID()+"', Index='"+sequence.getIndex()+"')",
-					sequence.getSequenceID()
-					);
+			
 			
 		} catch (SQLException | JsonProcessingException e) {
 			e.printStackTrace();

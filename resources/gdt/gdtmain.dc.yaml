@@ -21,7 +21,7 @@ yamlSource:
           app: $appID$
       spec:
         containers:
-        - name: bash
+        - name: gdtmain
           image: "docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest"
           resources:
             limits:
@@ -64,6 +64,6 @@ yamlSource:
              value: "$rmqusername$"
            - name: "rmqpassword"
              value: "$rmqpassword$"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
         securityContext: {}
         serviceAccount: default
