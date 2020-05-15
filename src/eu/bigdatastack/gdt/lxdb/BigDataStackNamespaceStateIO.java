@@ -11,14 +11,16 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import eu.bigdatastack.gdt.structures.Timed;
 import eu.bigdatastack.gdt.structures.data.BigDataStackNamespaceState;
 
-public class BigDataStackNamespaceStateIO {
+public class BigDataStackNamespaceStateIO implements Timed {
 
 	protected final String tableName = "BigDataStackNamespaceStatus";
 	protected ObjectMapper mapper = new ObjectMapper();
 
 	LXDB client;
+	long totalTime = 0;
 
 	public BigDataStackNamespaceStateIO(LXDB client) throws SQLException {
 		this.client = client;
@@ -31,7 +33,7 @@ public class BigDataStackNamespaceStateIO {
 	 * @throws SQLException
 	 */
 	public void initTable() throws SQLException {
-
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		DatabaseMetaData md = conn.getMetaData();
@@ -68,7 +70,7 @@ public class BigDataStackNamespaceStateIO {
 
 			conn.commit();
 		}
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		conn.close();
 	}
 
@@ -79,7 +81,7 @@ public class BigDataStackNamespaceStateIO {
 	 * @throws SQLException
 	 */
 	public boolean addNamespace(BigDataStackNamespaceState namespace) throws SQLException {
-
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -110,7 +112,7 @@ public class BigDataStackNamespaceStateIO {
 
 		conn.commit();
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 
@@ -124,6 +126,7 @@ public class BigDataStackNamespaceStateIO {
 	 * @throws IOException
 	 */
 	public BigDataStackNamespaceState getNamespace(String namespace) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -163,7 +166,7 @@ public class BigDataStackNamespaceStateIO {
 
 
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return state;
 	}
 
@@ -174,6 +177,7 @@ public class BigDataStackNamespaceStateIO {
 	 * @throws SQLException
 	 */
 	public boolean updateNamespace(BigDataStackNamespaceState namespace) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		try {
@@ -197,6 +201,7 @@ public class BigDataStackNamespaceStateIO {
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
 
@@ -204,7 +209,7 @@ public class BigDataStackNamespaceStateIO {
 
 		conn.commit();
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 
@@ -216,6 +221,7 @@ public class BigDataStackNamespaceStateIO {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		try {
@@ -232,8 +238,14 @@ public class BigDataStackNamespaceStateIO {
 			conn.close();
 			return false;
 		}
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
+	
+	@Override
+	public long timeSpent() {
+		return totalTime;
+	}
+
 	
 }

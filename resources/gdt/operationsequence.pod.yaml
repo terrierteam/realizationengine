@@ -6,7 +6,7 @@ yamlSource:
   apiVersion: v1
   kind: Pod
   metadata:
-    name: $appID$-$objectID$-$sequenceID$-$sequenceInstance$
+    name: $appID$-$sequenceID$-$sequenceInstance$
     namespace: $namespace$
     labels:
       operationsequence: "True"

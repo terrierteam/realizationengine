@@ -9,16 +9,18 @@ import java.text.DecimalFormat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import eu.bigdatastack.gdt.structures.Timed;
 import eu.bigdatastack.gdt.structures.data.BigDataStackMetric;
 import eu.bigdatastack.gdt.structures.data.BigDataStackMetricClassname;
 
-public class BigDataStackMetricIO {
+public class BigDataStackMetricIO implements Timed {
 
 	protected final String tableName = "BigDataStackMetrics";
 	protected ObjectMapper mapper = new ObjectMapper();
 	protected DecimalFormat formater = new DecimalFormat("#.####");
 	
 	LXDB client;
+	long totalTime = 0;
 	
 	public BigDataStackMetricIO(LXDB client) throws SQLException {
 		this.client = client;
@@ -31,7 +33,7 @@ public class BigDataStackMetricIO {
 	 * @throws SQLException
 	 */
 	public void initTable() throws SQLException {
-		
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		DatabaseMetaData md = conn.getMetaData();
@@ -61,7 +63,7 @@ public class BigDataStackMetricIO {
 			
 			conn.commit();
 		}
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		conn.close();
 	}
 
@@ -72,7 +74,7 @@ public class BigDataStackMetricIO {
 	 * @throws SQLException
 	 */
 	public boolean addMetric(BigDataStackMetric metric) throws SQLException {
-		
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		Statement statement = conn.createStatement();
@@ -91,12 +93,13 @@ public class BigDataStackMetricIO {
 		} catch (Exception e) {
 			//e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
 		
 		conn.commit();
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 	
@@ -108,6 +111,7 @@ public class BigDataStackMetricIO {
 	 * @throws SQLException
 	 */
 	public BigDataStackMetric getMetric(String owner, String metricName) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		Statement statement = conn.createStatement();
@@ -140,7 +144,7 @@ public class BigDataStackMetricIO {
 		
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return metric;
 	}
 	
@@ -151,6 +155,7 @@ public class BigDataStackMetricIO {
 	 * @throws SQLException
 	 */
 	public boolean updateMetric(BigDataStackMetric metric) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		try {
@@ -168,13 +173,14 @@ public class BigDataStackMetricIO {
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
 		
 		
 		conn.commit();
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 	
@@ -184,6 +190,7 @@ public class BigDataStackMetricIO {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		try {
@@ -198,10 +205,17 @@ public class BigDataStackMetricIO {
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
+	
+	@Override
+	public long timeSpent() {
+		return totalTime;
+	}
+
 	
 }

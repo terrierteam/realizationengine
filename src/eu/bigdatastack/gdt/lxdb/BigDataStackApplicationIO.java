@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import eu.bigdatastack.gdt.structures.Timed;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplicationType;
 
@@ -21,12 +22,13 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackApplicationType;
  * @author EbonBlade
  *
  */
-public class BigDataStackApplicationIO {
+public class BigDataStackApplicationIO implements Timed {
 
 	protected final String tableName = "BigDataStackApplications";
 	protected ObjectMapper mapper = new ObjectMapper();
 
 	LXDB client;
+	long totalTime = 0;
 
 	public BigDataStackApplicationIO(LXDB client) throws SQLException {
 		this.client = client;
@@ -39,7 +41,7 @@ public class BigDataStackApplicationIO {
 	 * @throws SQLException
 	 */
 	public void initTable() throws SQLException {
-
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		DatabaseMetaData md = conn.getMetaData();
@@ -67,7 +69,7 @@ public class BigDataStackApplicationIO {
 
 			conn.commit();
 		}
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		conn.close();
 	}
 
@@ -79,7 +81,7 @@ public class BigDataStackApplicationIO {
 	 * @throws SQLException
 	 */
 	public boolean addApplication(BigDataStackApplication app) throws SQLException {
-
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -94,14 +96,14 @@ public class BigDataStackApplicationIO {
 					SQLUtils.prepareText(mapper.writeValueAsString(app.getTypes()),1000)+
 					" )");
 		} catch (Exception e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 			conn.close();
 			return false;
 		}
 
 		conn.commit();
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 
@@ -116,6 +118,7 @@ public class BigDataStackApplicationIO {
 	 */
 	@SuppressWarnings("unchecked")
 	public BigDataStackApplication getApp(String appID, String owner, String namepace) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -148,7 +151,7 @@ public class BigDataStackApplicationIO {
 
 
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return app;
 	}
 
@@ -159,6 +162,7 @@ public class BigDataStackApplicationIO {
 	 * @throws SQLException
 	 */
 	public boolean updateApp(BigDataStackApplication app) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		try {
@@ -171,6 +175,7 @@ public class BigDataStackApplicationIO {
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
 
@@ -178,7 +183,7 @@ public class BigDataStackApplicationIO {
 
 		conn.commit();
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 
@@ -189,6 +194,7 @@ public class BigDataStackApplicationIO {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackApplication> getApplications(String owner) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -226,7 +232,7 @@ public class BigDataStackApplicationIO {
 		} 
 
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return retrievedApplications;
 	}
 	
@@ -236,6 +242,7 @@ public class BigDataStackApplicationIO {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		try {
@@ -250,10 +257,16 @@ public class BigDataStackApplicationIO {
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
+	}
+
+	@Override
+	public long timeSpent() {
+		return totalTime;
 	}
 
 }

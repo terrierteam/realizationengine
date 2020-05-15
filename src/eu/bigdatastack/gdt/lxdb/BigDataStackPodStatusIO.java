@@ -7,16 +7,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import eu.bigdatastack.gdt.structures.Timed;
 import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
 
-public class BigDataStackPodStatusIO {
+public class BigDataStackPodStatusIO implements Timed {
 
 	protected final String tableName = "BigDataStackPodStatus";
 
 	LXDB client;
+	long totalTime = 0;
 
 	public BigDataStackPodStatusIO(LXDB client) throws SQLException {
 		this.client = client;
@@ -30,7 +29,7 @@ public class BigDataStackPodStatusIO {
 	 * @throws SQLException
 	 */
 	public void initTable() throws SQLException {
-
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		DatabaseMetaData md = conn.getMetaData();
@@ -53,7 +52,7 @@ public class BigDataStackPodStatusIO {
 
 			conn.commit();
 		}
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		conn.close();
 	}
 
@@ -66,7 +65,7 @@ public class BigDataStackPodStatusIO {
 	 * @throws SQLException
 	 */
 	public boolean addPodStatus(BigDataStackPodStatus status) throws SQLException {
-
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -89,7 +88,7 @@ public class BigDataStackPodStatusIO {
 
 		conn.commit();
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 
@@ -102,6 +101,7 @@ public class BigDataStackPodStatusIO {
 	 * @throws SQLException
 	 */
 	public BigDataStackPodStatus getPodStatus(String podID) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		Statement statement = conn.createStatement();
@@ -136,7 +136,7 @@ public class BigDataStackPodStatusIO {
 		
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return status;
 	}
 	
@@ -147,6 +147,7 @@ public class BigDataStackPodStatusIO {
 	 * @throws SQLException
 	 */
 	public boolean updatePodStatus(BigDataStackPodStatus status) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		try {
@@ -171,7 +172,7 @@ public class BigDataStackPodStatusIO {
 		}
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 	
@@ -181,6 +182,7 @@ public class BigDataStackPodStatusIO {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		try {
@@ -195,9 +197,16 @@ public class BigDataStackPodStatusIO {
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
+	
+	@Override
+	public long timeSpent() {
+		return totalTime;
+	}
+
 }

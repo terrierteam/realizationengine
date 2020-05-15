@@ -599,7 +599,7 @@ public class GDTManager implements Manager {
 	public boolean stopMonitoringNamespace(BigDataStackNamespaceState namespace, String owner) {
 		
 		try {
-			List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects("gdtdefaultapp-gdtmonitor", owner, namespace.getNamespace(), "gdtdefaultapp");
+			List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects("gdtmonitor", owner, namespace.getNamespace(), "gdtdefaultapp");
 			if (objects.size()==0) return false;
 			
 			int succeeded = 0;
@@ -676,6 +676,25 @@ public class GDTManager implements Manager {
 	 * @return
 	 */
 	public boolean executeSequenceFromTemplate(BigDataStackOperationSequence sequenceTemplate, Map<String,String> parameters) {
+
+		if (parameters==null) parameters = new HashMap<String,String>();
+		parameters.put("appID", sequenceTemplate.getAppID());
+		parameters.put("namespace", sequenceTemplate.getNamespace());
+		parameters.put("owner", sequenceTemplate.getOwner());
+		parameters.put("sequenceID", sequenceTemplate.getSequenceID());
+		parameters.put("dbusername", databaseCredential.getUsername());
+		parameters.put("dbpassword", databaseCredential.getPassword());
+		parameters.put("dbhost", gdtConfig.getDatabase().getHost());
+		parameters.put("dbport", String.valueOf(gdtConfig.getDatabase().getPort()));
+		parameters.put("dbname", gdtConfig.getDatabase().getName());
+		parameters.put("ochost", gdtConfig.getOpenshift().getHost());
+		parameters.put("ocport", String.valueOf(gdtConfig.getOpenshift().getPort()));
+		parameters.put("ocusername", openshiftCredential.getUsername());
+		parameters.put("ocpassword", openshiftCredential.getPassword());
+		parameters.put("rmqhost", gdtConfig.getRabbitmq().getHost());
+		parameters.put("rmqport", String.valueOf(gdtConfig.getRabbitmq().getPort()));
+		parameters.put("rmqusername", rabbitMQCredential.getUsername());
+		parameters.put("rmqpassword", rabbitMQCredential.getPassword());
 		
 		// attempt to create the instance now rather than creating it later in the operation sequence thread as we need
 		// to set parameters now rather than pass them to the container
@@ -700,6 +719,7 @@ public class GDTManager implements Manager {
 					for (String paramKey : parameters.keySet()) {
 						newSequenceInstance.getParameters().put(paramKey, parameters.get(paramKey));
 					}
+					parameters.put("sequenceInstance", String.valueOf(newIndex));
 				}
 
 				sequenceAdded = sequenceInstanceClient.addSequence(newSequenceInstance);
@@ -732,6 +752,7 @@ public class GDTManager implements Manager {
 				BigDataStackObjectDefinition operationsequenceDef = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/gdt/operationsequence.pod.yaml"), "UTF-8"));
 				
 				String yaml = operationsequenceDef.getYamlSource();
+				
 				for (String paramKey : parameters.keySet()) {
 					yaml = yaml.replaceAll("\\$"+paramKey+"\\$", parameters.get(paramKey));
 				}
@@ -796,6 +817,18 @@ public class GDTManager implements Manager {
 		return sequenceInstanceClient;
 	}
 
+	public void printTimings() {
+		System.out.println("### Timings ###");
+		System.out.println("> eventClient: "+(eventClient.timeSpent()/1000)+"s");
+		System.out.println("> metricClient: "+(metricClient.timeSpent()/1000)+"s");
+		System.out.println("> objectInstanceClient: "+(objectInstanceClient.timeSpent()/1000)+"s");
+		System.out.println("> objectTemplateClient: "+(objectTemplateClient.timeSpent()/1000)+"s");
+		System.out.println("> sequenceInstanceClient: "+(sequenceInstanceClient.timeSpent()/1000)+"s");
+		System.out.println("> sequenceTemplateClient: "+(sequenceTemplateClient.timeSpent()/1000)+"s");
+		System.out.println("> podStatusClient: "+(podStatusClient.timeSpent()/1000)+"s");
+		System.out.println("> namespaceStateClient: "+(namespaceStateClient.timeSpent()/1000)+"s");
+		System.out.println("> credentialsClient: "+(credentialsClient.timeSpent()/1000)+"s");
+	}
 	
 	
 	

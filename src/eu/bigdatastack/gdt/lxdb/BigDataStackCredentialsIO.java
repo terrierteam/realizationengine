@@ -14,14 +14,16 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import eu.bigdatastack.gdt.structures.Timed;
 import eu.bigdatastack.gdt.structures.data.BigDataStackCredentials;
 import eu.bigdatastack.gdt.structures.data.BigDataStackCredentialsType;
 
-public class BigDataStackCredentialsIO {
+public class BigDataStackCredentialsIO implements Timed {
 	protected final String tableName = "BigDataStackCredentials";
 	protected ObjectMapper mapper = new ObjectMapper();
 
 	LXDB client;
+	long totalTime = 0;
 
 	public BigDataStackCredentialsIO(LXDB client) throws SQLException {
 		this.client = client;
@@ -34,7 +36,7 @@ public class BigDataStackCredentialsIO {
 	 * @throws SQLException
 	 */
 	public void initTable() throws SQLException {
-
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		DatabaseMetaData md = conn.getMetaData();
@@ -61,7 +63,7 @@ public class BigDataStackCredentialsIO {
 
 			conn.commit();
 		}
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		conn.close();
 	}
 
@@ -72,7 +74,7 @@ public class BigDataStackCredentialsIO {
 	 * @throws SQLException
 	 */
 	public boolean addCredential(BigDataStackCredentials credential) throws SQLException {
-
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		try {
@@ -97,7 +99,7 @@ public class BigDataStackCredentialsIO {
 		
 		
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 
@@ -113,6 +115,7 @@ public class BigDataStackCredentialsIO {
 	 */
 	@SuppressWarnings("unchecked")
 	public BigDataStackCredentials getCredential(String owner, BigDataStackCredentialsType type) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -143,7 +146,7 @@ public class BigDataStackCredentialsIO {
 
 
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return credential;
 	}
 
@@ -156,7 +159,7 @@ public class BigDataStackCredentialsIO {
 	 * @throws SQLException
 	 */
 	public String getNewToken(String owner, String password, BigDataStackCredentialsType type) throws SQLException {
-		
+		long startTime = System.currentTimeMillis();
 		BigDataStackCredentials credentials = getCredential(owner, type);
 		if (!credentials.getPassword().equals(password)) return null;
 		
@@ -172,6 +175,7 @@ public class BigDataStackCredentialsIO {
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return null;
 		}
 
@@ -179,7 +183,7 @@ public class BigDataStackCredentialsIO {
 
 		conn.commit();
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return token;
 	}
 	
@@ -190,7 +194,7 @@ public class BigDataStackCredentialsIO {
 	 * @throws SQLException
 	 */
 	public boolean updatePassweord(String owner, BigDataStackCredentialsType type, String username, String password) throws SQLException {
-		
+		long startTime = System.currentTimeMillis();
 		BigDataStackCredentials credentials = getCredential(owner, type);
 		if (!credentials.getPassword().equals(password) || !username.equals(credentials.getUsername())) return false;
 		
@@ -209,6 +213,7 @@ public class BigDataStackCredentialsIO {
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
 
@@ -216,7 +221,7 @@ public class BigDataStackCredentialsIO {
 
 		conn.commit();
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 
@@ -227,6 +232,7 @@ public class BigDataStackCredentialsIO {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		try {
@@ -243,7 +249,13 @@ public class BigDataStackCredentialsIO {
 			conn.close();
 			return false;
 		}
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
+	
+	@Override
+	public long timeSpent() {
+		return totalTime;
+	}
+
 }

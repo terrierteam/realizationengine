@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import eu.bigdatastack.gdt.structures.Timed;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
@@ -19,12 +20,13 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
  * @author EbonBlade
  *
  */
-public class BigDataStackEventIO {
+public class BigDataStackEventIO implements Timed {
 
 	protected final String tableName = "BigDataStackEvents";
 
 	LXDB client;
-
+	long totalTime = 0;
+	
 	public BigDataStackEventIO(LXDB client) throws SQLException {
 		this.client = client;
 
@@ -37,7 +39,7 @@ public class BigDataStackEventIO {
 	 * @throws SQLException
 	 */
 	public void initTable() throws SQLException {
-
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		DatabaseMetaData md = conn.getMetaData();
@@ -60,7 +62,7 @@ public class BigDataStackEventIO {
 
 			conn.commit();
 		}
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		conn.close();
 	}
 
@@ -73,7 +75,7 @@ public class BigDataStackEventIO {
 	 * @throws SQLException
 	 */
 	public boolean addEvent(BigDataStackEvent event) throws SQLException {
-
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -93,12 +95,13 @@ public class BigDataStackEventIO {
 		} catch (Exception e) {
 			//e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
 
 		conn.commit();
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 
@@ -110,6 +113,7 @@ public class BigDataStackEventIO {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, BigDataStackEventSeverity severity, String objectID, long startTime, long endTime) throws SQLException {
+		long ostartTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -157,7 +161,7 @@ public class BigDataStackEventIO {
 		Collections.reverse(retrievedEvents);
 
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-ostartTime;
 		return retrievedEvents;
 	}
 
@@ -169,6 +173,7 @@ public class BigDataStackEventIO {
 	 * @throws SQLException
 	 */
 	public int getEventCount(String appID, String owner) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -195,7 +200,7 @@ public class BigDataStackEventIO {
 		} 
 
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return count;
 	}
 
@@ -368,6 +373,7 @@ public class BigDataStackEventIO {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		try {
@@ -382,10 +388,17 @@ public class BigDataStackEventIO {
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
+	
+	@Override
+	public long timeSpent() {
+		return totalTime;
+	}
+
 
 }

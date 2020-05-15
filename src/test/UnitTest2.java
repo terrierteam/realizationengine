@@ -120,6 +120,8 @@ public class UnitTest2 {
 		// Shut down monitoring
 		assertTrue(manager.stopMonitoringNamespace(namespace, "richardm"));
 		
+		manager.printTimings();
+		
 		manager.shutdown();
 
 
@@ -160,6 +162,8 @@ public class UnitTest2 {
 		
 		// Shut down monitoring
 		//assertTrue(manager.stopMonitoringNamespace(namespace, "richardm"));
+		
+		manager.printTimings();
 		
 		manager.shutdown();
 

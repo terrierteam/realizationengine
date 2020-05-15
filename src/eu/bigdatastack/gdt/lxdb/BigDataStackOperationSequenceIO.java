@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.bigdatastack.gdt.operations.BigDataStackOperation;
+import eu.bigdatastack.gdt.structures.Timed;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceMode;
 
@@ -25,12 +26,13 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceMode;
  * @author EbonBlade
  *
  */
-public class BigDataStackOperationSequenceIO {
+public class BigDataStackOperationSequenceIO implements Timed {
 
 	protected String tableName = "BigDataStackOperationSequences";
 	protected ObjectMapper mapper = new ObjectMapper();
 	
 	LXDB client;
+	long totalTime = 0;
 	
 	public BigDataStackOperationSequenceIO(LXDB client, boolean template) throws SQLException {
 		this.client = client;
@@ -45,7 +47,7 @@ public class BigDataStackOperationSequenceIO {
 	 * @throws SQLException
 	 */
 	public void initTable() throws SQLException {
-		
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		DatabaseMetaData md = conn.getMetaData();
@@ -76,7 +78,7 @@ public class BigDataStackOperationSequenceIO {
 			
 			conn.commit();
 		}
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		conn.close();
 	}
 
@@ -89,7 +91,7 @@ public class BigDataStackOperationSequenceIO {
 	 * @throws JsonProcessingException 
 	 */
 	public boolean addSequence(BigDataStackOperationSequence sequence) throws SQLException, JsonProcessingException {
-		
+		long startTime = System.currentTimeMillis();
 		String operationsAsJson = mapper.writeValueAsString(sequence.getOperations());
 		
 		if (operationsAsJson.length()>=65535) return false;
@@ -124,7 +126,7 @@ public class BigDataStackOperationSequenceIO {
 		
 		
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 		
 	}
@@ -135,6 +137,7 @@ public class BigDataStackOperationSequenceIO {
 	 * @throws SQLException
 	 */
 	public BigDataStackOperationSequence getSequence(String appID, String sequenceID, int instance) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		Statement statement = conn.createStatement();
@@ -180,7 +183,7 @@ public class BigDataStackOperationSequenceIO {
 		
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return sequence;
 	}
 	
@@ -203,7 +206,7 @@ public class BigDataStackOperationSequenceIO {
 	 * @throws JsonProcessingException 
 	 */
 	public boolean updateSequence(BigDataStackOperationSequence sequence) throws SQLException, JsonProcessingException {
-		
+		long startTime = System.currentTimeMillis();
 		String operationsAsJson = mapper.writeValueAsString(sequence.getOperations());
 		
 		if (operationsAsJson.length()>=65535) return false;
@@ -230,6 +233,7 @@ public class BigDataStackOperationSequenceIO {
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
 		
@@ -237,7 +241,7 @@ public class BigDataStackOperationSequenceIO {
 		
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 	
@@ -251,6 +255,7 @@ public class BigDataStackOperationSequenceIO {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackOperationSequence> getOperationSequences(String appID) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		Statement statement = conn.createStatement();
@@ -302,7 +307,7 @@ public class BigDataStackOperationSequenceIO {
 		
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return retrievedSequences;
 	}
 	
@@ -315,6 +320,7 @@ public class BigDataStackOperationSequenceIO {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackOperationSequence> getOperationSequences(String appID, String sequenceID) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		Statement statement = conn.createStatement();
@@ -366,7 +372,7 @@ public class BigDataStackOperationSequenceIO {
 		
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return retrievedSequences;
 	}
 	
@@ -378,6 +384,7 @@ public class BigDataStackOperationSequenceIO {
 	 * @throws SQLException
 	 */
 	public BigDataStackOperationSequence getOperationSequence(String appID, String sequenceID, int instance) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		Statement statement = conn.createStatement();
@@ -427,7 +434,7 @@ public class BigDataStackOperationSequenceIO {
 		
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return sequence;
 	}
 	
@@ -437,6 +444,7 @@ public class BigDataStackOperationSequenceIO {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		try {
@@ -453,8 +461,14 @@ public class BigDataStackOperationSequenceIO {
 			conn.close();
 			return false;
 		}
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
+	
+	@Override
+	public long timeSpent() {
+		return totalTime;
+	}
+
 	
 }

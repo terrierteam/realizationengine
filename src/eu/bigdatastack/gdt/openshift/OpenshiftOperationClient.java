@@ -1,5 +1,7 @@
 package eu.bigdatastack.gdt.openshift;
 
+import java.util.List;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -8,11 +10,13 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.openshift.restclient.ClientBuilder;
 import com.openshift.restclient.IClient;
 import com.openshift.restclient.model.IDeploymentConfig;
+import com.openshift.restclient.model.IPod;
 import com.openshift.restclient.model.IProject;
 import com.openshift.restclient.model.IResource;
 
 
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
+import eu.bigdatastack.gdt.structures.openshift.IJob;
 
 public class OpenshiftOperationClient {
 
@@ -155,7 +159,13 @@ public class OpenshiftOperationClient {
 					return false;
 				case Job:
 					resource = client.get("job", object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), project.getName());
+					
+					List<IPod> pods = statusClient.getPodsForJob(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+					
 					client.delete(resource);
+					for (IPod pod : pods) {
+						client.delete(pod);
+					}
 					return true;
 				case Route:
 					return false;

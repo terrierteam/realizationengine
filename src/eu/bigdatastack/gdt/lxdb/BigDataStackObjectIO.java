@@ -15,15 +15,17 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import eu.bigdatastack.gdt.structures.Timed;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
 
-public class BigDataStackObjectIO {
+public class BigDataStackObjectIO implements Timed {
 
 	protected String tableName = "BigDataStackObjectDefinitions";
 	protected ObjectMapper mapper = new ObjectMapper();
 	
 	LXDB client;
+	long totalTime = 0;
 	
 	public BigDataStackObjectIO(LXDB client, boolean template) throws SQLException {
 		this.client = client;
@@ -38,7 +40,7 @@ public class BigDataStackObjectIO {
 	 * @throws SQLException
 	 */
 	public void initTable() throws SQLException {
-		
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		DatabaseMetaData md = conn.getMetaData();
@@ -68,7 +70,7 @@ public class BigDataStackObjectIO {
 			
 			conn.commit();
 		}
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		conn.close();
 	}
 
@@ -80,7 +82,7 @@ public class BigDataStackObjectIO {
 	 * @throws SQLException
 	 */
 	public boolean addObject(BigDataStackObjectDefinition object) throws SQLException {
-		
+		long startTime = System.currentTimeMillis();
 		if (object.getYamlSource().length()>=65535) return false;
 		
 		if (getObject(object.getObjectID(), object.getOwner(), object.getInstance())!=null) return false;
@@ -112,7 +114,7 @@ public class BigDataStackObjectIO {
 		
 		
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 		
 	}
@@ -126,6 +128,7 @@ public class BigDataStackObjectIO {
 	 * @throws IOException
 	 */
 	public BigDataStackObjectDefinition getObject(String objectID, String owner, int instance) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		Statement statement = conn.createStatement();
@@ -160,7 +163,7 @@ public class BigDataStackObjectIO {
 		
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return object;
 	}
 	
@@ -173,10 +176,11 @@ public class BigDataStackObjectIO {
 	 * @throws IOException
 	 */
 	public List<BigDataStackObjectDefinition> getObjects(String objectID, String owner, String namespace, String appID) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		Statement statement = conn.createStatement();
-		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE objectID='"+objectID+"' AND owner='"+owner+"' AND namespace='"+namespace+"'"+" AND appID='"+appID+"'");
+		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE objectID='"+objectID+"' AND owner='"+owner+"' AND namespace='"+namespace+"' AND appID='"+appID+"'");
 		ResultSet results = statement.getResultSet();
 		
 		List<BigDataStackObjectDefinition> objectList = new ArrayList<BigDataStackObjectDefinition>(3);
@@ -209,7 +213,7 @@ public class BigDataStackObjectIO {
 		
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return objectList;
 	}
 	
@@ -222,6 +226,7 @@ public class BigDataStackObjectIO {
 	 * @throws IOException
 	 */
 	public List<BigDataStackObjectDefinition> getObjectList(String owner, String namespace, String appID) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		Statement statement = conn.createStatement();
@@ -258,7 +263,7 @@ public class BigDataStackObjectIO {
 		
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return objectList;
 	}
 	
@@ -282,7 +287,7 @@ public class BigDataStackObjectIO {
 	 * @throws SQLException
 	 */
 	public boolean updateObject(BigDataStackObjectDefinition object) throws SQLException {
-		
+		long startTime = System.currentTimeMillis();
 		if (object.getYamlSource().length()>=65535) return false;
 		
 		Connection conn = client.openConnection();
@@ -306,6 +311,7 @@ public class BigDataStackObjectIO {
 		} catch (Exception e) {
 			e.printStackTrace();
 			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
 			return false;
 		}
 		
@@ -313,7 +319,7 @@ public class BigDataStackObjectIO {
 		
 		
 		conn.close();
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
 	
@@ -325,6 +331,7 @@ public class BigDataStackObjectIO {
 	 * @throws SQLException
 	 */
 	public int getObjectCount(String objectID, String owner) throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -349,7 +356,7 @@ public class BigDataStackObjectIO {
 		} 
 
 		conn.close();
-
+		totalTime+=System.currentTimeMillis()-startTime;
 		return count;
 	}
 
@@ -362,6 +369,7 @@ public class BigDataStackObjectIO {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		try {
@@ -378,8 +386,14 @@ public class BigDataStackObjectIO {
 			conn.close();
 			return false;
 		}
-		
+		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
+	
+	@Override
+	public long timeSpent() {
+		return totalTime;
+	}
+
 	
 }
