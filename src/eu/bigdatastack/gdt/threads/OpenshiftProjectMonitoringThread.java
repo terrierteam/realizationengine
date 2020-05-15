@@ -408,7 +408,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 						BigDataStackEventType.Openshift,
 						BigDataStackEventSeverity.Info,
 						"Pod '"+podID+"' Hosting Change: Host ['"+savedStatus.getHostIP()+"' -> '"+hostIP+"'], Pod IP ['"+savedStatus.getPodIP()+"' -> '"+podIP+"']",
-						"Openshift project monitoring for '"+namespace+"' detected a change in pod '"+podID+"' connected to object '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', its status changed from '"+savedStatus.getStatus()+"' -> '"+status+"'",
+						"Openshift project monitoring for '"+namespace+"' detected a change in pod '"+podID+"' connected to object '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', ['"+savedStatus.getHostIP()+"' -> '"+hostIP+"'], Pod IP ['"+savedStatus.getPodIP()+"' -> '"+podIP+"']",
 						objectDef.getObjectID()
 						);
 

@@ -82,10 +82,10 @@ public class Instantiate extends BigDataStackOperation{
 	@Override
 	public boolean execute(LXDB database, OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient, RabbitMQClient mailboxClient,
-			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner) {
+			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner,
+			EventUtil eventUtil) {
 
 		try {
-			EventUtil eventUtil = new EventUtil(database, mailboxClient);
 
 			// Stage 1: Retrieve instance object
 			BigDataStackObjectIO objectTemplateClient = new BigDataStackObjectIO(database, true);

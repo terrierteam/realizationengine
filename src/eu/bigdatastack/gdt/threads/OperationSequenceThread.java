@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import eu.bigdatastack.gdt.lxdb.BigDataStackEventIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackOperationSequenceIO;
 import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
@@ -74,6 +75,42 @@ public class OperationSequenceThread implements Runnable {
 		this.sequence = sequence;
 		this.newParameters = newParameters;
 	}
+	
+	public OperationSequenceThread(LXDB database,
+			OpenshiftOperationClient openshiftOperationClient,
+			OpenshiftStatusClient openshiftStatusClient,
+			RabbitMQClient mailboxClient,
+			PrometheusDataClient prometheusDataClient, 
+			BigDataStackOperationSequence sequence,
+			EventUtil eventUtil) {
+		super();
+		this.operationsClient = openshiftOperationClient;
+		this.statusClient = openshiftStatusClient;
+		this.mailboxClient =mailboxClient;
+		this.prometheusDataClient = prometheusDataClient;
+		this.database = database;
+		this.sequence = sequence;
+		this.eventUtil = eventUtil;
+	}
+
+	public OperationSequenceThread(LXDB database,
+			OpenshiftOperationClient openshiftOperationClient,
+			OpenshiftStatusClient openshiftStatusClient,
+			RabbitMQClient mailboxClient,
+			PrometheusDataClient prometheusDataClient, 
+			BigDataStackOperationSequence sequence,
+			Map<String,String> newParameters,
+			EventUtil eventUtil) {
+		super();
+		this.operationsClient = openshiftOperationClient;
+		this.statusClient = openshiftStatusClient;
+		this.mailboxClient =mailboxClient;
+		this.prometheusDataClient = prometheusDataClient;
+		this.database = database;
+		this.sequence = sequence;
+		this.newParameters = newParameters;
+		this.eventUtil = eventUtil;
+	}
 
 	@Override
 	public void run() {
@@ -82,7 +119,10 @@ public class OperationSequenceThread implements Runnable {
 		
 		// Stage 1: Instantiate Instance of Sequence
 		try {
-			this.eventUtil = new EventUtil(database, mailboxClient);
+			if (this.eventUtil==null) {
+				BigDataStackEventIO eventClient = new BigDataStackEventIO(database);
+				this.eventUtil = new EventUtil(eventClient, mailboxClient);
+			}
 
 			BigDataStackOperationSequenceIO sequenceIO = new BigDataStackOperationSequenceIO(database, false);
 			
@@ -138,19 +178,19 @@ public class OperationSequenceThread implements Runnable {
 				switch (currentState) {
 				case NotStarted:
 					// clean state, ready to run
-					operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this);
+					operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this, eventUtil);
 					break; 
 				case InProgress:
 					// We are in a bad situation, where a previous operation sequence run left the sequence
 					// in an unknown state, we will need to clean up before running again
 					if (!tryCleanUpPreviousOperation(operation)) break;
-					operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this);
+					operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this, eventUtil);
 					break;
 				case Completed:
 					switch (mode) {
 					case Run:
 						if (!tryCleanUpPreviousOperation(operation)) break;
-						operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this);
+						operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this, eventUtil);
 						break;
 					case Continue:
 						// Skip to next operation
@@ -160,7 +200,7 @@ public class OperationSequenceThread implements Runnable {
 					break;
 				case Failed:
 					if (!tryCleanUpPreviousOperation(operation)) break;
-					operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this);
+					operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this, eventUtil);
 					break;
 				}
 				
@@ -302,7 +342,7 @@ public class OperationSequenceThread implements Runnable {
 	 */
 	protected boolean tryCleanUpPreviousOperation(BigDataStackOperation operation) {
 		Delete deleteOperation = new Delete(operation.getAppID(), operation.getOwner(), operation.getNamespace(), operation.getObjectID());
-		boolean deleteOK = deleteOperation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this);
+		boolean deleteOK = deleteOperation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this, eventUtil);
 		if (!deleteOK) {
 			operation.setState(BigDataStackOperationState.Failed);
 			return false;

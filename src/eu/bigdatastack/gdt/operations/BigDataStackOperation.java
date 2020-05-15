@@ -8,6 +8,7 @@ import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.prometheus.PrometheusDataClient;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
 import eu.bigdatastack.gdt.threads.OperationSequenceThread;
+import eu.bigdatastack.gdt.util.EventUtil;
 
 /**
  * This interface represents an operation that can be done on the openshift cluster.
@@ -68,7 +69,8 @@ public abstract class BigDataStackOperation {
 			OpenshiftStatusClient openshiftStatusClient,
 			RabbitMQClient mailboxClient,
 			PrometheusDataClient prometheusDataClient,
-			OperationSequenceThread parentSequenceRunner);
+			OperationSequenceThread parentSequenceRunner,
+			EventUtil eventUtil);
 	
 	/**
 	 * Configures this operation from a provided json definition

@@ -102,7 +102,7 @@ public class GDTMain {
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
 						"Failed operation sequence pod based on template : '"+sequenceID+"'",
-						"Attempted to create the pod object for operation sequence '"+sequenceID+"' with index "+sequence.getIndex()+", but the cluster rejected it (has this sequence instance already been launched?)",
+						"Attempted to run operation sequence '"+sequenceID+"' with index "+sequence.getIndex()+", but one or more operations failed",
 						sequenceID
 						);
 			}

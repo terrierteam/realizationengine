@@ -159,6 +159,38 @@ public class OpenshiftStatusClient {
 	}
 
 	/**
+	 * Returns all pods for a specified project. Returns null if the request fails.
+	 * @param project
+	 * @param active
+	 * @param ended
+	 * @return List<IPod>
+	 */
+	public List<IPod> getPods(IProject project, boolean active, boolean ended, String labelselector) {
+
+
+		try {
+			List<IPod> pods = client.list("pod", project.getName(), labelselector);
+
+			List<IPod> selectedPods = new ArrayList<IPod>(pods.size());
+			for (IPod pod : pods) {
+
+				String status = pod.getStatus();
+				if (active && (status.equalsIgnoreCase("Running") || status.equalsIgnoreCase("Pending") || status.equalsIgnoreCase("CrashLoopBackOff"))) selectedPods.add(pod);
+				if (ended && (status.equalsIgnoreCase("Terminating") || status.equalsIgnoreCase("Completed") || status.equalsIgnoreCase("Failed"))) selectedPods.add(pod);
+
+			}
+			return selectedPods;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
+
+	}
+
+	
+	/**
 	 * Returns all deployment configs for a specified project. Returns null if the request fails.
 	 * @param project
 	 * @return List<IPod>

@@ -9,6 +9,8 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.openshift.restclient.model.IPod;
+import com.openshift.restclient.model.IProject;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackApplicationIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackCredentialsIO;
@@ -129,7 +131,7 @@ public class GDTManager implements Manager {
 		
 		
 		// Initalize Utilities
-		eventUtil = new EventUtil(database, mailboxClient);
+		eventUtil = new EventUtil(eventClient, mailboxClient);
 		
 
 	}
@@ -362,7 +364,8 @@ public class GDTManager implements Manager {
 				mailboxClient,
 				prometheusDataClient, 
 				sequenceTemplate,
-				parameters);
+				parameters,
+				eventUtil);
 		
 		thread.run();
 		return !thread.hasFailed();
@@ -793,6 +796,23 @@ public class GDTManager implements Manager {
 	public boolean executeSequenceFromTemplate(BigDataStackOperationSequence sequenceTemplate) {
 		Map<String,String> params = new HashMap<String,String>();
 		return executeSequenceFromTemplate(sequenceTemplate, params);
+		
+	}
+	
+	/**
+	 * Deletes any sequence template runners that have been completed to avoid cluttering the cluster. In this case,
+	 * completed means any pod in Terminating, Completed or Failed status. It uses the operationsequence=True label
+	 * to find the pods.
+	 */
+	public void cleanUpEndedSequenceTemplates(String namespace) {
+		
+		IProject project  = openshiftStatusClient.getProject(namespace);
+		
+		List<IPod> pods = openshiftStatusClient.getPods(project, false, true, "operationsequence=True");
+		
+		for (IPod pod : pods) {
+			openshiftOperationClient.getClient().delete(pod);
+		}
 		
 	}
 	

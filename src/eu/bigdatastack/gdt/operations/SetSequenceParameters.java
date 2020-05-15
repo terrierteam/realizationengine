@@ -73,11 +73,11 @@ public class SetSequenceParameters extends BigDataStackOperation{
 	@Override
 	public boolean execute(LXDB database, OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient, RabbitMQClient mailboxClient,
-			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner) {
+			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner,
+			EventUtil eventUtil) {
 		
 		
 		try {
-			EventUtil eventUtil = new EventUtil(database, mailboxClient);
 			
 			if (!parentSequenceRunner.getSequence().getParameters().containsKey(instanceRef)) {
 				eventUtil.registerEvent(

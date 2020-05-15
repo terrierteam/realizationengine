@@ -3,7 +3,6 @@ package eu.bigdatastack.gdt.util;
 import java.sql.SQLException;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackEventIO;
-import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
@@ -12,13 +11,11 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
 public class EventUtil {
 
 	BigDataStackEventIO eventIO;
-	LXDB database;
 	RabbitMQClient mailboxClient;
 	
-	public EventUtil(LXDB database, RabbitMQClient mailboxClient) throws SQLException {
-		this.database = database;
+	public EventUtil(BigDataStackEventIO eventIO, RabbitMQClient mailboxClient) throws SQLException {
 		this.mailboxClient= mailboxClient;
-		eventIO = new BigDataStackEventIO(database);
+		this.eventIO = eventIO;
 	}
 	
 	public boolean registerEvent(String appID, String owner, String namespace,

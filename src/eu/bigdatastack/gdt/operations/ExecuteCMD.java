@@ -10,6 +10,7 @@ import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.prometheus.PrometheusDataClient;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
 import eu.bigdatastack.gdt.threads.OperationSequenceThread;
+import eu.bigdatastack.gdt.util.EventUtil;
 
 public class ExecuteCMD extends BigDataStackOperation {
 
@@ -95,7 +96,8 @@ public class ExecuteCMD extends BigDataStackOperation {
 	@Override
 	public boolean execute(LXDB database, OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient, RabbitMQClient mailboxClient,
-			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner) {
+			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner,
+			EventUtil eventUtil) {
 		throw new NotImplementedException();
 	}
 	

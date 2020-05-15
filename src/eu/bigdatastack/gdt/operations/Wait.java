@@ -8,6 +8,7 @@ import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.prometheus.PrometheusDataClient;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
 import eu.bigdatastack.gdt.threads.OperationSequenceThread;
+import eu.bigdatastack.gdt.util.EventUtil;
 
 public class Wait extends BigDataStackOperation {
 
@@ -71,7 +72,8 @@ public class Wait extends BigDataStackOperation {
 	@Override
 	public boolean execute(LXDB database, OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient, RabbitMQClient mailboxClient,
-			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner) {
+			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner,
+			EventUtil eventUtil) {
 		
 		try {
 			Thread.sleep(1000*secondsToWait);
