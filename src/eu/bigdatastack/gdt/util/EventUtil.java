@@ -50,6 +50,8 @@ public class EventUtil {
 			
 			mailboxClient.publishEvent(newEvent);
 			
+			newEvent.print();
+			
 			//System.err.println(newEvent.getAppID()+" "+newEvent.getOwner()+" "+newEvent.getEventNo()+" "+newEvent.getTitle());
 		}
 		

@@ -1,5 +1,9 @@
 package eu.bigdatastack.gdt.structures.data;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 /**
  * Represents a human-readable event that has occurred during system operation. Events are
  * associated to an owner, application and optionally an object.
@@ -140,7 +144,14 @@ public class BigDataStackEvent implements Comparable<BigDataStackEvent> {
 		this.eventTime = eventTime;
 	}
 	
-	
+	public void print() {
+		Calendar c = Calendar.getInstance();
+		c.setTimeInMillis(eventTime);
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");  
+		String strDate = dateFormat.format(c.getTime()); 
+		
+		System.out.println("["+strDate+" ["+namepace+"/"+appID+"/"+objectID+"] ["+severity+"]: "+title);
+	}
 	
 	
 	
