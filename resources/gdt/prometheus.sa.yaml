@@ -1,0 +1,12 @@
+appID: "gdtdefaultapp"
+owner: "richardm"
+
+objectID: "prometheussa"
+type: ServiceAccount
+
+yamlSource:
+  apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: $objectID$
+    namespace: $namespace$

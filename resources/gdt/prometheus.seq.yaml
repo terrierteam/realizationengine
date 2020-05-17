@@ -1,0 +1,73 @@
+appID: "gdtdefaultapp"
+owner: "richardm"
+namespace: "richardmproject"
+
+sequenceID: "seq-prometheusdeploy"
+name: "GDT Prometheus Deployment Sequence"
+description: "Deploys the GDT Prometheus instance pod in a specified namepace"
+parameters: {}
+operations:
+  - className: Instantiate
+    objectID: "prometheussa"
+    defineInstanceRef: "prometheussaInstance"
+  - className: Apply
+    instanceRef: "prometheussaInstance"
+  - className: ParameterFromObjectLookup
+    parameter: "serviceaccount"
+    criteria: "richardmproject:serviceaccount:prometheussa-.*"
+    multipleMatches: "SelectFirst"
+  - className: Instantiate
+    objectID: "prometheusrole"
+    defineInstanceRef: "prometheusRoleInstance"
+  - className: Apply
+    instanceRef: "prometheusRoleInstance"
+  - className: ParameterFromObjectLookup
+    parameter: "role"
+    criteria: "richardmproject:role:prometheusrole-.*"
+    multipleMatches: "SelectFirst"
+  - className: Instantiate
+    objectID: "prometheusrb"
+    defineInstanceRef: "prometheusRBInstance"
+  - className: SetSequenceParameters
+    instanceRef: "prometheusRBInstance"
+  - className: Apply
+    instanceRef: "prometheusRBInstance"
+  - className: Instantiate
+    objectID: "prometheusconfig"
+    defineInstanceRef: "prometheusConfigMapInstance"
+  - className: SetSequenceParameters
+    instanceRef: "prometheusConfigMapInstance"
+  - className: Apply
+    instanceRef: "prometheusConfigMapInstance"
+  - className: Instantiate
+    objectID: "prometheus"
+    defineInstanceRef: "prometheusInstance"
+  - className: ParameterFromObjectLookup
+    parameter: "kubeServiceAccountSecret"
+    criteria: "richardmproject:secret:prometheussa-.*token-.*"
+    multipleMatches: "SelectFirst"
+  - className: ParameterFromObjectLookup
+    parameter: "prometheusConfig"
+    criteria: "richardmproject:configmap:prometheusconfig-.*"
+    multipleMatches: "SelectFirst"
+  - className: SetSequenceParameters
+    instanceRef: "prometheusInstance"
+  - className: Apply
+    instanceRef: "prometheusInstance"
+  - className: Instantiate
+    objectID: "prometheussrv"
+    defineInstanceRef: "prometheusSRVInstance"
+  - className: Apply
+    instanceRef: "prometheusSRVInstance"
+  - className: ParameterFromObjectLookup
+    parameter: "service"
+    criteria: "richardmproject:service:prometheussrv-.*"
+    multipleMatches: "SelectFirst"
+  - className: Instantiate
+    objectID: "prometheusroute"
+    defineInstanceRef: "prometheusRouteInstance"
+  - className: SetSequenceParameters
+    instanceRef: "prometheusRouteInstance"
+  - className: Apply
+    instanceRef: "prometheusRouteInstance"
+mode: Continue

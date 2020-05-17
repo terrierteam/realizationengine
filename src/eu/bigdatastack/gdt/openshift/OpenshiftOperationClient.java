@@ -126,6 +126,26 @@ public class OpenshiftOperationClient {
 					resource = client.getResourceFactory().create(yaml2Json(object.getYamlSource()));
 					client.create(resource);
 					return true;
+				case Secret:
+					resource = client.getResourceFactory().create(yaml2Json(object.getYamlSource()));
+					client.create(resource);
+					return true;
+				case ConfigMap:
+					resource = client.getResourceFactory().create(yaml2Json(object.getYamlSource()));
+					client.create(resource);
+					return true;
+				case ServiceAccount:
+					resource = client.getResourceFactory().create(yaml2Json(object.getYamlSource()));
+					client.create(resource);
+					return true;
+				case RoleBinding:
+					resource = client.getResourceFactory().create(yaml2Json(object.getYamlSource()));
+					client.create(resource);
+					return true;
+				case Role:
+					resource = client.getResourceFactory().create(yaml2Json(object.getYamlSource()));
+					client.create(resource);
+					return true;
 				case Playbook:
 					return false;
 			}
@@ -174,6 +194,16 @@ public class OpenshiftOperationClient {
 				case VolumeClaim:
 					return false;
 				case Pod:
+					return false;
+				case Secret:
+					return false;
+				case ConfigMap:
+					return false;
+				case ServiceAccount:
+					return false;
+				case RoleBinding:
+					return false;
+				case Role:
 					return false;
 				case Playbook:
 					return false;

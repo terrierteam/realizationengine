@@ -1,0 +1,24 @@
+appID: "gdtdefaultapp"
+owner: "richardm"
+
+objectID: "prometheussrv"
+type: Service
+
+yamlSource:
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: $objectID$
+    namespace: $namespace$
+  spec:
+    selector:
+      app: $appID$
+    ports:
+      - name: web
+        protocol: TCP
+        port: 9090
+        targetPort: 9090
+      - name: prometheus
+        protocol: TCP
+        port: 9091
+        targetPort: 9091

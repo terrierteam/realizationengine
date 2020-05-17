@@ -150,7 +150,7 @@ public class BigDataStackEvent implements Comparable<BigDataStackEvent> {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");  
 		String strDate = dateFormat.format(c.getTime()); 
 		
-		System.out.println("["+strDate+" ["+namepace+"/"+appID+"/"+objectID+"] ["+severity+"]: "+title);
+		System.out.println(strDate+" ["+namepace+"/"+appID+"/"+objectID+"] ["+severity+"]: "+title);
 	}
 	
 	

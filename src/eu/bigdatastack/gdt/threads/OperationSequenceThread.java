@@ -229,7 +229,7 @@ public class OperationSequenceThread implements Runnable {
 						sequence.getNamespace(),
 						BigDataStackEventType.Stage,
 						BigDataStackEventSeverity.Info,
-						"Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" Complete within sequqnce '"+sequence.getSequenceID()+"'",
+						"Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" Complete within sequence '"+sequence.getSequenceID()+"'",
 						"Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" completed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
 						sequence.getSequenceID()
 						);

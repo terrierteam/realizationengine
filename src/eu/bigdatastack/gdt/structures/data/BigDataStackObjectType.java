@@ -9,6 +9,11 @@ public enum BigDataStackObjectType {
 	Volume,
 	VolumeClaim,
 	Playbook,
-	Pod
+	Pod,
+	Secret,
+	ConfigMap,
+	ServiceAccount,
+	RoleBinding,
+	Role
 	
 }
