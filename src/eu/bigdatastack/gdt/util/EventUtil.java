@@ -43,7 +43,8 @@ public class EventUtil {
 			if (!eventRegistered) {
 				failures++;
 				if (failures>=5) {
-					System.err.println("FAILED");
+					System.err.println("Event not Sent");
+					newEvent.print();
 					return false;
 				} else continue;
 			}

@@ -1,7 +1,5 @@
 package eu.bigdatastack.gdt.operations;
 
-import java.sql.SQLException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
@@ -135,9 +133,11 @@ public class WaitFor extends BigDataStackOperation{
 					if (status.equalsIgnoreCase(waitForStatus)) inTargetState=true;
 				}
 				
+				Thread.sleep(10000);
+				
 			}
 			
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}

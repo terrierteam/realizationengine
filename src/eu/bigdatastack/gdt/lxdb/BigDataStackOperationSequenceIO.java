@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -72,6 +73,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 			"name VARCHAR(140), "+
 			"description VARCHAR(1000), "+
 			"jsonOperations VARCHAR(65535), "+
+			"parameters VARCHAR(5000), "+
 			"mode VARCHAR(100), "+
 			"PRIMARY KEY (appID,sequenceID,instance)"+
 			")");
@@ -93,8 +95,10 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	public boolean addSequence(BigDataStackOperationSequence sequence) throws SQLException, JsonProcessingException {
 		long startTime = System.currentTimeMillis();
 		String operationsAsJson = mapper.writeValueAsString(sequence.getOperations());
+		String parametersAsJson = mapper.writeValueAsString(sequence.getParameters());
 		
 		if (operationsAsJson.length()>=65535) return false;
+		if (parametersAsJson.length()>=5000) return false;
 		
 		if (getSequence(sequence.getAppID(), sequence.getSequenceID(), sequence.getIndex())!=null) return false;
 		
@@ -102,8 +106,8 @@ public class BigDataStackOperationSequenceIO implements Timed {
 		
 		try {
 			PreparedStatement statement = conn.prepareStatement(
-				"INSERT INTO "+tableName+" (appID, owner, namespace, instance, sequenceID, name, description, jsonOperations, mode)"+
-				" VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )");
+				"INSERT INTO "+tableName+" (appID, owner, namespace, instance, sequenceID, name, description, jsonOperations, mode, parameters)"+
+				" VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )");
 
 		
 			statement.setString(1, SQLUtils.prepareTextNoQuote(sequence.getAppID(),100));
@@ -115,6 +119,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 			statement.setString(7, SQLUtils.prepareTextNoQuote(sequence.getDescription(),1000));
 			statement.setString(8, operationsAsJson);
 			statement.setString(9, SQLUtils.prepareTextNoQuote(sequence.getMode().name(),100));
+			statement.setString(10,parametersAsJson);
 			statement.executeUpdate();
 			
 			conn.commit();
@@ -162,6 +167,9 @@ public class BigDataStackOperationSequenceIO implements Timed {
 					operations.add(operation);
 				}
 				
+				@SuppressWarnings("unchecked")
+				Map<String,String> parameters = mapper.readValue(results.getString("parameters"), Map.class);
+				
 				
 				sequence = new BigDataStackOperationSequence(
 						results.getString("appID"),
@@ -171,6 +179,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 						results.getString("sequenceID"),
 						results.getString("name"),
 						results.getString("description"),
+						parameters,
 						operations,
 						BigDataStackOperationSequenceMode.valueOf(results.getString("mode"))
 					);
@@ -208,14 +217,16 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	public boolean updateSequence(BigDataStackOperationSequence sequence) throws SQLException, JsonProcessingException {
 		long startTime = System.currentTimeMillis();
 		String operationsAsJson = mapper.writeValueAsString(sequence.getOperations());
+		String parametersAsJson = mapper.writeValueAsString(sequence.getParameters());
 		
 		if (operationsAsJson.length()>=65535) return false;
+		if (parametersAsJson.length()>=5000) return false;
 		
 		Connection conn = client.openConnection();
 		
 		try {
 			
-			PreparedStatement statement = conn.prepareStatement("UPDATE "+tableName+" SET name=?, description=?, jsonOperations=?, mode=?"+
+			PreparedStatement statement = conn.prepareStatement("UPDATE "+tableName+" SET name=?, description=?, jsonOperations=?, mode=?, parameters=?"+
 					" WHERE appID="+SQLUtils.prepareText(sequence.getAppID(),100)+
 					" AND owner="+SQLUtils.prepareText(sequence.getOwner(),140)+
 					" AND namespace="+SQLUtils.prepareText(sequence.getNamespace(),140)+
@@ -226,6 +237,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 			statement.setNString(2, sequence.getDescription());
 			statement.setNString(3, operationsAsJson);
 			statement.setNString(4, sequence.getMode().name());
+			statement.setNString(5, parametersAsJson);
 			
 			statement.executeUpdate();
 			conn.commit();
@@ -284,6 +296,9 @@ public class BigDataStackOperationSequenceIO implements Timed {
 					operations.add(operation);
 				}
 				
+				@SuppressWarnings("unchecked")
+				Map<String,String> parameters = mapper.readValue(results.getString("parameters"), Map.class);
+				
 				BigDataStackOperationSequence sequence = new BigDataStackOperationSequence(
 						results.getString("appID"),
 						results.getString("owner"),
@@ -292,6 +307,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 						results.getString("sequenceID"),
 						results.getString("name"),
 						results.getString("description"),
+						parameters,
 						operations,
 						BigDataStackOperationSequenceMode.valueOf(results.getString("mode"))
 					);
@@ -349,6 +365,9 @@ public class BigDataStackOperationSequenceIO implements Timed {
 					operations.add(operation);
 				}
 				
+				@SuppressWarnings("unchecked")
+				Map<String,String> parameters = mapper.readValue(results.getString("parameters"), Map.class);
+				
 				BigDataStackOperationSequence sequence = new BigDataStackOperationSequence(
 						results.getString("appID"),
 						results.getString("owner"),
@@ -357,6 +376,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 						results.getString("sequenceID"),
 						results.getString("name"),
 						results.getString("description"),
+						parameters,
 						operations,
 						BigDataStackOperationSequenceMode.valueOf(results.getString("mode"))
 					);
@@ -413,6 +433,9 @@ public class BigDataStackOperationSequenceIO implements Timed {
 					operations.add(operation);
 				}
 				
+				@SuppressWarnings("unchecked")
+				Map<String,String> parameters = mapper.readValue(results.getString("parameters"), Map.class);
+				
 				sequence = new BigDataStackOperationSequence(
 						results.getString("appID"),
 						results.getString("owner"),
@@ -421,6 +444,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 						results.getString("sequenceID"),
 						results.getString("name"),
 						results.getString("description"),
+						parameters,
 						operations,
 						BigDataStackOperationSequenceMode.valueOf(results.getString("mode"))
 					);

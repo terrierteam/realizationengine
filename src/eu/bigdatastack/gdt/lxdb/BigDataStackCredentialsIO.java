@@ -92,7 +92,7 @@ public class BigDataStackCredentialsIO implements Timed {
 			
 			conn.commit();
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			conn.close();
 			return false;
 		} 
@@ -206,9 +206,9 @@ public class BigDataStackCredentialsIO implements Timed {
 		try {
 			Statement statement = conn.createStatement();
 			statement.executeUpdate("UPDATE "+tableName+" SET "+
-					"username="+ SQLUtils.prepareTextNoQuote(credentials.getUsername(),140)+", "+
-					"password="+ SQLUtils.prepareTextNoQuote(credentials.getPassword(),140)+", "+
-					"tokens="+SQLUtils.prepareTextNoQuote(mapper.writeValueAsString(credentials.getTokens()),1000)+", "+
+					"username="+ SQLUtils.prepareText(credentials.getUsername(),140)+", "+
+					"password="+ SQLUtils.prepareText(credentials.getPassword(),140)+", "+
+					"tokens="+SQLUtils.prepareText(mapper.writeValueAsString(credentials.getTokens()),1000)+
 					" WHERE owner="+SQLUtils.prepareText(owner,140)+" AND type="+SQLUtils.prepareText(type.name(),100));
 		} catch (Exception e) {
 			e.printStackTrace();

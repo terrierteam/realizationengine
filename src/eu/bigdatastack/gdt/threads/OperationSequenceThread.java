@@ -216,8 +216,8 @@ public class OperationSequenceThread implements Runnable {
 							sequence.getNamespace(),
 							BigDataStackEventType.Stage,
 							BigDataStackEventSeverity.Alert,
-							"Operation Sequence Failed for: '"+sequence.getSequenceID()+"' at Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getName(),
-							"Operation '"+operation.getObjectID()+"' failed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
+							"Operation Sequence Failed for: '"+sequence.getSequenceID()+"' at operation targeting '"+operation.getObjectID()+"' of type "+operation.getClass().getName(),
+							"Operation targeting '"+operation.getObjectID()+"' failed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
 							sequence.getSequenceID()
 							);
 					return;
@@ -229,8 +229,8 @@ public class OperationSequenceThread implements Runnable {
 						sequence.getNamespace(),
 						BigDataStackEventType.Stage,
 						BigDataStackEventSeverity.Info,
-						"Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" Complete within sequence '"+sequence.getSequenceID()+"'",
-						"Operation '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" completed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
+						"Operation targeting '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" Complete within sequence '"+sequence.getSequenceID()+"'",
+						"Operation targeting '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" completed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
 						sequence.getSequenceID()
 						);
 				

@@ -39,7 +39,7 @@ yamlSource:
              replacement: $1
              action: keep
           scrape_interval: 30s
-          scheme: https
+          scheme: http
           tls_config:
             insecure_skip_verify: false
             ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt

@@ -13,7 +13,7 @@ public class SetupTest {
 		
 		// Config
 				GDTConfig config = new GDTConfig(new File("gdt.config.json"));
-				TestUtil.clearDatabase(config.getDatabase());
+				//TestUtil.clearDatabase(config.getDatabase());
 
 				// Manager
 				GDTManager manager = new GDTManager(config);

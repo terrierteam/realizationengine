@@ -6,6 +6,7 @@ import eu.bigdatastack.gdt.lxdb.BigDataStackApplicationIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackCredentialsIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackEventIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackMetricIO;
+import eu.bigdatastack.gdt.lxdb.BigDataStackMetricValueIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackNamespaceStateIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackOperationSequenceIO;
@@ -61,6 +62,8 @@ public class TestUtil {
 		BigDataStackCredentialsIO namespaceCredentials = new BigDataStackCredentialsIO(database);
 		namespaceCredentials.clearTable();
 		
+		BigDataStackMetricValueIO metricValueClient = new BigDataStackMetricValueIO(database);
+		metricValueClient.clearTable();
 	}
 	
 }

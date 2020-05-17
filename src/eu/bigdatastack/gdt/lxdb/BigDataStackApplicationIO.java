@@ -72,7 +72,7 @@ public class BigDataStackApplicationIO implements Timed {
 		totalTime+=System.currentTimeMillis()-startTime;
 		conn.close();
 	}
-
+	
 	/**
 	 * Add a new BigDataStack application to the database. The application will only be added if the appID is unique.
 	 * Use updateApp to change the content for an existing app

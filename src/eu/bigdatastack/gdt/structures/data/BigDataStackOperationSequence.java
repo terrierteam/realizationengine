@@ -170,6 +170,14 @@ public class BigDataStackOperationSequence {
 		this.mode = mode;
 	}
 
+	public String getNamepace() {
+		return namepace;
+	}
+
+	public void setNamepace(String namepace) {
+		this.namepace = namepace;
+	}
+
 	/**
 	 * Get the currently active operation. Returns null if the sequence has not started, or the last
 	 * operation if all have been completed.
