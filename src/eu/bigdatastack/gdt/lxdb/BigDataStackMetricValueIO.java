@@ -59,9 +59,9 @@ public class BigDataStackMetricValueIO implements Timed {
 					"appID VARCHAR(100), "+
 					"objectID VARCHAR(100), "+
 					"metricName VARCHAR(140), "+
-					"valueString VARCHAR(140), "+
-					"lastUpdated BIGINT, "+
-					"labels VARCHAR(5000), "+
+					"valueString VARCHAR(5000), "+
+					"lastUpdated VARCHAR(5000), "+
+					"labels VARCHAR(10000), "+
 					"PRIMARY KEY (appID,owner,namespace,objectID,metricName)"+
 					")");
 			
@@ -81,9 +81,13 @@ public class BigDataStackMetricValueIO implements Timed {
 	public boolean addMetricValue(BigDataStackMetricValue metricValue) throws Exception {
 		long startTime = System.currentTimeMillis();
 		
+		String valuesAsJson = mapper.writeValueAsString(metricValue.getValue());
+		String timesAsJson = mapper.writeValueAsString(metricValue.getLastUpdated());
 		String labelsAsJson = mapper.writeValueAsString(metricValue.getLabels());
 		
-		if (labelsAsJson.length()>=5000) return false;
+		if (valuesAsJson.length()>=5000) return false;
+		if (timesAsJson.length()>=5000) return false;
+		if (labelsAsJson.length()>=10000) return false;
 		
 		Connection conn = client.openConnection();
 
@@ -99,8 +103,8 @@ public class BigDataStackMetricValueIO implements Timed {
 				statement.setString(3,SQLUtils.prepareTextNoQuote(metricValue.getAppID(),100));
 				statement.setString(4, SQLUtils.prepareTextNoQuote(metricValue.getObjectID(),100));
 				statement.setString(5, SQLUtils.prepareTextNoQuote(metricValue.getMetricname(),140));
-				statement.setString(6, SQLUtils.prepareTextNoQuote(metricValue.getValue(),140));
-				statement.setLong(7, metricValue.getLastUpdated());
+				statement.setString(6, valuesAsJson);
+				statement.setString(7, timesAsJson);
 				statement.setString(8, labelsAsJson);
 				statement.executeUpdate();
 			
@@ -146,7 +150,11 @@ public class BigDataStackMetricValueIO implements Timed {
 			while (results.next()) {
 
 				@SuppressWarnings("unchecked")
-				Map<String,String> labels = mapper.readValue(results.getString("labels"), Map.class);
+				List<Map<String,String>> labels = mapper.readValue(results.getString("labels"), List.class);
+				@SuppressWarnings("unchecked")
+				List<String> valueL = mapper.readValue(results.getString("valueString"), List.class);
+				@SuppressWarnings("unchecked")
+				List<Long> timeL = mapper.readValue(results.getString("lastUpdated"), List.class);
 
 				BigDataStackMetricValue value = new BigDataStackMetricValue(
 						results.getString("owner"),
@@ -154,8 +162,8 @@ public class BigDataStackMetricValueIO implements Timed {
 						results.getString("appID"),
 						results.getString("objectID"),
 						results.getString("metricName"),
-						results.getString("valueString"),
-						results.getLong("lastUpdated"),
+						valueL,
+						timeL,
 						labels);
 
 				values.add(value);
@@ -181,9 +189,13 @@ public class BigDataStackMetricValueIO implements Timed {
 		long startTime = System.currentTimeMillis();
 		
 		
+		String valuesAsJson = mapper.writeValueAsString(metricValue.getValue());
+		String timesAsJson = mapper.writeValueAsString(metricValue.getLastUpdated());
 		String labelsAsJson = mapper.writeValueAsString(metricValue.getLabels());
 		
-		if (labelsAsJson.length()>=5000) return false;
+		if (valuesAsJson.length()>=5000) return false;
+		if (timesAsJson.length()>=5000) return false;
+		if (labelsAsJson.length()>=10000) return false;
 		
 		Connection conn = client.openConnection();
 		try {
@@ -194,8 +206,8 @@ public class BigDataStackMetricValueIO implements Timed {
 					" AND appID="+SQLUtils.prepareText(metricValue.getAppID(),100)+
 					" AND objectID="+SQLUtils.prepareText(metricValue.getObjectID(),100));
 			
-			statement.setNString(1, metricValue.getValue());
-			statement.setLong(2, metricValue.getLastUpdated());
+			statement.setNString(1, valuesAsJson);
+			statement.setNString(2, timesAsJson);
 			statement.setNString(3, labelsAsJson);
 			
 			statement.executeUpdate();

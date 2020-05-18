@@ -20,7 +20,7 @@ public class ATOSWLTest {
 		GDTManager manager = new GDTManager(config);
 		
 		
-		/*BigDataStackApplication app = manager.registerApplication(new File("resources/atoswl/atoswl.app.yaml"));
+		BigDataStackApplication app = manager.registerApplication(new File("resources/atoswl/atoswl.app.yaml"));
 		if (app==null) return;
 		
 		BigDataStackMetric ndcg_at_k_valid = manager.registerMetric(new File("resources/atoswl/ndcg_at_k_valid.metric.yaml"));
@@ -28,8 +28,8 @@ public class ATOSWLTest {
 		
 		
 		BigDataStackObjectDefinition object = manager.registerObject(new File("resources/atoswl/atoswl-train.job.yaml"));
-		if (object==null) return;*/
-		
+		if (object==null) return;
+	
 		BigDataStackOperationSequence seq = manager.registerOperationSequence(new File("resources/atoswl/atoswl-trainmodel.seq.yaml"));
 		if (seq==null) return;
 		

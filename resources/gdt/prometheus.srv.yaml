@@ -8,7 +8,7 @@ yamlSource:
   apiVersion: v1
   kind: Service
   metadata:
-    name: $objectID$
+    name: $objectID$-$instance$
     namespace: $namespace$
   spec:
     selector:

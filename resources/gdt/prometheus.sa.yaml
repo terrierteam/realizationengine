@@ -8,5 +8,5 @@ yamlSource:
   apiVersion: v1
   kind: ServiceAccount
   metadata:
-    name: $objectID$
+    name: $objectID$-$instance$
     namespace: $namespace$

@@ -4,7 +4,11 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,26 +36,90 @@ public class PrometheusDataClient {
 		if (data.has("resultType") && !data.get("resultType").asText().equalsIgnoreCase("vector")) return false;
 		
 		Iterator<JsonNode> resultIterator = data.get("result").iterator();
+		
+		List<String> values = new ArrayList<String>();
+		List<Long> times = new ArrayList<Long>();
+		List<Map<String,String>> labelSets = new ArrayList<Map<String,String>>();
+		
 		while (resultIterator.hasNext()) {
 			JsonNode result = resultIterator.next();
 			
 			JsonNode metricData = result.get("metric");
 			Iterator<String> fieldNames = metricData.fieldNames();
+			Map<String,String> map = new HashMap<String,String>();
 			while (fieldNames.hasNext()) {
 				String fieldName = fieldNames.next();
 				String fieldvalue = metricData.get(fieldName).asText();
-				existingValue.getLabels().put(fieldName, fieldvalue);
+				map.put(fieldName, fieldvalue);
 			}
 			
 			JsonNode value = result.get("value");
 			double time = value.get(0).asDouble();
 			String valueString = value.get(1).asText();
 			
-			existingValue.setLastUpdated(Double.valueOf(time).longValue()*1000);
-			existingValue.setValue(valueString);
-			
+			values.add(valueString);
+			times.add(Double.valueOf(time).longValue()*1000);
+			labelSets.add(map);
 		}
 		
+		List<String> newValues = new ArrayList<String>();
+		List<Long> newTimes = new ArrayList<Long>();
+		List<Map<String,String>> newLabelSets = new ArrayList<Map<String,String>>();
+		
+		int eIndex = 0;
+		for (Map<String,String> existingSet : existingValue.getLabels()) {
+			boolean matchFound = false;
+			int matchIndex = -1;
+			int index = 0;
+			for (Map<String,String> currentSet : labelSets) {
+				if (labelMatch(existingSet, currentSet)) {
+					matchFound = true;
+					matchIndex = index;
+					break;
+				}
+				index++;
+			}
+			
+			if (!matchFound) {
+				newValues.add(existingValue.getValue().get(eIndex));
+				newTimes.add(existingValue.getLastUpdated().get(eIndex));
+				newLabelSets.add(existingValue.getLabels().get(eIndex));
+			} else {
+				newValues.add(values.get(matchIndex));
+				newTimes.add(times.get(matchIndex));
+				newLabelSets.add(labelSets.get(matchIndex));
+			}
+			
+			eIndex++;
+		}
+		
+		int index = 0;
+		for (Map<String,String> currentSet : labelSets) {
+			for (Map<String,String> existingSet : existingValue.getLabels()) {
+				if (!labelMatch(existingSet, currentSet)) {
+					newValues.add(values.get(index));
+					newTimes.add(times.get(index));
+					newLabelSets.add(labelSets.get(index));
+				}
+			}
+			index++;
+		}
+		
+		existingValue.setLabels(newLabelSets);
+		existingValue.setValue(newValues);
+		existingValue.setLastUpdated(newTimes);
+		
+		
+		return true;
+		
+	}
+	
+	protected boolean labelMatch(Map<String,String> map1, Map<String,String> map2) {
+		if (map1.size()!=map2.size()) return false;
+		for(String k : map1.keySet()) {
+			if (!map2.containsKey(k)) return false;
+			if (!map1.get(k).equalsIgnoreCase(map2.get(k))) return false;
+		}
 		return true;
 		
 	}

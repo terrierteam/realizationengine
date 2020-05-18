@@ -176,15 +176,17 @@ public class Instantiate extends BigDataStackOperation{
 		yaml = yaml.replaceAll("\\$appID\\$", appID);
 		yaml = yaml.replaceAll("\\$owner\\$", owner);
 		yaml = yaml.replaceAll("\\$namespace\\$", namespace);
-		yaml = yaml.replaceAll("\\$objectID\\$", objectID+"-"+instance);
+		yaml = yaml.replaceAll("\\$objectID\\$", objectID);
+		yaml = yaml.replaceAll("\\$instance\\$", String.valueOf(instance));
 		
 		yaml = yaml.replaceAll("\\$appid\\$", appID);
-		yaml = yaml.replaceAll("\\$objectid\\$", objectID+"-"+instance);
+		yaml = yaml.replaceAll("\\$objectid\\$", objectID);
 		
 		yaml = yaml.replaceAll("\\$APPID\\$", appID);
 		yaml = yaml.replaceAll("\\$OWNER\\$", owner);
 		yaml = yaml.replaceAll("\\$NAMESPACE\\$", namespace);
-		yaml = yaml.replaceAll("\\$OBJECTID\\$", objectID+"-"+instance);
+		yaml = yaml.replaceAll("\\$OBJECTID\\$", objectID);
+		yaml = yaml.replaceAll("\\$INSTANCE\\$", String.valueOf(instance));
 		
 		return yaml;
 	}

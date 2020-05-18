@@ -8,7 +8,7 @@ yamlSource:
   kind: RoleBinding
   apiVersion: rbac.authorization.k8s.io/v1
   metadata:
-    name: $namespace$-$appID$-$objectID$
+    name: $namespace$-$appID$-$objectID$-$instance$
     namespace: $namespace$
   subjects:
     - kind: ServiceAccount

@@ -1,9 +1,12 @@
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import eu.bigdatastack.gdt.prometheus.PrometheusDataClient;
 import eu.bigdatastack.gdt.structures.data.BigDataStackMetricValue;
 
 public class MetricTest {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws JsonProcessingException {
 		
 		BigDataStackMetricValue metricValue = new BigDataStackMetricValue(
 				"richardm", "richardmproject", "atoswl", "atoswl-0",
@@ -13,11 +16,12 @@ public class MetricTest {
 		
 		client.update(metricValue);
 		
-		System.err.println(metricValue.getValue());
-		System.err.println(metricValue.getLastUpdated());
-		for (String k : metricValue.getLabels().keySet()) {
-			System.err.println(k+" "+metricValue.getLabels().get(k));
+		ObjectMapper mapper = new ObjectMapper();
+		
+		for (int i =0; i<metricValue.getLabels().size(); i++) {
+			System.err.println(mapper.writeValueAsString(metricValue.getLabels().get(i))+" "+metricValue.getLastUpdated().get(i)+" "+metricValue.getValue().get(i));
 		}
+
 
 	}
 

@@ -8,7 +8,7 @@ yamlSource:
   kind: Job
   apiVersion: batch/v1
   metadata:
-    name: $objectID$
+    name: $objectID$-$instance$
     namespace: $namespace$
     labels:
       app: atoswl
@@ -58,6 +58,17 @@ yamlSource:
               - name: promexporter
                 containerPort: 8003
                 protocol: TCP
+            env:
+              - name: "owner"
+                value: "$owner$"
+              - name: "namespace"
+                value: "$namespace$"
+              - name: "appID"
+                value: "$appID$"
+              - name: "instance"
+                value: "$instance$"
+              - name: "objectID"
+                value: "$objectID$"
         serviceAccount: containerroot
         volumes:
           - name: nfs-access

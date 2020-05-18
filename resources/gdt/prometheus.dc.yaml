@@ -8,7 +8,7 @@ yamlSource:
   apiVersion: v1
   kind: DeploymentConfig
   metadata:
-    name: $appID$-$objectID$
+    name: $appID$-$objectID$-$instance$
     namespace: $namespace$
   spec:
     replicas: 1
@@ -17,7 +17,7 @@ yamlSource:
     template:
       metadata:
         labels:
-          jobconfig: $objectID$
+          jobconfig: $objectID$-$instance$
           app: $appID$
       spec:
         containers:

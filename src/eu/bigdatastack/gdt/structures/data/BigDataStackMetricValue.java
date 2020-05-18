@@ -1,6 +1,8 @@
 package eu.bigdatastack.gdt.structures.data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class BigDataStackMetricValue {
@@ -11,14 +13,14 @@ public class BigDataStackMetricValue {
 	private String appID;
 	private String objectID;
 	private String metricname;
-	private String value;
-	private long lastUpdated;
-	private Map<String,String> labels;
+	private List<String> value;
+	private List<Long> lastUpdated;
+	private List<Map<String,String>> labels;
 	
 	public BigDataStackMetricValue() {}
 	
 	public BigDataStackMetricValue(String owner, String namespace, String appID, String objectID,
-			String metricname, String value, long lastUpdated, Map<String,String> labels) {
+			String metricname, List<String> value, List<Long> lastUpdated, List<Map<String,String>> labels) {
 		super();
 		this.owner = owner;
 		this.namespace = namespace;
@@ -38,9 +40,9 @@ public class BigDataStackMetricValue {
 		this.appID = appID;
 		this.objectID = objectID;
 		this.metricname = metricname;
-		this.value = "0";
-		this.lastUpdated = -1;
-		this.labels = new HashMap<String,String>();
+		this.value = new ArrayList<String>();
+		this.lastUpdated = new ArrayList<Long>();;
+		this.labels = new ArrayList<Map<String,String>>();
 	}
 
 	public String getOwner() {
@@ -83,29 +85,30 @@ public class BigDataStackMetricValue {
 		this.metricname = metricname;
 	}
 
-	public String getValue() {
+	public List<String> getValue() {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public void setValue(List<String> value) {
 		this.value = value;
 	}
 
-	public long getLastUpdated() {
-		return lastUpdated;
-	}
-
-	public void setLastUpdated(long lastUpdated) {
-		this.lastUpdated = lastUpdated;
-	}
-
-	public Map<String, String> getLabels() {
+	public List<Map<String, String>> getLabels() {
 		return labels;
 	}
 
-	public void setLabels(Map<String, String> labels) {
+	public void setLabels(List<Map<String, String>> labels) {
 		this.labels = labels;
 	}
+
+	public List<Long> getLastUpdated() {
+		return lastUpdated;
+	}
+
+	public void setLastUpdated(List<Long> lastUpdated) {
+		this.lastUpdated = lastUpdated;
+	}
+
 	
 	
 }

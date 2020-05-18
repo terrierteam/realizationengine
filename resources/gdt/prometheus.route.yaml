@@ -8,7 +8,7 @@ yamlSource:
   kind: Route
   apiVersion: route.openshift.io/v1
   metadata:
-    name: $objectID$
+    name: $objectID$-$instance$
     namespace: $namespace$
   spec:
     host: prometheus-gdt-$namespace$.ida.dcs.gla.ac.uk
