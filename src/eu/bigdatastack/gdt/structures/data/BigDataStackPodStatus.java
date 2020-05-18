@@ -12,15 +12,17 @@ public class BigDataStackPodStatus {
 	private String owner;
 	private String namespace;
 	private String objectID;
+	private int instance;
 	
 	private String podID;
 	private String status;
 	private String hostIP;
 	private String podIP;
 	
+	
 	public BigDataStackPodStatus() {}
 	
-	public BigDataStackPodStatus(String appID, String owner, String namespace, String objectID, String podID,
+	public BigDataStackPodStatus(String appID, String owner, String namespace, String objectID, int instance, String podID,
 			String status, String hostIP, String podIP) {
 		super();
 		this.appID = appID;
@@ -31,6 +33,7 @@ public class BigDataStackPodStatus {
 		this.status = status;
 		this.hostIP = hostIP;
 		this.podIP = podIP;
+		this.instance =instance;
 	}
 	
 	public String getObjectID() {
@@ -80,6 +83,14 @@ public class BigDataStackPodStatus {
 	}
 	public void setPodIP(String podIP) {
 		this.podIP = podIP;
+	}
+
+	public int getInstance() {
+		return instance;
+	}
+
+	public void setInstance(int instance) {
+		this.instance = instance;
 	}
 	
 	

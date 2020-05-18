@@ -76,7 +76,7 @@ public class Instantiate extends BigDataStackOperation{
 
 	@Override
 	public String describeOperation() {
-		return "Creates a new instance of "+objectID+", it can then be referred to locally within the sequence via the reference '"+seqInstanceRef+"'";
+		return "Creates an instance of "+objectID+", it can be referred to within the sequence as '"+seqInstanceRef+"'";
 	}
 
 	@Override

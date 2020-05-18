@@ -16,6 +16,7 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackNamespaceState;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
+import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
 import eu.bigdatastack.gdt.util.GDTFileUtil;
 
 public class GDTCLI {
@@ -201,6 +202,7 @@ public class GDTCLI {
 					System.out.println("|------------------------------------------------------");
 					System.out.println("| ID: "+sequenceTemplate.getSequenceID());
 					System.out.println("| Title: "+sequenceTemplate.getName());
+					System.out.println("| App: "+sequenceTemplate.getAppID());
 					System.out.println("| Owned By: "+sequenceTemplate.getOwner());
 					System.out.println("| Namespace: "+sequenceTemplate.getNamespace());
 					System.out.println("|------------------------------------------------------");
@@ -226,6 +228,10 @@ public class GDTCLI {
 								if (objectDef==null) continue;
 								if (objectDef.getType()==BigDataStackObjectType.DeploymentConfig || objectDef.getType()==BigDataStackObjectType.Job) {
 									System.out.println("|     - "+objectDef.getObjectID()+"("+objectDef.getInstance()+") of type "+objectDef.getType()+", states="+objectDef.getStatus());
+									List<BigDataStackPodStatus> statuses = manager.podStatusClient.getPodStatuses(sequenceTemplate.getAppID(), sequenceTemplate.getOwner(), objectID[0], sequenceTemplate.getNamespace(), objectDef.getInstance());
+									for (BigDataStackPodStatus status : statuses) {
+										System.out.println("|      ~ POD:"+status.getPodID()+", state=["+status.getStatus()+"]");
+									}
 								}
 								
 							}

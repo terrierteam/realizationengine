@@ -343,6 +343,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					owner,
 					namespace,
 					objectDef.getObjectID(),
+					objectDef.getInstance(),
 					podID,
 					status,
 					podIP,
