@@ -19,7 +19,7 @@ yamlSource:
        - 'java'
       args:
        - '-jar'
-       - './target/BigDataStack-GDT-Data-0.0.1-SNAPSHOT.jar'
+       - './target/BigDataStack-GDT-0.8.jar'
        - 'operationSequence'
       env:
        - name: "owner"
