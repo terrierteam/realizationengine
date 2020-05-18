@@ -207,7 +207,8 @@ public class BigDataStackMetricValueIO implements Timed {
 					" WHERE owner="+SQLUtils.prepareText(metricValue.getOwner(),140)+
 					" AND namespace="+SQLUtils.prepareText(metricValue.getNamespace(),140)+
 					" AND appID="+SQLUtils.prepareText(metricValue.getAppID(),100)+
-					" AND objectID="+SQLUtils.prepareText(metricValue.getObjectID(),100));
+					" AND objectID="+SQLUtils.prepareText(metricValue.getObjectID(),100)+
+					" AND metricName="+SQLUtils.prepareText(metricValue.getMetricname(),140));
 			
 			statement.setNString(1, valuesAsJson);
 			statement.setNString(2, timesAsJson);

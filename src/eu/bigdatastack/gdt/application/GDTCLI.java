@@ -12,6 +12,8 @@ import eu.bigdatastack.gdt.operations.Apply;
 import eu.bigdatastack.gdt.operations.BigDataStackOperation;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
+import eu.bigdatastack.gdt.structures.data.BigDataStackMetric;
+import eu.bigdatastack.gdt.structures.data.BigDataStackMetricValue;
 import eu.bigdatastack.gdt.structures.data.BigDataStackNamespaceState;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
@@ -236,6 +238,36 @@ public class GDTCLI {
 								
 							}
 						}
+					}
+					System.out.println("|------------------------------------------------------");
+					break;
+				case "appmetrics":
+					BigDataStackApplication app = manager.appClient.getApp(args[4], args[2], args[3]);
+					System.out.println("|------------------------------------------------------");
+					System.out.println("| ID: "+app.getAppID());
+					System.out.println("| Title: "+app.getName());
+					System.out.println("|------------------------------------------------------");
+					System.out.println();
+					List<BigDataStackMetricValue> metrics = manager.metricValueClient.getMetricValues(args[4], args[2], args[3], null);
+					System.out.println("|------------------------------------------------------");
+					System.out.println("| Metrics: ");
+					for (BigDataStackMetricValue metric : metrics) {
+						BigDataStackMetric metricDesc = manager.metricClient.getMetric(args[2], metric.getMetricname());
+						System.out.println("| > "+metric.getMetricname());
+						if (metricDesc!=null) {
+							System.out.println("|   "+metricDesc.getMinimumValue()+"<="+metricDesc.getDisplayUnit()+"<="+metricDesc.getMaximumValue());
+							if (metricDesc.isHigherIsBetter()) System.out.println("|   (Higher values are better)");
+							else System.out.println("|   (Lower values are better)");
+						}
+						for (int i =0; i<metric.getLabels().size(); i++) {
+							Map<String,String> labels = metric.getLabels().get(i);
+							String value = metric.getValue().get(i);
+							Long timestamp = metric.getLastUpdated().get(i);
+							System.out.println("|   -"+labels.get("objectID")+"("+labels.get("instance")+") "+value);
+							
+						}
+						
+						
 					}
 					System.out.println("|------------------------------------------------------");
 					break;
