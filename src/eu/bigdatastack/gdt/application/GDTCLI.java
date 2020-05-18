@@ -263,10 +263,28 @@ public class GDTCLI {
 							Map<String,String> labels = metric.getLabels().get(i);
 							String value = metric.getValue().get(i);
 							Long timestamp = metric.getLastUpdated().get(i);
-							System.out.println("|   -"+labels.get("objectID")+"("+labels.get("instance")+") "+value);
+							BigDataStackObjectDefinition objectDef = manager.objectInstanceClient.getObject(labels.get("objectID"), app.getOwner(), Integer.parseInt(labels.get("instance")));
+							System.out.println("|   - "+labels.get("objectID")+"("+labels.get("instance")+") "+value +" (status="+objectDef.getStatus()+")");
+							for (String label :labels.keySet()) {
+								if (label.contains("host")) continue;
+								if (label.contains("port")) continue;
+								if (label.contains("username")) continue;
+								if (label.contains("password")) continue;
+								if (label.contains("database")) continue;
+								if (label.contains("owner")) continue;
+								if (label.contains("namespace")) continue;
+								if (label.contains("__name__")) continue;
+								if (label.contains("instance")) continue;
+								if (label.contains("appID")) continue;
+								if (label.contains("objectID")) continue;
+								if (label.contains("job")) continue;
+								System.out.println("|     ~ "+label+"="+labels.get(label));
+							}
 							
 						}
-						
+						System.err.println("| ");
+						System.out.println("|    ---");
+						System.err.println("| ");
 						
 					}
 					System.out.println("|------------------------------------------------------");
