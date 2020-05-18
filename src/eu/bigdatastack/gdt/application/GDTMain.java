@@ -1,5 +1,6 @@
 package eu.bigdatastack.gdt.application;
 
+import java.io.File;
 import java.util.Map;
 
 import eu.bigdatastack.gdt.lxdb.LXDB;
@@ -38,6 +39,16 @@ public class GDTMain {
 		String rmqusername = System.getenv("rmqusername");
 		String rmqpassword = System.getenv("rmqpassword");
 		
+		if (args.length==0) {
+			System.out.println("### GDT Help ###");
+			System.out.println("Available Commands: ");
+			System.out.println("  register: Adds a new app, object, sequence or metric");
+			System.out.println("  list: lists existing objects");
+			System.out.println("  monitor: start or stop monitoring");
+			System.out.println("  sequence: launch new operation sequences");
+			System.out.println("  describe: describe objects");
+			return;
+		}
 		
 		// Launch as a monitoring instance
 		if (args[0].equalsIgnoreCase("namespaceMonitor")) {
@@ -114,6 +125,21 @@ public class GDTMain {
 			return;
 			
 			
+		} else {
+			
+			System.out.print("Reading Config...");
+			// config
+			GDTConfig config = new GDTConfig(new File("gdt.config.json"));
+			System.out.println("OK");
+
+			// Manager
+			System.out.print("Creating Manager and Checking State...");
+			GDTManager manager = new GDTManager(config);
+			System.out.println("OK");
+			
+			GDTCLI cli = new GDTCLI(manager);
+			
+			cli.processCommand(args);
 		}
 		
 	}

@@ -29,11 +29,12 @@ public class BigDataStackApplicationIO implements Timed {
 
 	LXDB client;
 	long totalTime = 0;
+	boolean init = false;
 
 	public BigDataStackApplicationIO(LXDB client) throws SQLException {
 		this.client = client;
 
-		initTable();
+		//initTable();
 	}
 
 	/**
@@ -81,6 +82,7 @@ public class BigDataStackApplicationIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean addApplication(BigDataStackApplication app) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -96,7 +98,7 @@ public class BigDataStackApplicationIO implements Timed {
 					SQLUtils.prepareText(mapper.writeValueAsString(app.getTypes()),1000)+
 					" )");
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			conn.close();
 			return false;
 		}
@@ -118,6 +120,7 @@ public class BigDataStackApplicationIO implements Timed {
 	 */
 	@SuppressWarnings("unchecked")
 	public BigDataStackApplication getApp(String appID, String owner, String namepace) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -162,6 +165,7 @@ public class BigDataStackApplicationIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean updateApp(BigDataStackApplication app) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -194,6 +198,7 @@ public class BigDataStackApplicationIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackApplication> getApplications(String owner) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -242,6 +247,7 @@ public class BigDataStackApplicationIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		

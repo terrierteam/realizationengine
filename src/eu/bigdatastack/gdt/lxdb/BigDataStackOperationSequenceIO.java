@@ -34,13 +34,13 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	
 	LXDB client;
 	long totalTime = 0;
-	
+	boolean init = false;
 	public BigDataStackOperationSequenceIO(LXDB client, boolean template) throws SQLException {
 		this.client = client;
 		
 		if (template) tableName=tableName+"Templates";
 		
-		initTable();
+		//initTable();
 	}
 	
 	/**
@@ -93,6 +93,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	 * @throws JsonProcessingException 
 	 */
 	public boolean addSequence(BigDataStackOperationSequence sequence) throws SQLException, JsonProcessingException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		String operationsAsJson = mapper.writeValueAsString(sequence.getOperations());
 		String parametersAsJson = mapper.writeValueAsString(sequence.getParameters());
@@ -142,6 +143,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	 * @throws SQLException
 	 */
 	public BigDataStackOperationSequence getSequence(String appID, String sequenceID, int instance) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -215,6 +217,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	 * @throws JsonProcessingException 
 	 */
 	public boolean updateSequence(BigDataStackOperationSequence sequence) throws SQLException, JsonProcessingException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		String operationsAsJson = mapper.writeValueAsString(sequence.getOperations());
 		String parametersAsJson = mapper.writeValueAsString(sequence.getParameters());
@@ -267,6 +270,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackOperationSequence> getOperationSequences(String appID) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -336,6 +340,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackOperationSequence> getOperationSequences(String appID, String sequenceID) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -404,6 +409,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	 * @throws SQLException
 	 */
 	public BigDataStackOperationSequence getOperationSequence(String appID, String sequenceID, int instance) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -468,6 +474,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		

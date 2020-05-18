@@ -1,0 +1,133 @@
+appID: "atoswl"
+name: "Deep Learning Grocery Recommender"
+description: "A grocery recommendation application. Contains both learning and serving components"
+owner: "richardm"
+namespace: "richardmproject"
+types:
+ - playbook
+
+
+metrics:
+  - owner: "$owner$"
+    name: "ndcg_at_k_valid"
+    metricClassname: "Double"
+    summary: "(Normalised discounted cumulative gain (NDCG) is a measure of ranking quality, typically used in information retrieval. This version of the metric is calculated on the validation set to rank k." 
+    maximumValue: 1.0
+    minimumValue: 0.0
+    higherIsBetter: True
+    displayUnit: "NDCG@K"
+  - owner: "$owner$"
+    name: "ndcg_at_k_test"
+    metricClassname: "Double"
+    summary: "(Normalised discounted cumulative gain (NDCG) is a measure of ranking quality, typically used in information retrieval. This version of the metric is calculated on the test set to rank k." 
+    maximumValue: 1.0
+    minimumValue: 0.0
+    higherIsBetter: True
+    displayUnit: "NDCG@K"
+
+objects:
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "atoswl-train"
+    type: Job
+    yamlSource:
+      kind: Job
+      apiVersion: batch/v1
+      metadata:
+        name: $objectID$-$instance$
+        namespace: $namespace$
+        labels:
+          app: atoswl
+      spec:
+        parallelism: 1
+        completions: 1
+        backoffLimit: 3
+        template:
+          metadata:
+            labels:
+              app: $appID$
+          spec:
+            nodeSelector:
+              node-role.ida/gpu2080ti: 'true'
+            restartPolicy: OnFailure
+            schedulerName: default-scheduler
+            securityContext: {}
+            containers:
+              - resources:
+                 limits:
+                    cpu: '6'
+                    memory: 56Gi
+                    nvidia.com/gpu: '1'
+                 requests:
+                    cpu: '3'
+                    memory: 18Gi
+                    nvidia.com/gpu: '1'
+                name: recommenderframework
+                command:
+                  - /yes/envs/py37torch13/bin/python
+                imagePullPolicy: Always
+                volumeMounts:
+                  - name: nfs-access
+                    mountPath: /nfs/
+                terminationMessagePolicy: File
+                image: 'docker-registry.default.svc:5000/$namespace$/is-cikm-rerun:latest'
+                workingDir: /nfs/RecFramework/cikm_rerun/examples/
+                args:
+                  - train_vbcar.py
+                  - '--dataset'
+                  - tafeng
+                  - '--emb_dim'
+                  - '64'
+                  - '--batch_size'
+                  - '512'
+                ports:
+                  - name: promexporter
+                    containerPort: 8003
+                    protocol: TCP
+                env:
+                  - name: "owner"
+                    value: "$owner$"
+                  - name: "namespace"
+                    value: "$namespace$"
+                  - name: "appID"
+                    value: "$appID$"
+                  - name: "instance"
+                    value: "$instance$"
+                  - name: "objectID"
+                    value: "$objectID$"
+            serviceAccount: containerroot
+            volumes:
+              - name: nfs-access
+                persistentVolumeClaim:
+                  claimName: zaiqiaovol1claim
+            dnsPolicy: ClusterFirst
+
+sequences:
+  - appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    sequenceID: "trainmodel"
+    name: "Product Recommender Model Training"
+    description: "Deploys a instance of the GLA recommendation framework and trains a model. Sequence will copy validation performance metrics into the central database until the learning job ends."
+    parameters: {}
+    operations:
+      - className: Instantiate
+        objectID: "atoswl-train"
+        defineInstanceRef: "trainingInstance"
+      - className: SetSequenceParameters
+        instanceRef: "trainingInstance"
+      - className: Apply
+        instanceRef: "trainingInstance"
+      - className: NewMetricValues
+        instanceRef: "trainingInstance"
+        metrics: 
+          - "ndcg_at_k_valid"
+          - "ndcg_at_k_test"
+      - className: RecordMetricsUntil
+        metrics:
+          - "ndcg_at_k_valid"
+          - "ndcg_at_k_test"
+        instanceRef: "trainingInstance"
+        waitForStatus: "Complete"
+        gracePeriodSec: 30
+    mode: Continue

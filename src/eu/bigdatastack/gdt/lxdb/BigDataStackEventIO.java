@@ -26,11 +26,11 @@ public class BigDataStackEventIO implements Timed {
 
 	LXDB client;
 	long totalTime = 0;
-	
+	boolean init = false;
 	public BigDataStackEventIO(LXDB client) throws SQLException {
 		this.client = client;
 
-		initTable();
+		//initTable();
 	}
 
 	/**
@@ -75,6 +75,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean addEvent(BigDataStackEvent event) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -113,6 +114,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, BigDataStackEventSeverity severity, String objectID, long startTime, long endTime) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long ostartTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -173,6 +175,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public int getEventCount(String appID, String owner) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -373,6 +376,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 

@@ -28,6 +28,7 @@ public class PrometheusDataClient {
 	public boolean update(BigDataStackMetricValue existingValue) {
 		
 		JsonNode response = basicQuery(existingValue);
+		//System.err.println(response.toString());
 		if (response==null) return false;
 
 		if (response.has("status") && !response.get("status").asText().equalsIgnoreCase("success")) return false;
@@ -95,13 +96,19 @@ public class PrometheusDataClient {
 		
 		int index = 0;
 		for (Map<String,String> currentSet : labelSets) {
+			boolean labelMatch = false;
 			for (Map<String,String> existingSet : existingValue.getLabels()) {
-				if (!labelMatch(existingSet, currentSet)) {
-					newValues.add(values.get(index));
-					newTimes.add(times.get(index));
-					newLabelSets.add(labelSets.get(index));
+				if (labelMatch(existingSet, currentSet)) {
+					labelMatch = true;
 				}
 			}
+			
+			if (labelMatch) continue;
+			
+			newValues.add(values.get(index));
+			newTimes.add(times.get(index));
+			newLabelSets.add(labelSets.get(index));
+			
 			index++;
 		}
 		

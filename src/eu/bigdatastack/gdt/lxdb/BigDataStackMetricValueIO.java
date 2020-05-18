@@ -25,11 +25,11 @@ public class BigDataStackMetricValueIO implements Timed {
 
 	LXDB client;
 	long totalTime = 0;
-
+	boolean init = false;
 	public BigDataStackMetricValueIO(LXDB client) throws SQLException {
 		this.client = client;
 
-		initTable();
+		//initTable();
 	}
 
 	/**
@@ -79,6 +79,7 @@ public class BigDataStackMetricValueIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean addMetricValue(BigDataStackMetricValue metricValue) throws Exception {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		
 		String valuesAsJson = mapper.writeValueAsString(metricValue.getValue());
@@ -131,6 +132,7 @@ public class BigDataStackMetricValueIO implements Timed {
 	 * @throws IOException
 	 */
 	public List<BigDataStackMetricValue> getMetricValues(String appID, String owner, String namepace, String objectID) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -186,6 +188,7 @@ public class BigDataStackMetricValueIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean updateMetricValue(BigDataStackMetricValue metricValue) throws Exception {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		
 		
@@ -233,6 +236,7 @@ public class BigDataStackMetricValueIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		

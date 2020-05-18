@@ -21,11 +21,11 @@ public class BigDataStackNamespaceStateIO implements Timed {
 
 	LXDB client;
 	long totalTime = 0;
-
+	boolean init = false;
 	public BigDataStackNamespaceStateIO(LXDB client) throws SQLException {
 		this.client = client;
 
-		initTable();
+		//initTable();
 	}
 
 	/**
@@ -50,7 +50,7 @@ public class BigDataStackNamespaceStateIO implements Timed {
 		if (!tableExists) {
 			Statement statement = conn.createStatement();
 			statement.executeUpdate("CREATE TABLE "+tableName+" ( "+
-					"namepace VARCHAR(140), "+
+					"namespace VARCHAR(140), "+
 					"host VARCHAR(200), "+
 					"port INT, "+
 					"clusterMonitoringActive BOOLEAN, "+
@@ -65,7 +65,7 @@ public class BigDataStackNamespaceStateIO implements Timed {
 					"eventExchangeActive BOOLEAN, "+
 					"eventExchangeHost VARCHAR(200), "+
 					"eventExchangePort INT, "+
-					"PRIMARY KEY (namepace)"+
+					"PRIMARY KEY (namespace)"+
 					")");
 
 			conn.commit();
@@ -81,12 +81,13 @@ public class BigDataStackNamespaceStateIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean addNamespace(BigDataStackNamespaceState namespace) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
 		try {
-			statement.executeUpdate("INSERT INTO "+tableName+" (namepace, host, port, clusterMonitoringActive, clusterMonitoringHost, clusterMonitoringPort, metricStoreActive, metricStoreHost, metricStorePort, logSearchActive, logSearchHost, logSearchPort, eventExchangeActive, eventExchangeHost, eventExchangePort)"+
+			statement.executeUpdate("INSERT INTO "+tableName+" (namespace, host, port, clusterMonitoringActive, clusterMonitoringHost, clusterMonitoringPort, metricStoreActive, metricStoreHost, metricStorePort, logSearchActive, logSearchHost, logSearchPort, eventExchangeActive, eventExchangeHost, eventExchangePort)"+
 					" VALUES ( "+
 					SQLUtils.prepareText(namespace.getNamespace(),140)+", "+
 					SQLUtils.prepareText(namespace.getHost(),200)+", "+
@@ -126,6 +127,7 @@ public class BigDataStackNamespaceStateIO implements Timed {
 	 * @throws IOException
 	 */
 	public BigDataStackNamespaceState getNamespace(String namespace) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -177,6 +179,7 @@ public class BigDataStackNamespaceStateIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean updateNamespace(BigDataStackNamespaceState namespace) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -221,6 +224,7 @@ public class BigDataStackNamespaceStateIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		

@@ -26,13 +26,13 @@ public class BigDataStackObjectIO implements Timed {
 	
 	LXDB client;
 	long totalTime = 0;
-	
+	boolean init = false;
 	public BigDataStackObjectIO(LXDB client, boolean template) throws SQLException {
 		this.client = client;
 		
 		if (template) tableName=tableName+"Templates";
 		
-		initTable();
+		//initTable();
 	}
 	
 	/**
@@ -40,6 +40,7 @@ public class BigDataStackObjectIO implements Timed {
 	 * @throws SQLException
 	 */
 	public void initTable() throws SQLException {
+		
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -82,6 +83,7 @@ public class BigDataStackObjectIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean addObject(BigDataStackObjectDefinition object) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		if (object.getYamlSource().length()>=65535) return false;
 		
@@ -128,6 +130,7 @@ public class BigDataStackObjectIO implements Timed {
 	 * @throws IOException
 	 */
 	public BigDataStackObjectDefinition getObject(String objectID, String owner, int instance) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -176,6 +179,7 @@ public class BigDataStackObjectIO implements Timed {
 	 * @throws IOException
 	 */
 	public List<BigDataStackObjectDefinition> getObjects(String objectID, String owner, String namespace, String appID) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -226,6 +230,7 @@ public class BigDataStackObjectIO implements Timed {
 	 * @throws IOException
 	 */
 	public List<BigDataStackObjectDefinition> getObjectList(String owner, String namespace, String appID) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -287,6 +292,7 @@ public class BigDataStackObjectIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean updateObject(BigDataStackObjectDefinition object) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		if (object.getYamlSource().length()>=65535) return false;
 		
@@ -331,6 +337,7 @@ public class BigDataStackObjectIO implements Timed {
 	 * @throws SQLException
 	 */
 	public int getObjectCount(String objectID, String owner) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -369,6 +376,7 @@ public class BigDataStackObjectIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		

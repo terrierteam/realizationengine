@@ -24,11 +24,11 @@ public class BigDataStackCredentialsIO implements Timed {
 
 	LXDB client;
 	long totalTime = 0;
-
+	boolean init = false;
 	public BigDataStackCredentialsIO(LXDB client) throws SQLException {
 		this.client = client;
 
-		initTable();
+		//initTable();
 	}
 
 	/**
@@ -74,6 +74,7 @@ public class BigDataStackCredentialsIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean addCredential(BigDataStackCredentials credential) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -115,6 +116,7 @@ public class BigDataStackCredentialsIO implements Timed {
 	 */
 	@SuppressWarnings("unchecked")
 	public BigDataStackCredentials getCredential(String owner, BigDataStackCredentialsType type) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 
@@ -159,6 +161,7 @@ public class BigDataStackCredentialsIO implements Timed {
 	 * @throws SQLException
 	 */
 	public String getNewToken(String owner, String password, BigDataStackCredentialsType type) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		BigDataStackCredentials credentials = getCredential(owner, type);
 		if (!credentials.getPassword().equals(password)) return null;
@@ -194,6 +197,7 @@ public class BigDataStackCredentialsIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean updatePassweord(String owner, BigDataStackCredentialsType type, String username, String password) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		BigDataStackCredentials credentials = getCredential(owner, type);
 		if (!credentials.getPassword().equals(password) || !username.equals(credentials.getUsername())) return false;
@@ -232,6 +236,7 @@ public class BigDataStackCredentialsIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		

@@ -6,7 +6,7 @@ yamlSource:
   apiVersion: v1
   kind: ConfigMap
   metadata:
-    name: $objectID$
+    name: $objectID$-$instance$
     namespace: $namespace$
   data:
     prometheus.env.yaml: >

@@ -21,11 +21,11 @@ public class BigDataStackMetricIO implements Timed {
 	
 	LXDB client;
 	long totalTime = 0;
-	
+	boolean init = false;
 	public BigDataStackMetricIO(LXDB client) throws SQLException {
 		this.client = client;
 		
-		initTable();
+		//initTable();
 	}
 	
 	/**
@@ -74,6 +74,7 @@ public class BigDataStackMetricIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean addMetric(BigDataStackMetric metric) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -111,6 +112,7 @@ public class BigDataStackMetricIO implements Timed {
 	 * @throws SQLException
 	 */
 	public BigDataStackMetric getMetric(String owner, String metricName) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -155,18 +157,17 @@ public class BigDataStackMetricIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean updateMetric(BigDataStackMetric metric) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		try {
 			Statement statement = conn.createStatement();
 			statement.executeUpdate("UPDATE "+tableName+" SET "+
-					"owner="+SQLUtils.prepareText(metric.getOwner(),140)+", "+
-					"name="+SQLUtils.prepareText(metric.getName(),140)+", "+
 					"metricClassname="+SQLUtils.prepareText(metric.getMetricClassname().name(),20)+", "+
 					"summary="+SQLUtils.prepareText(metric.getSummary(),3000)+", "+
-					"maximumValue="+formater.format(metric.getMaximumValue())+", "+
-					"minimumValue="+formater.format(metric.getMinimumValue())+", "+
+					"maximumValue='"+formater.format(metric.getMaximumValue())+"', "+
+					"minimumValue='"+formater.format(metric.getMinimumValue())+"', "+
 					"higherIsBetter="+metric.isHigherIsBetter()+", "+
 					"displayUnit="+SQLUtils.prepareText(metric.getDisplayUnit(),100)+
 					" WHERE name="+SQLUtils.prepareText(metric.getName(),140)+" AND owner="+SQLUtils.prepareText(metric.getOwner(),140));
@@ -190,6 +191,7 @@ public class BigDataStackMetricIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		

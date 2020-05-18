@@ -13,10 +13,10 @@ public class SetupTest {
 		
 		// Config
 				GDTConfig config = new GDTConfig(new File("gdt.config.json"));
-				//TestUtil.clearDatabase(config.getDatabase());
+				TestUtil.clearDatabase(config.getDatabase());
 
 				// Manager
-				GDTManager manager = new GDTManager(config);
+				/*GDTManager manager = new GDTManager(config);
 
 				// Register Namespace
 				BigDataStackNamespaceState namespace = manager.registerNamespace(new File("resources/bigdatastack/unitTest2/unitTest2.namespace,yaml"));
@@ -28,7 +28,7 @@ public class SetupTest {
 				
 				manager.printTimings();
 				
-				manager.shutdown();
+				manager.shutdown();*/
 				
 				
 				

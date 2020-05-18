@@ -16,11 +16,11 @@ public class BigDataStackPodStatusIO implements Timed {
 
 	LXDB client;
 	long totalTime = 0;
-
+	boolean init = false;
 	public BigDataStackPodStatusIO(LXDB client) throws SQLException {
 		this.client = client;
 
-		initTable();
+		//initTable();
 	}
 
 	/**
@@ -65,7 +65,9 @@ public class BigDataStackPodStatusIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean addPodStatus(BigDataStackPodStatus status) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
+		
 		Connection conn = client.openConnection();
 
 		Statement statement = conn.createStatement();
@@ -101,6 +103,7 @@ public class BigDataStackPodStatusIO implements Timed {
 	 * @throws SQLException
 	 */
 	public BigDataStackPodStatus getPodStatus(String podID) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -147,6 +150,7 @@ public class BigDataStackPodStatusIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean updatePodStatus(BigDataStackPodStatus status) throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
@@ -182,6 +186,7 @@ public class BigDataStackPodStatusIO implements Timed {
 	 * @throws SQLException
 	 */
 	public boolean clearTable() throws SQLException {
+		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		

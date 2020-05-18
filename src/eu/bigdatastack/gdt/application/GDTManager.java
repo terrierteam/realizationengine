@@ -4,11 +4,14 @@ import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.openshift.restclient.model.IPod;
 import com.openshift.restclient.model.IProject;
 
@@ -34,6 +37,7 @@ import eu.bigdatastack.gdt.structures.config.GDTConfig;
 import eu.bigdatastack.gdt.structures.config.OpenshiftConfig;
 import eu.bigdatastack.gdt.structures.config.RabbitMQConf;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
+import eu.bigdatastack.gdt.structures.data.BigDataStackApplicationType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackCredentials;
 import eu.bigdatastack.gdt.structures.data.BigDataStackCredentialsType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
@@ -1079,6 +1083,76 @@ public class GDTManager implements Manager {
 	}
 
 
+	public void loadPlaybook(String yaml) {
+		
+		try {
+			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+			JsonNode node = mapper.readTree(yaml);
+			
+			List<BigDataStackApplicationType> types = new ArrayList<BigDataStackApplicationType>();
+			Iterator<JsonNode> typeI = node.get("types").iterator();
+			while (typeI.hasNext()) types.add(BigDataStackApplicationType.valueOf(typeI.next().textValue()));
+			
+			BigDataStackApplication app = new BigDataStackApplication(
+					node.get("appID").asText(), 
+					node.get("name").asText(), 
+					node.get("description").asText(), 
+					node.get("owner").asText(), 
+					node.get("namespace").asText(),
+					types);
+			
+			registerApplication(new YAMLMapper().writeValueAsString(app));
+			
+			if (node.has("metrics")) {
+				JsonNode metrics = node.get("metrics");
+				Iterator<JsonNode> metricI = metrics.iterator();
+				while (metricI.hasNext()) {
+					String jsonAsYaml = new YAMLMapper().writeValueAsString(metricI.next());
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), app.getOwner(), app.getNamespace());
+					registerMetric(jsonAsYaml);
+				}
+			}
+			
+			if (node.has("objects")) {
+				JsonNode objects = node.get("objects");
+				Iterator<JsonNode> objectsI = objects.iterator();
+				while (objectsI.hasNext()) {
+					String jsonAsYaml = new YAMLMapper().writeValueAsString(objectsI.next());
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), app.getOwner(), app.getNamespace());
+					registerObject(jsonAsYaml);
+				}
+			}
+			
+			
+			if (node.has("sequences")) {
+				JsonNode sequences = node.get("sequences");
+				Iterator<JsonNode> sequencesI = sequences.iterator();
+				while (sequencesI.hasNext()) {
+					String jsonAsYaml = new YAMLMapper().writeValueAsString(sequencesI.next());
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), app.getOwner(), app.getNamespace());
+					registerOperationSequence(jsonAsYaml);
+				}
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	protected static String replaceDefaultParameters(String yaml, String appID, String owner, String namespace) {
+		yaml = yaml.replaceAll("\\$appID\\$", appID);
+		yaml = yaml.replaceAll("\\$owner\\$", owner);
+		yaml = yaml.replaceAll("\\$namespace\\$", namespace);
+		
+		yaml = yaml.replaceAll("\\$appid\\$", appID);
+		
+		yaml = yaml.replaceAll("\\$APPID\\$", appID);
+		yaml = yaml.replaceAll("\\$OWNER\\$", owner);
+		yaml = yaml.replaceAll("\\$NAMESPACE\\$", namespace);
+		
+		return yaml;
+	}
 
 
 }
