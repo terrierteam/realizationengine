@@ -108,7 +108,7 @@ public class RecordMetricsUntil extends BigDataStackOperation{
 
 	@Override
 	public String describeOperation() {
-		return "Creates a new set of metric value objects in the database that can be used to maintain a set of metrics.";
+		return "Iteratively checks and Stores metric values until "+instanceRef+" reaches status "+waitForStatus;
 	}
 	
 	

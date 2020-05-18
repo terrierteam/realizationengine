@@ -67,7 +67,12 @@ public class IJob {
 			}
 		}
 		
-		if (statuses.size()==0) statuses.add("Unknown");
+		if (statuses.size()==0) {
+			if (status.has("active")) {
+				int numActive = status.get("active").asInt();
+				if (numActive>0) statuses.add("In Progress");
+			} else statuses.add("Unknown");
+		}
 		
 		return statuses;
 	}

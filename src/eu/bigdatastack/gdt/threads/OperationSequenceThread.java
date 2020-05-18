@@ -179,6 +179,7 @@ public class OperationSequenceThread implements Runnable {
 				case NotStarted:
 					// clean state, ready to run
 					operation.setState(BigDataStackOperationState.InProgress);
+					sequenceIO.updateSequence(sequence);
 					operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this, eventUtil);
 					break; 
 				case InProgress:
@@ -186,6 +187,7 @@ public class OperationSequenceThread implements Runnable {
 					// in an unknown state, we will need to clean up before running again
 					if (!tryCleanUpPreviousOperation(operation)) break;
 					operation.setState(BigDataStackOperationState.InProgress);
+					sequenceIO.updateSequence(sequence);
 					operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this, eventUtil);
 					break;
 				case Completed:
@@ -193,6 +195,7 @@ public class OperationSequenceThread implements Runnable {
 					case Run:
 						if (!tryCleanUpPreviousOperation(operation)) break;
 						operation.setState(BigDataStackOperationState.InProgress);
+						sequenceIO.updateSequence(sequence);
 						operationSucceeded = operation.execute(database, operationsClient, statusClient, mailboxClient, prometheusDataClient, this, eventUtil);
 						break;
 					case Continue:
