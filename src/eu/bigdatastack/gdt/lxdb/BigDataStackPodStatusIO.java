@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import eu.bigdatastack.gdt.structures.Timed;
 import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
@@ -46,7 +48,7 @@ public class BigDataStackPodStatusIO implements Timed {
 		if (!tableExists) {
 			Statement statement = conn.createStatement();
 			statement.executeUpdate("CREATE TABLE " + tableName + " ( " + "appID VARCHAR(100), "
-					+ "owner VARCHAR(140), " + "podID VARCHAR(100), " + "objectID VARCHAR(100), " + "namespace VARCHAR(140), "
+					+ "owner VARCHAR(140), " + "podID VARCHAR(100), " + "objectID VARCHAR(100), " + "namespace VARCHAR(140), " + "instance INT, "
 					+ "status VARCHAR(100), " + "podIP VARCHAR(50), " + "hostIP VARCHAR(50), "
 					+ "PRIMARY KEY (podID)" + ")");
 
@@ -73,7 +75,7 @@ public class BigDataStackPodStatusIO implements Timed {
 		Statement statement = conn.createStatement();
 		try {
 			statement.executeUpdate("INSERT INTO " + tableName
-					+ " (appID, owner, podID, objectID, namespace, status, podIP, hostIP)"
+					+ " (appID, owner, podID, objectID, namespace, status, podIP, hostIP, instance)"
 					+ " VALUES ( " + SQLUtils.prepareText(status.getAppID(), 100) + ", "
 					+ SQLUtils.prepareText(status.getOwner(), 140) + ", "
 					+ SQLUtils.prepareText(status.getPodID(), 100) + ", "
@@ -81,7 +83,8 @@ public class BigDataStackPodStatusIO implements Timed {
 					+ SQLUtils.prepareText(status.getNamespace(), 140) + ", "
 					+ SQLUtils.prepareText(status.getStatus(), 100) + ", "
 					+ SQLUtils.prepareText(status.getPodIP(), 50) + ", "
-					+ SQLUtils.prepareText(status.getHostIP(), 50) + " )");
+					+ SQLUtils.prepareText(status.getHostIP(), 50) + ", "
+					+ status.getInstance() + " )");
 		} catch (Exception e) {
 			//e.printStackTrace();
 			conn.close();
@@ -125,6 +128,7 @@ public class BigDataStackPodStatusIO implements Timed {
 						results.getString("owner"),
 						results.getString("namespace"),
 						results.getString("objectID"),
+						results.getInt("instance"),
 						results.getString("podID"),
 						results.getString("status"),
 						results.getString("hostIP"),
@@ -144,6 +148,61 @@ public class BigDataStackPodStatusIO implements Timed {
 	}
 	
 	/**
+	 * Returns the status for a particular named pod. 
+	 * @param appID
+	 * @param objectID
+	 * @param podID
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackPodStatus> getPodStatuses(String appID, String owner, String objectID, String namespace, int instance) throws SQLException {
+		if (!init) { initTable(); init=true;}
+		long startTime = System.currentTimeMillis();
+		Connection conn = client.openConnection();
+		
+		Statement statement = conn.createStatement();
+		
+		StringBuilder baseStatement = new StringBuilder();
+		baseStatement.append("SELECT * FROM "+tableName+" WHERE owner='"+owner+"'");
+		if (namespace!=null) baseStatement.append(" AND namespace='"+namespace+"'");
+		if (appID!=null) baseStatement.append(" AND appID='"+appID+"'");
+		if (objectID!=null) baseStatement.append(" AND objectID='"+objectID+"'");
+		if (instance>=0) baseStatement.append(" AND instance="+instance);
+		statement.execute(baseStatement.toString());
+		ResultSet results = statement.getResultSet();
+		
+		List<BigDataStackPodStatus> statuses = new ArrayList<BigDataStackPodStatus>();
+		
+		 try {
+			while (results.next()) {
+				 
+				BigDataStackPodStatus status = new BigDataStackPodStatus(
+						results.getString("appID"),
+						results.getString("owner"),
+						results.getString("namespace"),
+						results.getString("objectID"),
+						results.getInt("instance"),
+						results.getString("podID"),
+						results.getString("status"),
+						results.getString("hostIP"),
+						results.getString("podIP")
+						);
+				
+				statuses.add(status);
+
+			 }
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		 
+		
+		
+		conn.close();
+		totalTime+=System.currentTimeMillis()-startTime;
+		return statuses;
+	}
+	
+	/**
 	 * Update the data for an existing BigDataStack status for a pod. 
 	 * @param status
 	 * @return
@@ -159,6 +218,7 @@ public class BigDataStackPodStatusIO implements Timed {
 			PreparedStatement statement = conn.prepareStatement("UPDATE "+tableName+" SET status=?, podIP=?, hostIP=?"+
 					" WHERE appID="+SQLUtils.prepareText(status.getAppID(),100)+
 					" AND objectID="+SQLUtils.prepareText(status.getObjectID(),100)+
+					" AND instance="+status.getInstance()+
 					" AND podID="+SQLUtils.prepareText(status.getPodID(),100));
 			
 			statement.setNString(1, SQLUtils.prepareTextNoQuote(status.getStatus(),100));
