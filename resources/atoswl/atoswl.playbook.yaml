@@ -34,7 +34,7 @@ objects:
       kind: Job
       apiVersion: batch/v1
       metadata:
-        name: $objectID$-$instance$
+        name: $appID$-$objectID$-$instance$
         namespace: $namespace$
         labels:
           app: atoswl
@@ -77,9 +77,9 @@ objects:
                   - '--dataset'
                   - tafeng
                   - '--emb_dim'
-                  - '64'
+                  - '$emb_dim$'
                   - '--batch_size'
-                  - '512'
+                  - '$batch_size$'
                 ports:
                   - name: promexporter
                     containerPort: 8003

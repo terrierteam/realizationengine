@@ -1,13 +1,20 @@
 package eu.bigdatastack.gdt.application;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
+import eu.bigdatastack.gdt.operations.Apply;
+import eu.bigdatastack.gdt.operations.BigDataStackOperation;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
 import eu.bigdatastack.gdt.structures.data.BigDataStackNamespaceState;
+import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
+import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.util.GDTFileUtil;
 
@@ -20,6 +27,7 @@ public class GDTCLI {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	public void processCommand(String[] args) throws Exception {
 		
 		switch (args[0]) {
@@ -77,6 +85,7 @@ public class GDTCLI {
 		case "sequence":
 			if (args.length==1) {
 				System.out.println("sequence [start|startsync] <appID> <sequenceID>");
+				System.out.println("sequence [start] <appID> <sequenceID> param1=val1,param2=val2");
 			} else {
 				BigDataStackOperationSequence seq;
 				switch (args[1]) {
@@ -86,7 +95,14 @@ public class GDTCLI {
 						System.out.println("Sequence in app "+args[2]+" with id "+args[3]+" not found");
 						return;
 					}
-					manager.executeSequenceFromTemplate(seq);
+					Map<String,String> params = new HashMap<String,String>();
+					if (args.length==5) {
+						String[] parts = args[4].split(",");
+						for (String part : parts) {
+							params.put(part.split("=")[0], part.split("=")[1]);
+						}
+					}
+					manager.executeSequenceFromTemplate(seq, params);
 					break;
 				case "startsync":
 					seq = manager.sequenceTemplateClient.getOperationSequence(args[2], args[3], 0);
@@ -165,6 +181,57 @@ public class GDTCLI {
 				case "apps":
 					List<BigDataStackApplication> apps = manager.appClient.getApplications(args[2]);
 					for (BigDataStackApplication app : apps) System.out.println(app.getAppID()+": "+app.getName());
+					break;
+				default:
+					System.out.println("list events <owner> <appID>");
+					System.out.println("list apps <owner>");
+				}
+			}
+			
+			break;
+			
+		case "summarize":
+			if (args.length==1) {
+				System.out.println("list events <owner> <appID>");
+				System.out.println("list apps <owner>");
+			} else {
+				switch (args[1]) {
+				case "sequence":
+					BigDataStackOperationSequence sequenceTemplate = manager.getSequenceTemplateClient().getSequence(args[2], args[3]);
+					System.out.println("|------------------------------------------------------");
+					System.out.println("| ID: "+sequenceTemplate.getSequenceID());
+					System.out.println("| Title: "+sequenceTemplate.getName());
+					System.out.println("| Owned By: "+sequenceTemplate.getOwner());
+					System.out.println("| Namespace: "+sequenceTemplate.getNamespace());
+					System.out.println("|------------------------------------------------------");
+					System.out.println();
+					System.out.println("|------------------------------------------------------");
+					System.out.println("| Operations: ");
+					for (BigDataStackOperation operation : sequenceTemplate.getOperations()) {
+						System.out.println("| > "+operation.getClassName()+": "+operation.describeOperation());
+					}
+					System.out.println("|------------------------------------------------------");
+					System.out.println();
+					System.out.println("|------------------------------------------------------");
+					System.out.println("| Instances: ");
+					List<BigDataStackOperationSequence> sequences = manager.getSequenceInstanceClient().getOperationSequences(args[2], args[3]);
+					for (BigDataStackOperationSequence sequence : sequences) {
+						if (sequence.getCurrentOperation()==null) System.out.println("| > "+sequence.getIndex()+": Not Started");
+						else System.out.println("| > "+sequence.getIndex()+": "+sequence.getCurrentOperation().getClassName()+"="+sequence.getCurrentOperation().getState());
+						for (BigDataStackOperation operation : sequence.getOperations()) {
+							if (operation instanceof Apply) {
+								Apply apply = (Apply)operation;
+								String[] objectID = sequence.getParameters().get(apply.getInstanceRef()).split(":");
+								BigDataStackObjectDefinition objectDef = manager.objectInstanceClient.getObject(objectID[0], sequenceTemplate.getOwner(), Integer.parseInt(objectID[1]));
+								if (objectDef==null) continue;
+								if (objectDef.getType()==BigDataStackObjectType.DeploymentConfig || objectDef.getType()==BigDataStackObjectType.Job) {
+									System.out.println("|     - "+objectDef.getObjectID()+"("+objectDef.getInstance()+") of type "+objectDef.getType()+", states="+objectDef.getStatus());
+								}
+								
+							}
+						}
+					}
+					System.out.println("|------------------------------------------------------");
 					break;
 				default:
 					System.out.println("list events <owner> <appID>");
