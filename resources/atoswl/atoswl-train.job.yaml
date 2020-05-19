@@ -49,11 +49,11 @@ yamlSource:
             args:
               - train_vbcar.py
               - '--dataset'
-              - tafeng
+              - $dataset$
               - '--emb_dim'
               - '$emb_dim$'
               - '--batch_size'
-              - '$batch_size$'
+              - '256'
             ports:
               - name: promexporter
                 containerPort: 8003

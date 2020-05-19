@@ -13,6 +13,7 @@ import eu.bigdatastack.gdt.structures.config.RabbitMQConf;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
+import eu.bigdatastack.gdt.threads.CostExporter;
 import eu.bigdatastack.gdt.threads.OpenshiftProjectMonitoringThread;
 
 public class GDTMain {
@@ -125,6 +126,21 @@ public class GDTMain {
 			return;
 			
 			
+		} else if (args[0].equalsIgnoreCase("costEstimator")) {
+			
+			
+			LXDB database = new LXDB(dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
+			
+			OpenshiftStatusClient openshiftStatus = new OpenshiftStatusClient(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			openshiftStatus.connectToOpenshift();
+			
+			RabbitMQClient rabbitMQClient = new RabbitMQClient(rmqhost, Integer.parseInt(rmqport), rmqusername, rmqpassword);
+			
+			CostExporter monitorThread = new CostExporter(openshiftStatus, rabbitMQClient, database, owner, namespace);
+			monitorThread.run();
+			openshiftStatus.close();
+			
+		// Launch as a processor for an Operation Sequence
 		} else {
 			
 			System.out.print("Reading Config...");
