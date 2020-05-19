@@ -3,6 +3,7 @@ package eu.bigdatastack.gdt.threads;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Random;
 
 import com.openshift.restclient.model.IProject;
 
@@ -79,12 +80,11 @@ public class CostExporter implements Runnable{
 			e1.printStackTrace();
 		}
 
-		IProject project = openshiftStatus.getProject(namespace); // here
-
+		Random r = new Random();
+		
 		while (!kill) {
 
 			try {
-				
 
 				List<BigDataStackApplication> applications = applicationIO.getApplications(owner);
 
@@ -96,13 +96,18 @@ public class CostExporter implements Runnable{
 						
 						if (objectDef==null) continue;
 						if (objectDef.getType()==BigDataStackObjectType.DeploymentConfig || objectDef.getType()==BigDataStackObjectType.Job) {
-							System.out.println("|     - "+objectDef.getObjectID()+"("+objectDef.getInstance()+") of type "+objectDef.getType()+", states="+objectDef.getStatus());
+							//System.out.println("|     - "+objectDef.getObjectID()+"("+objectDef.getInstance()+") of type "+objectDef.getType()+", states="+objectDef.getStatus());
 							List<BigDataStackPodStatus> statuses = podStatusIO.getPodStatuses(app.getAppID(), app.getOwner(), objectDef.getObjectID(), app.getNamespace(), objectDef.getInstance());
 							for (BigDataStackPodStatus status : statuses) {
 								
 								if (status.getStatus().equalsIgnoreCase("Running")) {
 									
-									double cost = 1.34; // replace with actual cost estimator
+									int amountToVary = r.nextInt(100);
+									double cost = 2.0;
+									if (r.nextBoolean()) cost += (1.0*amountToVary)/100;
+									else cost -= (1.0*amountToVary)/100;
+									
+									// replace with actual cost estimator
 									
 									costPerHour.labels(app.getOwner(), app.getNamespace(), app.getAppID(), objectDef.getObjectID(), String.valueOf(objectDef.getInstance())).set(cost);
 								}
@@ -120,7 +125,7 @@ public class CostExporter implements Runnable{
 			}
 
 			try {
-				Thread.sleep(10000);
+				Thread.sleep(60000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

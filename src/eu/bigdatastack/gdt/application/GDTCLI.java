@@ -36,7 +36,7 @@ public class GDTCLI {
 		switch (args[0]) {
 		case "register":
 			if (args.length==1) {
-				System.out.println("register [namespace|playbook|object|metric] </path/to/file.yaml>");
+				System.out.println("register [namespace|playbook|object|metric|sequence] </path/to/file.yaml>");
 			} else {
 				switch (args[1]) {
 				case "namespace":
@@ -51,8 +51,11 @@ public class GDTCLI {
 				case "metric":
 					manager.registerMetric(new File(args[2]));
 					break;
+				case "sequence":
+					manager.registerOperationSequence(new File(args[2]));
+					break;
 				default:
-					System.out.println("register [namespace|playbook|object|metric] </path/to/file.yaml>");
+					System.out.println("register [namespace|playbook|object|metric|sequence] </path/to/file.yaml>");
 				}
 			}
 			
@@ -195,8 +198,8 @@ public class GDTCLI {
 			
 		case "summarize":
 			if (args.length==1) {
-				System.out.println("list events <owner> <appID>");
-				System.out.println("list apps <owner>");
+				System.out.println("sequence <appID> <sequenceID>");
+				System.out.println("appmetrics <owner> <namespace> <appID>");
 			} else {
 				switch (args[1]) {
 				case "sequence":
@@ -290,8 +293,8 @@ public class GDTCLI {
 					System.out.println("|------------------------------------------------------");
 					break;
 				default:
-					System.out.println("list events <owner> <appID>");
-					System.out.println("list apps <owner>");
+					System.out.println("sequence <appID> <sequenceID>");
+					System.out.println("appmetrics <owner> <namespace> <appID>");
 				}
 			}
 			
