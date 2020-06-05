@@ -253,8 +253,18 @@ public class GDTManager implements Manager {
 	 * @return
 	 */
 	public BigDataStackObjectDefinition registerObject(String yaml) {
+		return registerObject(yaml, null);
+	}
+	
+	/**
+	 * Registers a new BigDataStack Object Definition with the database from a yaml format String
+	 * @param yaml
+	 * @return
+	 */
+	public BigDataStackObjectDefinition registerObject(String yaml, String namespace) {
 		try {
 			BigDataStackObjectDefinition object = GDTFileUtil.readObjectFromString(yaml);
+			if (namespace!=null) object.setNamespace(namespace);
 			if (!objectTemplateClient.addObject(object)) {
 				if (!objectTemplateClient.updateObject(object)) {
 					eventUtil.registerEvent(
@@ -299,6 +309,21 @@ public class GDTManager implements Manager {
 		try {
 			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
 			return registerObject(yaml);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new BigDataStack Object Definition with the database from a yaml format File
+	 * @param yamlFile
+	 * @return
+	 */
+	public BigDataStackObjectDefinition registerObject(File yamlFile, String namespace) {
+		try {
+			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
+			return registerObject(yaml, namespace);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -514,16 +539,26 @@ public class GDTManager implements Manager {
 		}
 	}
 
-
 	/**
 	 * Registers a new operation sequence with the database
 	 * @param namespace
 	 * @return
 	 */
 	public BigDataStackOperationSequence registerOperationSequence(String yaml) {
-		try {
-			BigDataStackOperationSequence sequence = GDTFileUtil.readSequenceFromString(yaml);
+		return registerOperationSequence(yaml, null);
+	}
+	
 
+	/**
+	 * Registers a new operation sequence with the database
+	 * @param namespace
+	 * @return
+	 */
+	public BigDataStackOperationSequence registerOperationSequence(String yaml, String namespace) {
+		try {
+			BigDataStackOperationSequence sequence = GDTFileUtil.readSequenceFromString(yaml, namespace);
+			if (namespace!=null) sequence.setNamepace(namespace);
+			
 			if (!sequenceTemplateClient.addSequence(sequence)) {
 				if (!sequenceTemplateClient.updateSequence(sequence)) {
 					eventUtil.registerEvent(
@@ -572,6 +607,21 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
+	
+	/**
+	 * Registers a new operation sequence with the database
+	 * @param yamlFile
+	 * @return
+	 */
+	public BigDataStackOperationSequence registerOperationSequence(File yamlFile, String namespace) {
+		try {
+			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
+			return registerOperationSequence(yaml, namespace);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 	/**
 	 * Attempts to start the monitoring service for a namespace
@@ -606,7 +656,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus config object
 			BigDataStackObjectDefinition prometheusCM = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusconfig", owner);
-			if (prometheusCM == null) prometheusCM = registerObject(new File("resources/gdt/prometheus.config.yaml"));
+			if (prometheusCM == null) prometheusCM = registerObject(new File("resources/gdt/prometheus.config.yaml"), namespace.getNamespace());
 			if (prometheusCM == null) {
 
 				eventUtil.registerEvent(
@@ -624,7 +674,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus service account
 			BigDataStackObjectDefinition prometheusSA = getObjectTemplateClient().getObject("gdtdefaultapp-prometheussa", owner);
-			if (prometheusSA == null) prometheusSA = registerObject(new File("resources/gdt/prometheus.sa.yaml"));
+			if (prometheusSA == null) prometheusSA = registerObject(new File("resources/gdt/prometheus.sa.yaml"), namespace.getNamespace());
 			if (prometheusSA == null) {
 
 				eventUtil.registerEvent(
@@ -642,7 +692,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus service account role
 			BigDataStackObjectDefinition prometheusR = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusrole", owner);
-			if (prometheusR == null) prometheusR = registerObject(new File("resources/gdt/prometheus.role.yaml"));
+			if (prometheusR == null) prometheusR = registerObject(new File("resources/gdt/prometheus.role.yaml"), namespace.getNamespace());
 			if (prometheusR == null) {
 
 				eventUtil.registerEvent(
@@ -660,7 +710,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus cluster role binding for service account
 			BigDataStackObjectDefinition prometheusCRB = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusrb", owner);
-			if (prometheusCRB == null) prometheusCRB = registerObject(new File("resources/gdt/prometheus.rb.yaml"));
+			if (prometheusCRB == null) prometheusCRB = registerObject(new File("resources/gdt/prometheus.rb.yaml"), namespace.getNamespace());
 			if (prometheusCRB == null) {
 
 				eventUtil.registerEvent(
@@ -678,7 +728,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus object
 			BigDataStackObjectDefinition prometheusDC = getObjectTemplateClient().getObject("gdtdefaultapp-prometheus", owner);
-			if (prometheusDC == null) prometheusDC = registerObject(new File("resources/gdt/prometheus.dc.yaml"));
+			if (prometheusDC == null) prometheusDC = registerObject(new File("resources/gdt/prometheus.dc.yaml"), namespace.getNamespace());
 			if (prometheusDC == null) {
 
 				eventUtil.registerEvent(
@@ -696,7 +746,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus service object
 			BigDataStackObjectDefinition prometheusSRV = getObjectTemplateClient().getObject("gdtdefaultapp-prometheussrv", owner);
-			if (prometheusSRV == null) prometheusSRV = registerObject(new File("resources/gdt/prometheus.srv.yaml"));
+			if (prometheusSRV == null) prometheusSRV = registerObject(new File("resources/gdt/prometheus.srv.yaml"), namespace.getNamespace());
 			if (prometheusSRV == null) {
 
 				eventUtil.registerEvent(
@@ -714,7 +764,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus route object
 			BigDataStackObjectDefinition prometheusRoute = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusroute", owner);
-			if (prometheusRoute == null) prometheusRoute = registerObject(new File("resources/gdt/prometheus.route.yaml"));
+			if (prometheusRoute == null) prometheusRoute = registerObject(new File("resources/gdt/prometheus.route.yaml"), namespace.getNamespace());
 			if (prometheusRoute == null) {
 
 				eventUtil.registerEvent(
@@ -732,7 +782,7 @@ public class GDTManager implements Manager {
 
 			// get or create the operation sequence
 			BigDataStackOperationSequence prometheusSequenceTemplate = getSequenceTemplateClient().getOperationSequence("gdtdefaultapp", "seq-prometheusdeploy", 0);
-			if (prometheusSequenceTemplate==null) prometheusSequenceTemplate = registerOperationSequence(new File("resources/gdt/prometheus.seq.yaml"));
+			if (prometheusSequenceTemplate==null) prometheusSequenceTemplate = registerOperationSequence(new File("resources/gdt/prometheus.seq.yaml"), namespace.getNamespace());
 			if (prometheusSequenceTemplate==null) {
 
 				eventUtil.registerEvent(
@@ -755,7 +805,7 @@ public class GDTManager implements Manager {
 
 			// get or register the monitor object
 			BigDataStackObjectDefinition monitorDC = getObjectTemplateClient().getObject("gdtdefaultapp-gdtmonitor", owner);
-			if (monitorDC == null) monitorDC = registerObject(new File("resources/gdt/gdtmain.dc.yaml"));
+			if (monitorDC == null) monitorDC = registerObject(new File("resources/gdt/gdtmain.dc.yaml"), namespace.getNamespace());
 			if (monitorDC == null) {
 
 				eventUtil.registerEvent(
@@ -773,7 +823,7 @@ public class GDTManager implements Manager {
 
 			// get or create the operation sequence
 			BigDataStackOperationSequence existingSequenceTemplate = getSequenceTemplateClient().getOperationSequence("gdtdefaultapp", "seq-gdtmonitor", 0);
-			if (existingSequenceTemplate==null) existingSequenceTemplate = registerOperationSequence(new File("resources/gdt/gdtmonitor.seq.yaml"));
+			if (existingSequenceTemplate==null) existingSequenceTemplate = registerOperationSequence(new File("resources/gdt/gdtmonitor.seq.yaml"), namespace.getNamespace());
 			if (existingSequenceTemplate==null) {
 
 				eventUtil.registerEvent(

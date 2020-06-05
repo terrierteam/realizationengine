@@ -103,6 +103,17 @@ public class GDTFileUtil {
 	 * @return
 	 */
 	public static BigDataStackOperationSequence readSequenceFromString(String yaml) {
+		
+		return readSequenceFromString(yaml, null);
+	}
+	
+	/**
+	 * Reads in a BigDataStackOperationSequence from a yaml format string. Note that this relies on implementations of
+	 * initalizeFromJson within each Operation class to parse the contents of the operation definitions
+	 * @param yaml
+	 * @return
+	 */
+	public static BigDataStackOperationSequence readSequenceFromString(String yaml, String namespace) {
 		try {
 			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 			JsonNode node = mapper.readTree(yaml);
@@ -110,20 +121,29 @@ public class GDTFileUtil {
 			
 			String appID = node.get("appID").asText();
 			String owner = node.get("owner").asText();
-			String namespace = "";
-			if (node.has("namespace")) namespace = node.get("namespace").asText();
-			String sequenceID = node.get("sequenceID").asText();	
+			if (namespace==null && node.has("namespace")) namespace = node.get("namespace").asText();
+			String sequenceID = node.get("sequenceID").asText();
+			
+			
+			yaml = yaml.replaceAll("\\$appID\\$", appID);
+			yaml = yaml.replaceAll("\\$owner\\$", owner);
+			yaml = yaml.replaceAll("\\$namespace\\$", namespace);
+			yaml = yaml.replaceAll("\\$sequenceID\\$", sequenceID);
+			
+			node = mapper.readTree(yaml);
+			
+			
 			String name = "";
 			if (node.has("name")) name = node.get("name").asText();
 			String description = "";
 			if (node.has("description")) description = node.get("description").asText();
 			Map<String,String> parameters = new HashMap<String,String>();
 			if (node.has("parameters") && node.get("parameters").isArray()) {
-				Iterator<JsonNode> paramI = node.get("parameters").iterator();
+				Iterator<String> paramI = node.get("parameters").fieldNames();
 				while (paramI.hasNext()) {
-					JsonNode param = paramI.next();
-					if (param.has("name") && param.has("value")) parameters.put(param.get("name").asText(), param.get("value").asText());
-					if (param.has("key") && param.has("value")) parameters.put(param.get("key").asText(), param.get("value").asText());
+					String fieldName = paramI.next();
+					parameters.put(fieldName, node.get("parameters").get(fieldName).asText());
+					
 				}
 			}
 			

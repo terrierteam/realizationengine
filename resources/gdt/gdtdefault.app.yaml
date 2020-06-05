@@ -1,7 +1,7 @@
 appID: "gdtdefaultapp"
 name: "GDT Default App"
 description: "This is the default app that global decision tracker components are deployed under"
-owner: "richardm"
+owner: "gdt"
 namespace: "richardmproject"
 types:
  - file

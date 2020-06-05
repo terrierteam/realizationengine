@@ -1,5 +1,5 @@
 appID: "gdtdefaultapp"
-owner: "richardm"
+owner: "gdt"
 namespace: "richardmproject"
 
 sequenceID: "seq-prometheusdeploy"
@@ -14,7 +14,7 @@ operations:
     instanceRef: "prometheussaInstance"
   - className: ParameterFromObjectLookup
     parameter: "serviceaccount"
-    criteria: "richardmproject:serviceaccount:prometheussa-.*"
+    criteria: "$namespace$:serviceaccount:prometheussa-.*"
     multipleMatches: "SelectFirst"
   - className: Instantiate
     objectID: "prometheusrole"
@@ -23,7 +23,7 @@ operations:
     instanceRef: "prometheusRoleInstance"
   - className: ParameterFromObjectLookup
     parameter: "role"
-    criteria: "richardmproject:role:prometheusrole-.*"
+    criteria: "$namespace$:role:prometheusrole-.*"
     multipleMatches: "SelectFirst"
   - className: Instantiate
     objectID: "prometheusrb"
@@ -44,11 +44,11 @@ operations:
     defineInstanceRef: "prometheusInstance"
   - className: ParameterFromObjectLookup
     parameter: "kubeServiceAccountSecret"
-    criteria: "richardmproject:secret:prometheussa-.*token-.*"
+    criteria: "$namespace$:secret:prometheussa-.*token-.*"
     multipleMatches: "SelectFirst"
   - className: ParameterFromObjectLookup
     parameter: "prometheusConfig"
-    criteria: "richardmproject:configmap:prometheusconfig-.*"
+    criteria: "$namespace$:configmap:prometheusconfig-.*"
     multipleMatches: "SelectFirst"
   - className: SetSequenceParameters
     instanceRef: "prometheusInstance"
@@ -61,7 +61,7 @@ operations:
     instanceRef: "prometheusSRVInstance"
   - className: ParameterFromObjectLookup
     parameter: "service"
-    criteria: "richardmproject:service:prometheussrv-.*"
+    criteria: "$namespace$:service:prometheussrv-.*"
     multipleMatches: "SelectFirst"
   - className: Instantiate
     objectID: "prometheusroute"
