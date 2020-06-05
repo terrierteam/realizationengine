@@ -104,7 +104,7 @@ public class GDTFileUtil {
 	 */
 	public static BigDataStackOperationSequence readSequenceFromString(String yaml) {
 		
-		return readSequenceFromString(yaml, null);
+		return readSequenceFromString(yaml, null, null);
 	}
 	
 	/**
@@ -113,14 +113,14 @@ public class GDTFileUtil {
 	 * @param yaml
 	 * @return
 	 */
-	public static BigDataStackOperationSequence readSequenceFromString(String yaml, String namespace) {
+	public static BigDataStackOperationSequence readSequenceFromString(String yaml, String namespace, String owner) {
 		try {
 			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 			JsonNode node = mapper.readTree(yaml);
 			
 			
 			String appID = node.get("appID").asText();
-			String owner = node.get("owner").asText();
+			if (owner==null && node.has("owner")) owner = node.get("owner").asText();
 			if (namespace==null && node.has("namespace")) namespace = node.get("namespace").asText();
 			String sequenceID = node.get("sequenceID").asText();
 			

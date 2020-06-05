@@ -588,7 +588,7 @@ public class GDTManager implements Manager {
 	 */
 	public BigDataStackOperationSequence registerOperationSequence(String yaml, String namespace, String owner) {
 		try {
-			BigDataStackOperationSequence sequence = GDTFileUtil.readSequenceFromString(yaml, namespace);
+			BigDataStackOperationSequence sequence = GDTFileUtil.readSequenceFromString(yaml, namespace, owner);
 			if (namespace!=null) sequence.setNamepace(namespace);
 			if (owner!=null) sequence.setOwner(owner);
 			
