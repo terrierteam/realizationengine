@@ -1,8 +1,10 @@
 package eu.bigdatastack.gdt.operations;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -142,6 +144,9 @@ public class RecordMetricsUntil extends BigDataStackOperation{
 			BigDataStackObjectIO objectInstanceClient = new BigDataStackObjectIO(database, false);
 			BigDataStackObjectDefinition instanceObject = null;
 			
+			Set<String> failureStates = new HashSet<String>();
+			failureStates.add("Failed");
+			
 			eventUtil.registerEvent(
 					getAppID(),
 					getOwner(),
@@ -154,7 +159,8 @@ public class RecordMetricsUntil extends BigDataStackOperation{
 					);
 			
 			boolean inTargetState = false;
-			while (!inTargetState) {
+			boolean inFailState = false;
+			while (!inTargetState && !inFailState) {
 				instanceObject = objectInstanceClient.getObject(sourceObjectID, getOwner(), instance);
 				if (instanceObject==null) {
 					eventUtil.registerEvent(
@@ -172,6 +178,22 @@ public class RecordMetricsUntil extends BigDataStackOperation{
 				
 				for (String status : instanceObject.getStatus()) {
 					if (status.equalsIgnoreCase(waitForStatus)) inTargetState=true;
+					if (failureStates.contains(status)) {
+						inFailState = true;
+						
+						eventUtil.registerEvent(
+								getAppID(),
+								getOwner(),
+								getNamespace(),
+								BigDataStackEventType.Stage,
+								BigDataStackEventSeverity.Warning,
+								"Record-Metrics-Until Operation Aborted for: '"+sourceObjectID+"("+instance+")'",
+								"The underlying object that we were waiting for '"+sourceObjectID+"("+instance+")' entered a failure state",
+								sourceObjectID
+								);
+						
+						return false;
+					}
 				}
 				
 				// update metrics

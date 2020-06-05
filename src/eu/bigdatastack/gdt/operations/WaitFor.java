@@ -1,5 +1,8 @@
 package eu.bigdatastack.gdt.operations;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
@@ -111,9 +114,14 @@ public class WaitFor extends BigDataStackOperation{
 			String sourceObjectID = parentSequenceRunner.getSequence().getParameters().get(instanceRef).split(":")[0];
 			int instance = Integer.valueOf(parentSequenceRunner.getSequence().getParameters().get(instanceRef).split(":")[1]);
 			
+			Set<String> failureStates = new HashSet<String>();
+			failureStates.add("Failed");
+			
+			
 			BigDataStackObjectIO objectInstanceClient = new BigDataStackObjectIO(database, false);
 			boolean inTargetState = false;
-			while (!inTargetState) {
+			boolean inFailState = false;
+			while (!inTargetState && !inFailState) {
 				BigDataStackObjectDefinition instanceObject = objectInstanceClient.getObject(sourceObjectID, getOwner(), instance);
 				if (instanceObject==null) {
 					eventUtil.registerEvent(
@@ -131,6 +139,22 @@ public class WaitFor extends BigDataStackOperation{
 				
 				for (String status : instanceObject.getStatus()) {
 					if (status.equalsIgnoreCase(waitForStatus)) inTargetState=true;
+					if (failureStates.contains(status)) {
+						inFailState = true;
+						
+						eventUtil.registerEvent(
+								getAppID(),
+								getOwner(),
+								getNamespace(),
+								BigDataStackEventType.Stage,
+								BigDataStackEventSeverity.Warning,
+								"Wait-For Operation Aborted for: '"+sourceObjectID+"("+instance+")'",
+								"The underlying object that we were waiting for '"+sourceObjectID+"("+instance+")' entered a failure state",
+								sourceObjectID
+								);
+						
+						return false;
+					}
 				}
 				
 				Thread.sleep(10000);

@@ -267,6 +267,9 @@ public class GDTCLI {
 							String value = metric.getValue().get(i);
 							Long timestamp = metric.getLastUpdated().get(i);
 							BigDataStackObjectDefinition objectDef = manager.objectInstanceClient.getObject(labels.get("objectID"), app.getOwner(), Integer.parseInt(labels.get("instance")));
+							if (labels.containsKey("appID")) if (!labels.get("appID").equalsIgnoreCase(app.getAppID())) continue;
+							
+							
 							System.out.println("|   - "+labels.get("objectID")+"("+labels.get("instance")+") "+value +" (status="+objectDef.getStatus()+")");
 							for (String label :labels.keySet()) {
 								if (label.contains("host")) continue;

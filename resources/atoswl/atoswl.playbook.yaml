@@ -24,6 +24,15 @@ metrics:
     minimumValue: 0.0
     higherIsBetter: True
     displayUnit: "NDCG@K"
+  - owner: "$owner$"
+    name: "costPerHour"
+    metricClassname: "Double"
+    summary: "The cost of running this Pod per hour in US dollars." 
+    maximumValue: 1000.0
+    minimumValue: 0.0
+    higherIsBetter: True
+    displayUnit: "$/hour"
+
 
 objects:
   - appID: "$appID$"
@@ -106,6 +115,30 @@ sequences:
   - appID: "$appID$"
     owner: "$owner$"
     namespace: "$namespace$"
+    sequenceID: "trainmodelregmetrics"
+    name: "Product Recommender Model Training"
+    description: "Deploys a instance of the GLA recommendation framework and trains a model. Sequence will copy validation performance metrics into the central database until the learning job ends."
+    parameters: {}
+    operations:
+      - className: Instantiate
+        objectID: "atoswl-train"
+        defineInstanceRef: "trainingInstance"
+      - className: SetSequenceParameters
+        instanceRef: "trainingInstance"
+      - className: Apply
+        instanceRef: "trainingInstance"
+      - className: RecordMetricsUntil
+        metrics:
+          - "ndcg_at_k_valid"
+          - "ndcg_at_k_test"
+          - "costPerHour"
+        instanceRef: "trainingInstance"
+        waitForStatus: "Complete"
+        gracePeriodSec: 30
+    mode: Continue
+  - appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
     sequenceID: "trainmodel"
     name: "Product Recommender Model Training"
     description: "Deploys a instance of the GLA recommendation framework and trains a model. Sequence will copy validation performance metrics into the central database until the learning job ends."
@@ -123,10 +156,12 @@ sequences:
         metrics: 
           - "ndcg_at_k_valid"
           - "ndcg_at_k_test"
+          - "costPerHour"
       - className: RecordMetricsUntil
         metrics:
           - "ndcg_at_k_valid"
           - "ndcg_at_k_test"
+          - "costPerHour"
         instanceRef: "trainingInstance"
         waitForStatus: "Complete"
         gracePeriodSec: 30
