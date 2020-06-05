@@ -138,7 +138,7 @@ public class GDTFileUtil {
 			String description = "";
 			if (node.has("description")) description = node.get("description").asText();
 			Map<String,String> parameters = new HashMap<String,String>();
-			if (node.has("parameters") && node.get("parameters").isArray()) {
+			if (node.has("parameters")) {
 				Iterator<String> paramI = node.get("parameters").fieldNames();
 				while (paramI.hasNext()) {
 					String fieldName = paramI.next();
