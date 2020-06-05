@@ -62,17 +62,17 @@ public class GDTCLI {
 			break;
 		case "monitor":
 			if (args.length==1) {
-				System.out.println("monitor [start|stop] <namespace>");
+				System.out.println("monitor [start|stop] <owner> <namespace>");
 			} else {
 				BigDataStackNamespaceState namespace;
 				switch (args[1]) {
 				case "start":
-					namespace = manager.namespaceStateClient.getNamespace(args[2]);
+					namespace = manager.namespaceStateClient.getNamespace(args[3]);
 					if (namespace==null) {
-						System.out.println("Namespace "+args[2]+" not found");
+						System.out.println("Namespace "+args[3]+" not found");
 						return;
 					}
-					manager.startMonitoringNamespace(namespace, "GDT");
+					manager.startMonitoringNamespace(namespace, args[2]);
 					break;
 				case "stop":
 					namespace = manager.namespaceStateClient.getNamespace(args[2]);

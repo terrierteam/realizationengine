@@ -152,7 +152,7 @@ public class GDTManager implements Manager {
 	public BigDataStackApplication registerApplication(String yaml) {
 		try {
 			BigDataStackApplication app = yamlMapper.readValue(yaml, BigDataStackApplication.class);
-			return registerApplication(app, null);
+			return registerApplication(app, null, null);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -167,7 +167,22 @@ public class GDTManager implements Manager {
 	public BigDataStackApplication registerApplication(String yaml, String namespace) {
 		try {
 			BigDataStackApplication app = yamlMapper.readValue(yaml, BigDataStackApplication.class);
-			return registerApplication(app, namespace);
+			return registerApplication(app, namespace, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new BigDataStack Application with the database from a yaml format String
+	 * @param yaml
+	 * @return
+	 */
+	public BigDataStackApplication registerApplication(String yaml, String namespace, String owner) {
+		try {
+			BigDataStackApplication app = yamlMapper.readValue(yaml, BigDataStackApplication.class);
+			return registerApplication(app, namespace, owner);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -179,8 +194,9 @@ public class GDTManager implements Manager {
 	 * @param yaml
 	 * @return
 	 */
-	protected BigDataStackApplication registerApplication(BigDataStackApplication app, String namespace) {
+	protected BigDataStackApplication registerApplication(BigDataStackApplication app, String namespace, String owner) {
 		if (namespace!=null) app.setNamespace(namespace);
+		if (owner!=null) app.setOwner(owner);
 
 		try {
 			if (!appClient.addApplication(app)) {
@@ -237,10 +253,10 @@ public class GDTManager implements Manager {
 	 * @param yamlFile
 	 * @return
 	 */
-	public BigDataStackApplication registerApplication(File yamlFile, String namespace) {
+	public BigDataStackApplication registerApplication(File yamlFile, String namespace, String owner) {
 		try {
 			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
-			return registerApplication(yaml, namespace);
+			return registerApplication(yaml, namespace, owner);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -253,7 +269,7 @@ public class GDTManager implements Manager {
 	 * @return
 	 */
 	public BigDataStackObjectDefinition registerObject(String yaml) {
-		return registerObject(yaml, null);
+		return registerObject(yaml, null, null);
 	}
 	
 	/**
@@ -261,10 +277,11 @@ public class GDTManager implements Manager {
 	 * @param yaml
 	 * @return
 	 */
-	public BigDataStackObjectDefinition registerObject(String yaml, String namespace) {
+	public BigDataStackObjectDefinition registerObject(String yaml, String namespace, String owner) {
 		try {
 			BigDataStackObjectDefinition object = GDTFileUtil.readObjectFromString(yaml);
 			if (namespace!=null) object.setNamespace(namespace);
+			if (owner!=null) object.setOwner(owner);
 			if (!objectTemplateClient.addObject(object)) {
 				if (!objectTemplateClient.updateObject(object)) {
 					eventUtil.registerEvent(
@@ -323,7 +340,22 @@ public class GDTManager implements Manager {
 	public BigDataStackObjectDefinition registerObject(File yamlFile, String namespace) {
 		try {
 			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
-			return registerObject(yaml, namespace);
+			return registerObject(yaml, namespace, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new BigDataStack Object Definition with the database from a yaml format File
+	 * @param yamlFile
+	 * @return
+	 */
+	public BigDataStackObjectDefinition registerObject(File yamlFile, String namespace, String owner) {
+		try {
+			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
+			return registerObject(yaml, namespace, owner);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -545,7 +577,7 @@ public class GDTManager implements Manager {
 	 * @return
 	 */
 	public BigDataStackOperationSequence registerOperationSequence(String yaml) {
-		return registerOperationSequence(yaml, null);
+		return registerOperationSequence(yaml, null, null);
 	}
 	
 
@@ -554,10 +586,11 @@ public class GDTManager implements Manager {
 	 * @param namespace
 	 * @return
 	 */
-	public BigDataStackOperationSequence registerOperationSequence(String yaml, String namespace) {
+	public BigDataStackOperationSequence registerOperationSequence(String yaml, String namespace, String owner) {
 		try {
 			BigDataStackOperationSequence sequence = GDTFileUtil.readSequenceFromString(yaml, namespace);
 			if (namespace!=null) sequence.setNamepace(namespace);
+			if (owner!=null) sequence.setOwner(owner);
 			
 			if (!sequenceTemplateClient.addSequence(sequence)) {
 				if (!sequenceTemplateClient.updateSequence(sequence)) {
@@ -616,7 +649,22 @@ public class GDTManager implements Manager {
 	public BigDataStackOperationSequence registerOperationSequence(File yamlFile, String namespace) {
 		try {
 			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
-			return registerOperationSequence(yaml, namespace);
+			return registerOperationSequence(yaml, namespace, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new operation sequence with the database
+	 * @param yamlFile
+	 * @return
+	 */
+	public BigDataStackOperationSequence registerOperationSequence(File yamlFile, String namespace, String owner) {
+		try {
+			String yaml = GDTFileUtil.file2String(yamlFile, "UTF-8");
+			return registerOperationSequence(yaml, namespace, owner);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -635,7 +683,7 @@ public class GDTManager implements Manager {
 
 			// get or register the default app
 			BigDataStackApplication app = getAppClient().getApp("gdtdefaultapp", owner, namespace.getNamespace());
-			if (app == null) app = registerApplication(new File("resources/gdt/gdtdefault.app.yaml"), namespace.getNamespace());
+			if (app == null) app = registerApplication(new File("resources/gdt/gdtdefault.app.yaml"), namespace.getNamespace(), owner);
 			if (app == null) {
 
 				eventUtil.registerEvent(
@@ -656,7 +704,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus config object
 			BigDataStackObjectDefinition prometheusCM = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusconfig", owner);
-			if (prometheusCM == null) prometheusCM = registerObject(new File("resources/gdt/prometheus.config.yaml"), namespace.getNamespace());
+			if (prometheusCM == null) prometheusCM = registerObject(new File("resources/gdt/prometheus.config.yaml"), namespace.getNamespace(), owner);
 			if (prometheusCM == null) {
 
 				eventUtil.registerEvent(
@@ -674,7 +722,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus service account
 			BigDataStackObjectDefinition prometheusSA = getObjectTemplateClient().getObject("gdtdefaultapp-prometheussa", owner);
-			if (prometheusSA == null) prometheusSA = registerObject(new File("resources/gdt/prometheus.sa.yaml"), namespace.getNamespace());
+			if (prometheusSA == null) prometheusSA = registerObject(new File("resources/gdt/prometheus.sa.yaml"), namespace.getNamespace(), owner);
 			if (prometheusSA == null) {
 
 				eventUtil.registerEvent(
@@ -692,7 +740,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus service account role
 			BigDataStackObjectDefinition prometheusR = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusrole", owner);
-			if (prometheusR == null) prometheusR = registerObject(new File("resources/gdt/prometheus.role.yaml"), namespace.getNamespace());
+			if (prometheusR == null) prometheusR = registerObject(new File("resources/gdt/prometheus.role.yaml"), namespace.getNamespace(), owner);
 			if (prometheusR == null) {
 
 				eventUtil.registerEvent(
@@ -710,7 +758,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus cluster role binding for service account
 			BigDataStackObjectDefinition prometheusCRB = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusrb", owner);
-			if (prometheusCRB == null) prometheusCRB = registerObject(new File("resources/gdt/prometheus.rb.yaml"), namespace.getNamespace());
+			if (prometheusCRB == null) prometheusCRB = registerObject(new File("resources/gdt/prometheus.rb.yaml"), namespace.getNamespace(), owner);
 			if (prometheusCRB == null) {
 
 				eventUtil.registerEvent(
@@ -728,7 +776,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus object
 			BigDataStackObjectDefinition prometheusDC = getObjectTemplateClient().getObject("gdtdefaultapp-prometheus", owner);
-			if (prometheusDC == null) prometheusDC = registerObject(new File("resources/gdt/prometheus.dc.yaml"), namespace.getNamespace());
+			if (prometheusDC == null) prometheusDC = registerObject(new File("resources/gdt/prometheus.dc.yaml"), namespace.getNamespace(), owner);
 			if (prometheusDC == null) {
 
 				eventUtil.registerEvent(
@@ -746,7 +794,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus service object
 			BigDataStackObjectDefinition prometheusSRV = getObjectTemplateClient().getObject("gdtdefaultapp-prometheussrv", owner);
-			if (prometheusSRV == null) prometheusSRV = registerObject(new File("resources/gdt/prometheus.srv.yaml"), namespace.getNamespace());
+			if (prometheusSRV == null) prometheusSRV = registerObject(new File("resources/gdt/prometheus.srv.yaml"), namespace.getNamespace(), owner);
 			if (prometheusSRV == null) {
 
 				eventUtil.registerEvent(
@@ -764,7 +812,7 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus route object
 			BigDataStackObjectDefinition prometheusRoute = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusroute", owner);
-			if (prometheusRoute == null) prometheusRoute = registerObject(new File("resources/gdt/prometheus.route.yaml"), namespace.getNamespace());
+			if (prometheusRoute == null) prometheusRoute = registerObject(new File("resources/gdt/prometheus.route.yaml"), namespace.getNamespace(), owner);
 			if (prometheusRoute == null) {
 
 				eventUtil.registerEvent(
@@ -782,7 +830,7 @@ public class GDTManager implements Manager {
 
 			// get or create the operation sequence
 			BigDataStackOperationSequence prometheusSequenceTemplate = getSequenceTemplateClient().getOperationSequence("gdtdefaultapp", "seq-prometheusdeploy", 0);
-			if (prometheusSequenceTemplate==null) prometheusSequenceTemplate = registerOperationSequence(new File("resources/gdt/prometheus.seq.yaml"), namespace.getNamespace());
+			if (prometheusSequenceTemplate==null) prometheusSequenceTemplate = registerOperationSequence(new File("resources/gdt/prometheus.seq.yaml"), namespace.getNamespace(), owner);
 			if (prometheusSequenceTemplate==null) {
 
 				eventUtil.registerEvent(
@@ -805,7 +853,7 @@ public class GDTManager implements Manager {
 
 			// get or register the monitor object
 			BigDataStackObjectDefinition monitorDC = getObjectTemplateClient().getObject("gdtdefaultapp-gdtmonitor", owner);
-			if (monitorDC == null) monitorDC = registerObject(new File("resources/gdt/gdtmain.dc.yaml"), namespace.getNamespace());
+			if (monitorDC == null) monitorDC = registerObject(new File("resources/gdt/gdtmain.dc.yaml"), namespace.getNamespace(), owner);
 			if (monitorDC == null) {
 
 				eventUtil.registerEvent(
@@ -823,7 +871,7 @@ public class GDTManager implements Manager {
 
 			// get or create the operation sequence
 			BigDataStackOperationSequence existingSequenceTemplate = getSequenceTemplateClient().getOperationSequence("gdtdefaultapp", "seq-gdtmonitor", 0);
-			if (existingSequenceTemplate==null) existingSequenceTemplate = registerOperationSequence(new File("resources/gdt/gdtmonitor.seq.yaml"), namespace.getNamespace());
+			if (existingSequenceTemplate==null) existingSequenceTemplate = registerOperationSequence(new File("resources/gdt/gdtmonitor.seq.yaml"), namespace.getNamespace(), owner);
 			if (existingSequenceTemplate==null) {
 
 				eventUtil.registerEvent(

@@ -312,6 +312,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		for (IPod pod : pods) {
 			updatePodStatus(project, app, objectDef, pod);
 		}
+		
 
 	}
 

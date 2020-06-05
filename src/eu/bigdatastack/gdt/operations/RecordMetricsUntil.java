@@ -146,6 +146,7 @@ public class RecordMetricsUntil extends BigDataStackOperation{
 			
 			Set<String> failureStates = new HashSet<String>();
 			failureStates.add("Failed");
+			failureStates.add("Deleted");
 			
 			eventUtil.registerEvent(
 					getAppID(),
