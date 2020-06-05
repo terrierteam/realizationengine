@@ -116,7 +116,7 @@ public class WaitFor extends BigDataStackOperation{
 			
 			Set<String> failureStates = new HashSet<String>();
 			failureStates.add("Failed");
-			
+			failureStates.add("Deleted");
 			
 			BigDataStackObjectIO objectInstanceClient = new BigDataStackObjectIO(database, false);
 			boolean inTargetState = false;

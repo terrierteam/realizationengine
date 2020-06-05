@@ -40,6 +40,7 @@ public class GDTMain {
 		String rmqusername = System.getenv("rmqusername");
 		String rmqpassword = System.getenv("rmqpassword");
 		
+		
 		if (args.length==0) {
 			System.out.println("### GDT Help ###");
 			System.out.println("Available Commands: ");
@@ -145,7 +146,13 @@ public class GDTMain {
 			
 			System.out.print("Reading Config...");
 			// config
-			GDTConfig config = new GDTConfig(new File("gdt.config.json"));
+			GDTConfig config;
+			
+			
+			String gdtConfig = System.getenv("GDTConfig");
+			if (gdtConfig!=null) config = new GDTConfig(new File(gdtConfig));
+			else config = new GDTConfig(new File("gdt.config.json"));
+
 			System.out.println("OK");
 
 			// Manager
