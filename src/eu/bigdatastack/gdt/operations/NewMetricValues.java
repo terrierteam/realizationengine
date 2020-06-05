@@ -132,7 +132,7 @@ public class NewMetricValues extends BigDataStackOperation{
 			for (String metric : metrics) {
 				
 				BigDataStackMetricValue metricValue = new BigDataStackMetricValue(
-						owner, namespace, appID, sourceObjectID+"-"+instance,
+						owner, namespace, appID, sourceObjectID,
 						metric);
 				
 				if (!metricValueClient.addMetricValue(metricValue)) {
@@ -141,9 +141,9 @@ public class NewMetricValues extends BigDataStackOperation{
 							getOwner(),
 							getNamespace(),
 							BigDataStackEventType.Stage,
-							BigDataStackEventSeverity.Warning,
-							"New Metric Values Creation Operation tried to add : '"+metric+"' for '"+sourceObjectID+"("+instance+")' but failed",
-							"Attempted to register metric '"+metric+"' value for '"+sourceObjectID+"("+instance+")', but registration was rejected.",
+							BigDataStackEventSeverity.Info,
+							"New Metric Values Creation Operation tried to add : '"+metric+"' for '"+sourceObjectID+"' but already existed",
+							"Attempted to register metric '"+metric+"' value for '"+sourceObjectID+"("+instance+")', but request failed, likely because the metric already exists.",
 							sourceObjectID
 							);
 				} else {
