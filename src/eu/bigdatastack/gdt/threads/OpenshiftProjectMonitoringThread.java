@@ -3,6 +3,7 @@ package eu.bigdatastack.gdt.threads;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.openshift.restclient.model.IDeploymentConfig;
@@ -90,7 +91,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 
 				for (BigDataStackApplication app : applications) {
 
-					List<BigDataStackObjectDefinition> objectInstances = objectIO.getObjectList(owner, namespace, app.getAppID());
+					List<BigDataStackObjectDefinition> objectInstances = objectIO.getObjectList(owner, namespace, app.getAppID(), null);
 
 					for (BigDataStackObjectDefinition objectDef : objectInstances) {
 						
@@ -98,6 +99,19 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 							if (objectDef.getType() == BigDataStackObjectType.DeploymentConfig) processDeploymentConfig(project, app, objectDef);
 							
 							if (objectDef.getType() == BigDataStackObjectType.Job) processJob(project, app, objectDef);
+							
+							if (objectDef.getType() == BigDataStackObjectType.Pod) {
+								if (objectDef.getObjectID().equalsIgnoreCase("operationsequence")) {
+									List<IPod> pods = openshiftStatus.getPods(project, true, true, "operationsequence=True");
+									for (IPod pod : pods) {
+										Map<String,String> labels = pod.getLabels();
+										if (labels.get("runnerIndex").equalsIgnoreCase(String.valueOf(objectDef.getInstance())))
+											updatePodStatus(project, app, objectDef, pod);
+									}
+									
+								}
+								
+							}
 						} catch (com.openshift.restclient.NotFoundException e) {
 							// TODO Auto-generated catch block
 							System.err.println(e.getMessage());

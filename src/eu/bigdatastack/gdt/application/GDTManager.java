@@ -4,9 +4,11 @@ import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,24 +65,24 @@ public class GDTManager implements Manager {
 	ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
 	LXDB database;
-	OpenshiftOperationClient openshiftOperationClient;
-	OpenshiftStatusClient openshiftStatusClient;
-	RabbitMQClient mailboxClient;
-	PrometheusDataClient prometheusDataClient;
+	public OpenshiftOperationClient openshiftOperationClient;
+	public OpenshiftStatusClient openshiftStatusClient;
+	public RabbitMQClient mailboxClient;
+	public PrometheusDataClient prometheusDataClient;
 
-	EventUtil eventUtil;
+	public EventUtil eventUtil;
 
-	BigDataStackApplicationIO appClient;
-	BigDataStackEventIO eventClient;
-	BigDataStackMetricIO metricClient;
-	BigDataStackObjectIO objectInstanceClient;
-	BigDataStackObjectIO objectTemplateClient;
-	BigDataStackOperationSequenceIO sequenceInstanceClient;
-	BigDataStackOperationSequenceIO sequenceTemplateClient;
-	BigDataStackPodStatusIO podStatusClient;
-	BigDataStackNamespaceStateIO namespaceStateClient;
-	BigDataStackCredentialsIO credentialsClient;
-	BigDataStackMetricValueIO metricValueClient;
+	public BigDataStackApplicationIO appClient;
+	public BigDataStackEventIO eventClient;
+	public BigDataStackMetricIO metricClient;
+	public BigDataStackObjectIO objectInstanceClient;
+	public BigDataStackObjectIO objectTemplateClient;
+	public BigDataStackOperationSequenceIO sequenceInstanceClient;
+	public BigDataStackOperationSequenceIO sequenceTemplateClient;
+	public BigDataStackPodStatusIO podStatusClient;
+	public BigDataStackNamespaceStateIO namespaceStateClient;
+	public BigDataStackCredentialsIO credentialsClient;
+	public BigDataStackMetricValueIO metricValueClient;
 
 	BigDataStackCredentials databaseCredential;
 	BigDataStackCredentials openshiftCredential;
@@ -677,24 +679,24 @@ public class GDTManager implements Manager {
 	 * @param owner
 	 * @return
 	 */
-	public boolean startMonitoringNamespace(BigDataStackNamespaceState namespace, String owner) {
+	public boolean startMonitoringNamespace(String namespace, String owner) {
 
 		try {
 
 			// get or register the default app
-			BigDataStackApplication app = getAppClient().getApp("gdtdefaultapp", owner, namespace.getNamespace());
-			if (app == null) app = registerApplication(new File("resources/gdt/gdtdefault.app.yaml"), namespace.getNamespace(), owner);
+			BigDataStackApplication app = getAppClient().getApp("gdtdefaultapp", owner, namespace);
+			if (app == null) app = registerApplication(new File("resources/gdt/gdtdefault.app.yaml"), namespace, owner);
 			if (app == null) {
 
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
-						"Failed to launch namespace monitoring for namespace: '"+namespace.getNamespace()+"'",
+						"Failed to launch namespace monitoring for namespace: '"+namespace+"'",
 						"Tried to get or register the GDT default application, but it was rejected by the registry",
-						namespace.getNamespace()
+						namespace
 						);
 				return false;
 			}
@@ -704,16 +706,16 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus config object
 			BigDataStackObjectDefinition prometheusCM = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusconfig", owner);
-			if (prometheusCM == null) prometheusCM = registerObject(new File("resources/gdt/prometheus.config.yaml"), namespace.getNamespace(), owner);
+			if (prometheusCM == null) prometheusCM = registerObject(new File("resources/gdt/prometheus.config.yaml"), namespace, owner);
 			if (prometheusCM == null) {
 
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
-						"Failed to register namespace prometheus configmap instance for namespace: '"+namespace.getNamespace()+"'",
+						"Failed to register namespace prometheus configmap instance for namespace: '"+namespace+"'",
 						"Tried to get or register the GDT Prometheus configmap, but it was rejected by the registry",
 						"gdtdefaultapp-prometheusconfig"
 						);
@@ -722,16 +724,16 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus service account
 			BigDataStackObjectDefinition prometheusSA = getObjectTemplateClient().getObject("gdtdefaultapp-prometheussa", owner);
-			if (prometheusSA == null) prometheusSA = registerObject(new File("resources/gdt/prometheus.sa.yaml"), namespace.getNamespace(), owner);
+			if (prometheusSA == null) prometheusSA = registerObject(new File("resources/gdt/prometheus.sa.yaml"), namespace, owner);
 			if (prometheusSA == null) {
 
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
-						"Failed to register namespace prometheus service account for namespace: '"+namespace.getNamespace()+"'",
+						"Failed to register namespace prometheus service account for namespace: '"+namespace+"'",
 						"Tried to get or register the GDT prometheus service account object, but it was rejected by the registry",
 						"gdtdefaultapp-prometheussa"
 						);
@@ -740,16 +742,16 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus service account role
 			BigDataStackObjectDefinition prometheusR = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusrole", owner);
-			if (prometheusR == null) prometheusR = registerObject(new File("resources/gdt/prometheus.role.yaml"), namespace.getNamespace(), owner);
+			if (prometheusR == null) prometheusR = registerObject(new File("resources/gdt/prometheus.role.yaml"), namespace, owner);
 			if (prometheusR == null) {
 
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
-						"Failed to register namespace prometheus role for namespace: '"+namespace.getNamespace()+"'",
+						"Failed to register namespace prometheus role for namespace: '"+namespace+"'",
 						"Tried to get or register the GDT prometheus role object, but it was rejected by the registry",
 						"gdtdefaultapp-prometheusrole"
 						);
@@ -758,16 +760,16 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus cluster role binding for service account
 			BigDataStackObjectDefinition prometheusCRB = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusrb", owner);
-			if (prometheusCRB == null) prometheusCRB = registerObject(new File("resources/gdt/prometheus.rb.yaml"), namespace.getNamespace(), owner);
+			if (prometheusCRB == null) prometheusCRB = registerObject(new File("resources/gdt/prometheus.rb.yaml"), namespace, owner);
 			if (prometheusCRB == null) {
 
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
-						"Failed to register namespace prometheus service account role binding for namespace: '"+namespace.getNamespace()+"'",
+						"Failed to register namespace prometheus service account role binding for namespace: '"+namespace+"'",
 						"Tried to get or register the GDT prometheus service account role binding object, but it was rejected by the registry",
 						"gdtdefaultapp-prometheusrb"
 						);
@@ -776,16 +778,16 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus object
 			BigDataStackObjectDefinition prometheusDC = getObjectTemplateClient().getObject("gdtdefaultapp-prometheus", owner);
-			if (prometheusDC == null) prometheusDC = registerObject(new File("resources/gdt/prometheus.dc.yaml"), namespace.getNamespace(), owner);
+			if (prometheusDC == null) prometheusDC = registerObject(new File("resources/gdt/prometheus.dc.yaml"), namespace, owner);
 			if (prometheusDC == null) {
 
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
-						"Failed to register namespace prometheus instance for namespace: '"+namespace.getNamespace()+"'",
+						"Failed to register namespace prometheus instance for namespace: '"+namespace+"'",
 						"Tried to get or register the GDT Prometheus object, but it was rejected by the registry",
 						"gdtdefaultapp-prometheus"
 						);
@@ -794,16 +796,16 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus service object
 			BigDataStackObjectDefinition prometheusSRV = getObjectTemplateClient().getObject("gdtdefaultapp-prometheussrv", owner);
-			if (prometheusSRV == null) prometheusSRV = registerObject(new File("resources/gdt/prometheus.srv.yaml"), namespace.getNamespace(), owner);
+			if (prometheusSRV == null) prometheusSRV = registerObject(new File("resources/gdt/prometheus.srv.yaml"), namespace, owner);
 			if (prometheusSRV == null) {
 
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
-						"Failed to register namespace prometheus service instance for namespace: '"+namespace.getNamespace()+"'",
+						"Failed to register namespace prometheus service instance for namespace: '"+namespace+"'",
 						"Tried to get or register the GDT Prometheus service object, but it was rejected by the registry",
 						"gdtdefaultapp-prometheussrv"
 						);
@@ -812,16 +814,16 @@ public class GDTManager implements Manager {
 
 			// get or register the prometheus route object
 			BigDataStackObjectDefinition prometheusRoute = getObjectTemplateClient().getObject("gdtdefaultapp-prometheusroute", owner);
-			if (prometheusRoute == null) prometheusRoute = registerObject(new File("resources/gdt/prometheus.route.yaml"), namespace.getNamespace(), owner);
+			if (prometheusRoute == null) prometheusRoute = registerObject(new File("resources/gdt/prometheus.route.yaml"), namespace, owner);
 			if (prometheusRoute == null) {
 
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
-						"Failed to register namespace prometheus route instance for namespace: '"+namespace.getNamespace()+"'",
+						"Failed to register namespace prometheus route instance for namespace: '"+namespace+"'",
 						"Tried to get or register the GDT Prometheus route object, but it was rejected by the registry",
 						"gdtdefaultapp-prometheusroute"
 						);
@@ -829,17 +831,17 @@ public class GDTManager implements Manager {
 			}
 
 			// get or create the operation sequence
-			BigDataStackOperationSequence prometheusSequenceTemplate = getSequenceTemplateClient().getOperationSequence("gdtdefaultapp", "seq-prometheusdeploy", 0);
-			if (prometheusSequenceTemplate==null) prometheusSequenceTemplate = registerOperationSequence(new File("resources/gdt/prometheus.seq.yaml"), namespace.getNamespace(), owner);
+			BigDataStackOperationSequence prometheusSequenceTemplate = getSequenceTemplateClient().getOperationSequence("gdtdefaultapp", "seq-prometheusdeploy", 0, null);
+			if (prometheusSequenceTemplate==null) prometheusSequenceTemplate = registerOperationSequence(new File("resources/gdt/prometheus.seq.yaml"), namespace, owner);
 			if (prometheusSequenceTemplate==null) {
 
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
-						"Failed to launch namespace prometheus instance for namespace: '"+namespace.getNamespace()+"'",
+						"Failed to launch namespace prometheus instance for namespace: '"+namespace+"'",
 						"Tried to get or register the GDT Prometheus object operation sequence template, but it was rejected by the registry",
 						"seq-prometheusdeploy"
 						);
@@ -853,16 +855,16 @@ public class GDTManager implements Manager {
 
 			// get or register the monitor object
 			BigDataStackObjectDefinition monitorDC = getObjectTemplateClient().getObject("gdtdefaultapp-gdtmonitor", owner);
-			if (monitorDC == null) monitorDC = registerObject(new File("resources/gdt/gdtmain.dc.yaml"), namespace.getNamespace(), owner);
+			if (monitorDC == null) monitorDC = registerObject(new File("resources/gdt/gdtmain.dc.yaml"), namespace, owner);
 			if (monitorDC == null) {
 
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
-						"Failed to launch namespace monitoring for namespace: '"+namespace.getNamespace()+"'",
+						"Failed to launch namespace monitoring for namespace: '"+namespace+"'",
 						"Tried to get or register the GDT Monitoring object, but it was rejected by the registry",
 						"gdtdefaultapp-gdtmonitor"
 						);
@@ -870,17 +872,17 @@ public class GDTManager implements Manager {
 			}
 
 			// get or create the operation sequence
-			BigDataStackOperationSequence existingSequenceTemplate = getSequenceTemplateClient().getOperationSequence("gdtdefaultapp", "seq-gdtmonitor", 0);
-			if (existingSequenceTemplate==null) existingSequenceTemplate = registerOperationSequence(new File("resources/gdt/gdtmonitor.seq.yaml"), namespace.getNamespace(), owner);
+			BigDataStackOperationSequence existingSequenceTemplate = getSequenceTemplateClient().getOperationSequence("gdtdefaultapp", "seq-gdtmonitor", 0, null);
+			if (existingSequenceTemplate==null) existingSequenceTemplate = registerOperationSequence(new File("resources/gdt/gdtmonitor.seq.yaml"), namespace, owner);
 			if (existingSequenceTemplate==null) {
 
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Error,
-						"Failed to launch namespace monitoring for namespace: '"+namespace.getNamespace()+"'",
+						"Failed to launch namespace monitoring for namespace: '"+namespace+"'",
 						"Tried to get or register the GDT Monitoring operation sequence template, but it was rejected by the registry",
 						"seq-gdtmonitor"
 						);
@@ -929,10 +931,10 @@ public class GDTManager implements Manager {
 	 * @param owner
 	 * @return
 	 */
-	public boolean stopMonitoringNamespace(BigDataStackNamespaceState namespace, String owner) {
+	public boolean stopMonitoringNamespace(String namespace, String owner) {
 
 		try {
-			List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects("gdtmonitor", owner, namespace.getNamespace(), "gdtdefaultapp");
+			List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects("gdtmonitor", owner, namespace, "gdtdefaultapp");
 			if (objects.size()==0) return false;
 
 			int succeeded = 0;
@@ -942,24 +944,24 @@ public class GDTManager implements Manager {
 					eventUtil.registerEvent(
 							"gdtdefaultapp",
 							owner,
-							namespace.getNamespace(),
+							namespace,
 							BigDataStackEventType.Openshift,
 							BigDataStackEventSeverity.Error,
-							"Failed to halt namespace monitoring for namespace: '"+namespace.getNamespace()+"' via "+object.getObjectID()+"'("+object.getInstance()+")'",
+							"Failed to halt namespace monitoring for namespace: '"+namespace+"' via "+object.getObjectID()+"'("+object.getInstance()+")'",
 							"Tried to delete the deployment config for the monitoring process as listed in the registry: "+object.getObjectID()+"'("+object.getInstance()+", but openshift rejected it",
-							namespace.getNamespace()
+							namespace
 							);
 					failures++;
 				} else {
 					eventUtil.registerEvent(
 							"gdtdefaultapp",
 							owner,
-							namespace.getNamespace(),
+							namespace,
 							BigDataStackEventType.Openshift,
 							BigDataStackEventSeverity.Info,
-							"Halted namespace monitoring for namespace: '"+namespace.getNamespace()+"' via '"+object.getObjectID()+"("+object.getInstance()+")'",
+							"Halted namespace monitoring for namespace: '"+namespace+"' via '"+object.getObjectID()+"("+object.getInstance()+")'",
 							"Deleted the deployment config for the monitoring process as listed in the registry: '"+object.getObjectID()+"("+object.getInstance()+")'",
-							namespace.getNamespace()
+							namespace
 							);
 					succeeded++;
 				}
@@ -969,23 +971,23 @@ public class GDTManager implements Manager {
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Info,
-						"Halted namespace monitoring for namespace: '"+namespace.getNamespace()+"'",
-						"Monitoring of the namespace '"+namespace.getNamespace()+"' has stopped.",
-						namespace.getNamespace()
+						"Halted namespace monitoring for namespace: '"+namespace+"'",
+						"Monitoring of the namespace '"+namespace+"' has stopped.",
+						namespace
 						);
 			} else if (failures>0) {
 				eventUtil.registerEvent(
 						"gdtdefaultapp",
 						owner,
-						namespace.getNamespace(),
+						namespace,
 						BigDataStackEventType.GlobalDecisionTracker,
 						BigDataStackEventSeverity.Warning,
-						"Failed to halt namespace monitoring for namespace: '"+namespace.getNamespace()+"'",
-						"Tried to delete the deployed monitoring instance(s) for the namespace '"+namespace.getNamespace()+"', but no request succeeded, likely this means that monitoring is now not running.",
-						namespace.getNamespace()
+						"Failed to halt namespace monitoring for namespace: '"+namespace+"'",
+						"Tried to delete the deployed monitoring instance(s) for the namespace '"+namespace+"', but no request succeeded, likely this means that monitoring is now not running.",
+						namespace
 						);
 				return false;
 			}
@@ -1090,9 +1092,45 @@ public class GDTManager implements Manager {
 					yaml = yaml.replaceAll("\\$"+paramKey+"\\$", parameters.get(paramKey));
 				}
 				operationsequenceDef.setYamlSource(yaml);
+				
+				// Now register the sequence pod (this is needed so we can track its progress)
+				int failedReg = 0;
+				boolean regOK = false;
+				while (!regOK) {
+					List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects(operationsequenceDef.getObjectID(), operationsequenceDef.getOwner(), operationsequenceDef.getNamespace(), operationsequenceDef.getAppID());
+					int highestIndex = 0;
+					for (BigDataStackObjectDefinition objectInstance : objects) {
+						if (objectInstance.getInstance()>highestIndex) highestIndex = objectInstance.getInstance();
+					}
 
+					int newIndex = highestIndex+1;
+					operationsequenceDef.setInstance(newIndex);
+					regOK = objectInstanceClient.addObject(operationsequenceDef);
+					if (!regOK) failedReg++;
+					else parameters.put("runnerIndex", String.valueOf(newIndex));
+					if (failedReg==5) {
+						eventUtil.registerEvent(
+								newSequenceInstance.getAppID(),
+								newSequenceInstance.getOwner(),
+								newSequenceInstance.getNamespace(),
+								BigDataStackEventType.GlobalDecisionTracker,
+								BigDataStackEventSeverity.Warning,
+								"Failed to register the operation sequence running for '"+newSequenceInstance.getSequenceID()+"', with the database",
+								"The last step of launcing an operation sequence is registering the runner object, but this failed for '"+newSequenceInstance.getSequenceID()+"', this means that the sequence runner will be un-tracked and hence subsequent deletion of the sequence will not kill the runner if it is still active",
+								newSequenceInstance.getSequenceID()
+								);
+						break;
+					}
+				}
+				
+				
+				yaml = yaml.replaceAll("\\$runnerIndex\\$", parameters.get("runnerIndex"));
+				operationsequenceDef.setYamlSource(yaml);
+
+				newSequenceInstance.getParameters().put("runnerIndex", parameters.get("runnerIndex"));
+				sequenceInstanceClient.updateSequence(newSequenceInstance);
+				
 				openshiftOperationClient.applyOperation(operationsequenceDef);
-
 
 			} else {
 				eventUtil.registerEvent(
@@ -1166,6 +1204,137 @@ public class GDTManager implements Manager {
 	public BigDataStackOperationSequenceIO getSequenceInstanceClient() {
 		return sequenceInstanceClient;
 	}
+	
+	/**
+	 * Directly deletes an object instance, if there are underlying pods they will also be deleted. 
+	 * @param owner
+	 * @param appID
+	 * @param objectID
+	 * @param instance
+	 * @return
+	 */
+	public boolean deleteObjectInstance(String owner, String appID, String objectID, int instance) {
+		try {
+			BigDataStackObjectDefinition object = objectInstanceClient.getObject(objectID, owner, instance);
+			if (object==null) return false;
+			
+			boolean deleted =  openshiftOperationClient.deleteOperation(object);
+			if (!deleted) return false;
+			eventUtil.registerEvent(
+					appID,
+					owner,
+					object.getNamespace(),
+					BigDataStackEventType.Openshift,
+					BigDataStackEventSeverity.Info,
+					"Object '"+objectID+"("+instance+")' Deleted",
+					"Deleted the cluster instance associated to '"+objectID+"("+instance+")', this will kill running pods, but the object will remain in the database.",
+					objectID
+					);
+			
+			object.getStatus().add("Deleted");
+			objectInstanceClient.updateObject(object);
+			
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	/**
+	 * Directly deletes all instances for an object, if there are underlying pods they will also be deleted. 
+	 * @param owner
+	 * @param appID
+	 * @param objectID
+	 * @param instance
+	 * @return
+	 */
+	public boolean deleteObjectInstances(String owner, String appID, String objectID) {
+		boolean anyFailed = false;
+		try {
+			List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects(objectID, owner, null, appID);
+			for (BigDataStackObjectDefinition object : objects) {
+				boolean deleted =  openshiftOperationClient.deleteOperation(object);
+				if (deleted==false) {
+					anyFailed = true;
+					continue;
+				}
+				eventUtil.registerEvent(
+						appID,
+						owner,
+						object.getNamespace(),
+						BigDataStackEventType.Openshift,
+						BigDataStackEventSeverity.Info,
+						"Object '"+objectID+"("+object.getInstance()+")' Deleted",
+						"Deleted the cluster instance associated to '"+objectID+"("+object.getInstance()+")', this will kill running pods, but the object will remain in the database.",
+						objectID
+						);
+				
+				object.getStatus().add("Deleted");
+				objectInstanceClient.updateObject(object);
+			}
+			
+			return anyFailed;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	public boolean stopOperationSequence(String owner, String appID, String sequenceID, int instance) {
+		try {
+			BigDataStackOperationSequence sequence = sequenceInstanceClient.getSequence(appID, sequenceID, instance);
+			if (sequence==null) return false;
+			
+			// First try and kill the sequence runner
+			List<BigDataStackObjectDefinition> sequenceRunners = objectInstanceClient.getObjects("operationsequence", "gdt", sequence.getNamepace(), appID);
+			for (BigDataStackObjectDefinition sequenceRunner : sequenceRunners) {
+				// weird sub-case where we want to check whether the object yaml has labels
+				JsonNode yamlSource = yamlMapper.readTree(sequenceRunner.getYamlSource());
+				JsonNode metadata = yamlSource.get("metadata");
+				JsonNode labels = metadata.get("labels");
+				if (!labels.has("appID") || !labels.get("appID").asText().equalsIgnoreCase(appID)) continue;
+				if (!labels.has("sequenceID") || !labels.get("sequenceID").asText().equalsIgnoreCase(sequenceID)) continue;
+				if (!labels.has("sequenceInstance") || !labels.get("sequenceInstance").asText().equalsIgnoreCase(String.valueOf(instance))) continue;
+				
+				// if we get to here then we have found a sequence runner for the specified sequence and instance
+				boolean deleted =  openshiftOperationClient.deleteOperation(sequenceRunner); // try deleting it
+				
+				if (deleted) {
+					eventUtil.registerEvent(
+							appID,
+							owner,
+							sequenceRunner.getNamespace(),
+							BigDataStackEventType.Openshift,
+							BigDataStackEventSeverity.Info,
+							"Stop Operation Sequence: Runner for '"+sequenceID+"("+instance+")' Deleted",
+							"Deleted an operation sequence runner for '"+sequenceID+"("+instance+")', this will stop future operations from starting.",
+							sequenceID
+							);
+					
+					// update the object status
+					Set<String> status = new HashSet<String>();
+					status.add("Killed");
+					sequenceRunner.setStatus(status);
+					objectInstanceClient.updateObject(sequenceRunner);
+				}
+				
+			}
+			
+			/*boolean deleted =  openshiftOperationClient.deleteOperation(object);
+			if (!deleted) return false;
+			
+			object.getStatus().add("Deleted");
+			objectInstanceClient.updateObject(object);*/
+			
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+
 
 	public void printTimings() {
 		System.out.println("### Timings ###");

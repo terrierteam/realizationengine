@@ -78,7 +78,7 @@ public class GDTMain {
 			GDTManager manager = new GDTManager(gdtConf);
 			
 			// This should only ever return 1 sequence because we are connecting to the template client
-			BigDataStackOperationSequence sequence = manager.getSequenceInstanceClient().getOperationSequence(appID, sequenceID, Integer.parseInt(sequenceInstance));
+			BigDataStackOperationSequence sequence = manager.getSequenceInstanceClient().getOperationSequence(appID, sequenceID, Integer.parseInt(sequenceInstance), null);
 			if (sequence==null) {
 				manager.eventUtil.registerEvent(
 						appID,
@@ -140,6 +140,22 @@ public class GDTMain {
 			CostExporter monitorThread = new CostExporter(openshiftStatus, rabbitMQClient, database, owner, namespace);
 			monitorThread.run();
 			openshiftStatus.close();
+			
+			
+		} else if (args[0].equalsIgnoreCase("api")) {
+			
+			DatabaseConf databaseConf = new DatabaseConf(dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
+			OpenshiftConfig openshiftConf = new OpenshiftConfig(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			RabbitMQConf rabbitMQConf = new RabbitMQConf(rmqhost, Integer.parseInt(rmqport), rmqusername, rmqpassword);
+			GDTConfig gdtConf = new GDTConfig(databaseConf,rabbitMQConf,openshiftConf);
+			
+			GDTManager manager = new GDTManager(gdtConf);
+			
+			try {
+				String[] commandArgs = {"server", "api.json"};
+				new GDTAPI(manager).run(commandArgs); // Create a new online api and run it
+			} catch (Exception e) {e.printStackTrace();}
+			
 			
 		// Launch as a processor for an Operation Sequence
 		} else {

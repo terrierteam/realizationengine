@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 import eu.bigdatastack.gdt.operations.Apply;
@@ -30,7 +29,7 @@ public class GDTCLI {
 	}
 	
 	
-	@SuppressWarnings("unchecked")
+	//@SuppressWarnings("unchecked")
 	public void processCommand(String[] args) throws Exception {
 		
 		switch (args[0]) {
@@ -72,7 +71,7 @@ public class GDTCLI {
 						System.out.println("Namespace "+args[3]+" not found");
 						return;
 					}
-					manager.startMonitoringNamespace(namespace, args[2]);
+					manager.startMonitoringNamespace(namespace.getNamespace(), args[2]);
 					break;
 				case "stop":
 					namespace = manager.namespaceStateClient.getNamespace(args[2]);
@@ -80,7 +79,7 @@ public class GDTCLI {
 						System.out.println("Namespace "+args[2]+" not found");
 						return;
 					}
-					manager.stopMonitoringNamespace(namespace, "GDT");
+					manager.stopMonitoringNamespace(namespace.getNamespace(), "GDT");
 					break;
 				default:
 					System.out.println("monitor [start|stop] <namespace>");
@@ -96,7 +95,7 @@ public class GDTCLI {
 				BigDataStackOperationSequence seq;
 				switch (args[1]) {
 				case "start":
-					seq = manager.sequenceTemplateClient.getOperationSequence(args[2], args[3], 0);
+					seq = manager.sequenceTemplateClient.getOperationSequence(args[2], args[3], 0, null);
 					if (seq==null) {
 						System.out.println("Sequence in app "+args[2]+" with id "+args[3]+" not found");
 						return;
@@ -111,7 +110,7 @@ public class GDTCLI {
 					manager.executeSequenceFromTemplate(seq, params);
 					break;
 				case "startsync":
-					seq = manager.sequenceTemplateClient.getOperationSequence(args[2], args[3], 0);
+					seq = manager.sequenceTemplateClient.getOperationSequence(args[2], args[3], 0, null);
 					if (seq==null) {
 						System.out.println("Sequence in app "+args[2]+" with id "+args[3]+" not found");
 						return;
@@ -251,7 +250,7 @@ public class GDTCLI {
 					System.out.println("| Title: "+app.getName());
 					System.out.println("|------------------------------------------------------");
 					System.out.println();
-					List<BigDataStackMetricValue> metrics = manager.metricValueClient.getMetricValues(args[4], args[2], args[3], null);
+					List<BigDataStackMetricValue> metrics = manager.metricValueClient.getMetricValues(args[4], args[2], args[3], null, null);
 					System.out.println("|------------------------------------------------------");
 					System.out.println("| Metrics: ");
 					for (BigDataStackMetricValue metric : metrics) {
@@ -265,7 +264,7 @@ public class GDTCLI {
 						for (int i =0; i<metric.getLabels().size(); i++) {
 							Map<String,String> labels = metric.getLabels().get(i);
 							String value = metric.getValue().get(i);
-							Long timestamp = metric.getLastUpdated().get(i);
+							//Long timestamp = metric.getLastUpdated().get(i);
 							BigDataStackObjectDefinition objectDef = manager.objectInstanceClient.getObject(labels.get("objectID"), app.getOwner(), Integer.parseInt(labels.get("instance")));
 							if (labels.containsKey("appID")) if (!labels.get("appID").equalsIgnoreCase(app.getAppID())) continue;
 							

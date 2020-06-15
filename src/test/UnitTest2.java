@@ -101,7 +101,7 @@ public class UnitTest2 {
 		manager.cleanUpEndedSequenceTemplates(namespace.getNamespace()); // clean any old sequence template runners
 
 		// Start Namespace Monitoring
-		assertTrue(manager.startMonitoringNamespace(namespace, "richardm"));
+		assertTrue(manager.startMonitoringNamespace(namespace.getNamespace(), "richardm"));
 		
 		// Create Application
 		BigDataStackApplication app = manager.registerApplication(new File("resources/bigdatastack/unitTest2/unitTest2.app.yaml"));
@@ -119,7 +119,7 @@ public class UnitTest2 {
 		assertTrue(manager.executeSequenceFromTemplateSync(seq));
 		
 		// Shut down monitoring
-		assertTrue(manager.stopMonitoringNamespace(namespace, "richardm"));
+		assertTrue(manager.stopMonitoringNamespace(namespace.getNamespace(), "richardm"));
 		
 		manager.printTimings();
 		
@@ -145,7 +145,7 @@ public class UnitTest2 {
 		manager.cleanUpEndedSequenceTemplates(namespace.getNamespace()); // clean any old sequence template runners
  
 		// Start Namespace Monitoring
-		assertTrue(manager.startMonitoringNamespace(namespace, "richardm"));
+		assertTrue(manager.startMonitoringNamespace(namespace.getNamespace(), "richardm"));
 		
 		// Create Application
 		BigDataStackApplication app = manager.registerApplication(new File("resources/bigdatastack/unitTest2/unitTest2.app.yaml"));

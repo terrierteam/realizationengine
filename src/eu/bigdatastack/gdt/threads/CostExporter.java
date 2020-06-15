@@ -90,7 +90,7 @@ public class CostExporter implements Runnable{
 
 				for (BigDataStackApplication app : applications) {
 
-					List<BigDataStackObjectDefinition> objectInstances = objectIO.getObjectList(owner, namespace, app.getAppID());
+					List<BigDataStackObjectDefinition> objectInstances = objectIO.getObjectList(owner, namespace, app.getAppID(), null);
 
 					for (BigDataStackObjectDefinition objectDef : objectInstances) {
 						

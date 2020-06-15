@@ -4,6 +4,11 @@
   <artifactId>BigDataStack-GDT</artifactId>
   <version>0.8</version>
   
+  
+  <properties>
+    <dropwizard.version>2.0.10</dropwizard.version>
+</properties>
+  
   <dependencies>
   
   <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
@@ -89,6 +94,12 @@
   <groupId>io.prometheus</groupId>
   <artifactId>simpleclient_pushgateway</artifactId>
   <version>0.8.1</version>
+</dependency>
+
+<dependency>
+    <groupId>io.dropwizard</groupId>
+    <artifactId>dropwizard-core</artifactId>
+    <version>${dropwizard.version}</version>
 </dependency>
 
   </dependencies>

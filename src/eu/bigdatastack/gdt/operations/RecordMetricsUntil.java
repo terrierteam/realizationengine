@@ -199,7 +199,7 @@ public class RecordMetricsUntil extends BigDataStackOperation{
 				
 				// update metrics
 				//System.err.println("Check Metrics");
-				List<BigDataStackMetricValue> metricsToUpdate = metricValueClient.getMetricValues(instanceObject.getAppID(), instanceObject.getOwner(), instanceObject.getNamespace(), sourceObjectID+"-"+instance);
+				List<BigDataStackMetricValue> metricsToUpdate = metricValueClient.getMetricValues(instanceObject.getAppID(), instanceObject.getOwner(), instanceObject.getNamespace(), sourceObjectID+"-"+instance, null);
 				//System.err.println(metricsToUpdate.size());
 				for (BigDataStackMetricValue metricValue : metricsToUpdate) {
 					if (prometheusDataClient.update(metricValue)) {
@@ -215,7 +215,7 @@ public class RecordMetricsUntil extends BigDataStackOperation{
 			Thread.sleep(gracePeriodSec*1000);
 			
 			// update metrics
-			List<BigDataStackMetricValue> metricsToUpdate = metricValueClient.getMetricValues(instanceObject.getAppID(), instanceObject.getOwner(), instanceObject.getNamespace(), instanceObject.getObjectID());
+			List<BigDataStackMetricValue> metricsToUpdate = metricValueClient.getMetricValues(instanceObject.getAppID(), instanceObject.getOwner(), instanceObject.getNamespace(), instanceObject.getObjectID(), null);
 			for (BigDataStackMetricValue metricValue : metricsToUpdate) {
 				if (prometheusDataClient.update(metricValue)) {
 					metricValueClient.updateMetricValue(metricValue);

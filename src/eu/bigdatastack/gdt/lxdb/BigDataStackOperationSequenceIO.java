@@ -269,7 +269,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	 * @return
 	 * @throws SQLException
 	 */
-	public List<BigDataStackOperationSequence> getOperationSequences(String appID) throws SQLException {
+	public List<BigDataStackOperationSequence> getOperationSequences(String owner, String appID, String sequenceID) throws SQLException {
 		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
@@ -278,6 +278,8 @@ public class BigDataStackOperationSequenceIO implements Timed {
 		
 		StringBuilder baseStatement = new StringBuilder();
 		baseStatement.append("SELECT * FROM "+tableName+" WHERE appID='"+appID+"'");
+		if (owner!=null) baseStatement.append(" AND owner='"+owner+"'");
+		if (sequenceID!=null) baseStatement.append(" AND sequenceID='"+sequenceID+"'");
 		
 		statement.execute(baseStatement.toString());
 		ResultSet results = statement.getResultSet();
@@ -408,7 +410,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 	 * @return
 	 * @throws SQLException
 	 */
-	public BigDataStackOperationSequence getOperationSequence(String appID, String sequenceID, int instance) throws SQLException {
+	public BigDataStackOperationSequence getOperationSequence(String appID, String sequenceID, int instance, String owner) throws SQLException {
 		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
@@ -417,6 +419,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 		
 		StringBuilder baseStatement = new StringBuilder();
 		baseStatement.append("SELECT * FROM "+tableName+" WHERE appID='"+appID+"' AND sequenceID='"+sequenceID+"' AND instance="+instance);
+		if (owner!=null) baseStatement.append(" AND owner='"+owner+"'");
 		
 		statement.execute(baseStatement.toString());
 		ResultSet results = statement.getResultSet();

@@ -1,0 +1,20 @@
+appID: "gdtdefaultapp"
+owner: "gdt"
+
+objectID: "tme-prometheus-assignment"
+type: TripleMonitoringEngine
+
+yamlSource:
+  apiVersion: unipi.gr/v1
+  kind: TripleMonitoringEngine
+  metadata:
+    name: $appID$-$objectID$-$instance$
+    namespace: tme
+  spec:
+    type: tme-prometheus 
+    prometheus:
+      url: $prometheusService$ 
+      externals-labels: replicas 
+    volume:
+      name: volume-prometheus-ks8 
+      claim_name: $prometheus-tme-volume$

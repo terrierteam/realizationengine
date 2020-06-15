@@ -183,8 +183,14 @@ public class BigDataStackObjectIO implements Timed {
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
+		StringBuilder query = new StringBuilder();
+		query.append("SELECT DISTINCT * FROM "+tableName+" WHERE owner='"+owner+"'");
+		if (namespace!=null) query.append(" AND namespace='"+namespace+"'");
+		if (appID!=null) query.append(" AND appID='"+appID+"'");
+		if (objectID!=null) query.append(" AND objectID='"+objectID+"'");
+		
 		Statement statement = conn.createStatement();
-		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE objectID='"+objectID+"' AND owner='"+owner+"' AND namespace='"+namespace+"' AND appID='"+appID+"'");
+		statement.execute(query.toString());
 		ResultSet results = statement.getResultSet();
 		
 		List<BigDataStackObjectDefinition> objectList = new ArrayList<BigDataStackObjectDefinition>(3);
@@ -229,13 +235,18 @@ public class BigDataStackObjectIO implements Timed {
 	 * @throws JsonMappingException
 	 * @throws IOException
 	 */
-	public List<BigDataStackObjectDefinition> getObjectList(String owner, String namespace, String appID) throws SQLException {
+	public List<BigDataStackObjectDefinition> getObjectList(String owner, String namespace, String appID, BigDataStackObjectType type) throws SQLException {
 		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
+		StringBuilder queryBuilder = new StringBuilder();
+		queryBuilder.append("SELECT DISTINCT * FROM "+tableName+" WHERE owner='"+owner+"'");
+		if (namespace!=null) queryBuilder.append(" AND namespace='"+namespace+"'");
+		if (appID!=null) queryBuilder.append(" AND appID='"+appID+"'");
+		if (type!=null) queryBuilder.append(" AND type='"+type.name()+"'");
 		Statement statement = conn.createStatement();
-		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE namespace='"+namespace+"' AND owner='"+owner+"' AND appID='"+appID+"'");
+		statement.execute(queryBuilder.toString());
 		ResultSet results = statement.getResultSet();
 		
 		List<BigDataStackObjectDefinition> objectList = new ArrayList<BigDataStackObjectDefinition>(10);

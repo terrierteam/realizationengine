@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -116,6 +118,10 @@ public class BigDataStackMetricIO implements Timed {
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
+		StringBuilder queryBuilder = new StringBuilder();
+		queryBuilder.append("SELECT DISTINCT * FROM "+tableName+" WHERE owner='"+owner+"'");
+		if (metricName!=null) queryBuilder.append(" AND metricName='"+metricName+"'");
+		
 		Statement statement = conn.createStatement();
 		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE name='"+metricName+"' AND owner='"+owner+"'");
 		ResultSet results = statement.getResultSet();
@@ -148,6 +154,56 @@ public class BigDataStackMetricIO implements Timed {
 		conn.close();
 		totalTime+=System.currentTimeMillis()-startTime;
 		return metric;
+	}
+	
+	/**
+	 * Returns a previously list of previously stored BigDataStack Metrics with registered with a user. 
+	 * @param owner
+	 * @param metricName
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackMetric> listMetrics(String owner, String metricName) throws SQLException {
+		if (!init) { initTable(); init=true;}
+		long startTime = System.currentTimeMillis();
+		Connection conn = client.openConnection();
+		
+		StringBuilder queryBuilder = new StringBuilder();
+		queryBuilder.append("SELECT DISTINCT * FROM "+tableName+" WHERE owner='"+owner+"'");
+		if (metricName!=null) queryBuilder.append(" AND metricName='"+metricName+"'");
+		
+		Statement statement = conn.createStatement();
+		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE name='"+metricName+"' AND owner='"+owner+"'");
+		ResultSet results = statement.getResultSet();
+		
+		List<BigDataStackMetric> metrics = new ArrayList<BigDataStackMetric>();
+		
+		 try {
+			while (results.next()) {
+
+				 
+				BigDataStackMetric metric = new BigDataStackMetric(
+						 results.getString("owner"),
+						 results.getString("name"),
+						 BigDataStackMetricClassname.valueOf(results.getString("metricClassname")),
+						 results.getString("summary"),
+						 Double.parseDouble(results.getString("maximumValue")),
+						 Double.parseDouble(results.getString("minimumValue")),
+						 results.getBoolean("higherIsBetter"),
+						 results.getString("displayUnit"));
+				 
+				metrics.add(metric);
+			 }
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+		} 
+		 
+		
+		
+		conn.close();
+		totalTime+=System.currentTimeMillis()-startTime;
+		return metrics;
 	}
 	
 	/**

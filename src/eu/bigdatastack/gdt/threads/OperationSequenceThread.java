@@ -1,12 +1,15 @@
 package eu.bigdatastack.gdt.threads;
 
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackEventIO;
+import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackOperationSequenceIO;
 import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
@@ -18,6 +21,7 @@ import eu.bigdatastack.gdt.prometheus.PrometheusDataClient;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
+import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceMode;
 import eu.bigdatastack.gdt.util.EventUtil;
@@ -115,7 +119,12 @@ public class OperationSequenceThread implements Runnable {
 	@Override
 	public void run() {
 
-		
+		BigDataStackObjectIO objectIO = null;
+		try {
+			objectIO = new BigDataStackObjectIO(database, false);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		// Stage 1: Instantiate Instance of Sequence
 		try {
@@ -125,6 +134,7 @@ public class OperationSequenceThread implements Runnable {
 			}
 
 			BigDataStackOperationSequenceIO sequenceIO = new BigDataStackOperationSequenceIO(database, false);
+			
 			
 			if (sequence.getIndex()<=0) {
 				// this is a template, so we need to instantiate
@@ -164,7 +174,38 @@ public class OperationSequenceThread implements Runnable {
 			return;
 		}
 		
-		if (kill || failed) return;
+		BigDataStackObjectDefinition runnerObject = null;
+		if (sequence.getParameters().containsKey("runnerIndex")) {
+			// we are in a containerized runner, so we should keep the state of the runner object updated as well
+			try {
+				
+				runnerObject = objectIO.getObject("operationsequence", "gdt", Integer.parseInt(sequence.getParameters().get("runnerIndex")));
+				
+				if (runnerObject!=null) {
+					Set<String> runnerStatus = new HashSet<String>();
+					runnerStatus.add("Progressing");
+					objectIO.updateObject(runnerObject);
+				}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		if (kill || failed) {
+			if (runnerObject!=null) {
+				Set<String> runnerStatus = new HashSet<String>();
+				runnerStatus.add("Failed");
+				try {
+					objectIO.updateObject(runnerObject);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				operationsClient.deleteOperation(runnerObject); // delete self;
+			}
+			
+			return;
+		}
 
 		// Stage 2: Process Operations
 		BigDataStackOperationSequenceMode mode = sequence.getMode();
@@ -215,7 +256,18 @@ public class OperationSequenceThread implements Runnable {
 				
 				sequenceIO.updateSequence(sequence);
 				
-				if (kill || failed) return;
+				if (kill || failed) {
+					if (runnerObject!=null) {
+						Set<String> runnerStatus = new HashSet<String>();
+						runnerStatus.add("Failed");
+						try {
+							objectIO.updateObject(runnerObject);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+						operationsClient.deleteOperation(runnerObject); // delete self;
+					}
+				}
 				
 				if (!operationSucceeded) {
 					failed = true;
@@ -229,6 +281,16 @@ public class OperationSequenceThread implements Runnable {
 							"Operation targeting '"+operation.getObjectID()+"' failed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
 							sequence.getSequenceID()
 							);
+					if (runnerObject!=null) {
+						Set<String> runnerStatus = new HashSet<String>();
+						runnerStatus.add("Failed");
+						try {
+							objectIO.updateObject(runnerObject);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+						operationsClient.deleteOperation(runnerObject); // delete self;
+					}
 					return;
 				}
 				
@@ -262,6 +324,16 @@ public class OperationSequenceThread implements Runnable {
 					e1.printStackTrace();
 				}
 				
+				if (runnerObject!=null) {
+					Set<String> runnerStatus = new HashSet<String>();
+					runnerStatus.add("Failed");
+					try {
+						objectIO.updateObject(runnerObject);
+					} catch (Exception e1) {
+						e1.printStackTrace();
+					}
+					operationsClient.deleteOperation(runnerObject); // delete self;
+				}
 				return;
 			}
 
@@ -283,6 +355,17 @@ public class OperationSequenceThread implements Runnable {
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
+			
+			if (runnerObject!=null) {
+				Set<String> runnerStatus = new HashSet<String>();
+				runnerStatus.add("Failed");
+				try {
+					objectIO.updateObject(runnerObject);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				operationsClient.deleteOperation(runnerObject); // delete self;
+			}
 		} else {
 			try {
 				eventUtil.registerEvent(
@@ -297,6 +380,17 @@ public class OperationSequenceThread implements Runnable {
 						);
 			} catch (SQLException e1) {
 				e1.printStackTrace();
+			}
+			
+			if (runnerObject!=null) {
+				Set<String> runnerStatus = new HashSet<String>();
+				runnerStatus.add("Completed");
+				try {
+					objectIO.updateObject(runnerObject);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				operationsClient.deleteOperation(runnerObject); // delete self;
 			}
 		}
 

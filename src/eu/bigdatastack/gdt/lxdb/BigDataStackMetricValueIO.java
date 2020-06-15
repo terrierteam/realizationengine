@@ -131,7 +131,7 @@ public class BigDataStackMetricValueIO implements Timed {
 	 * @throws JsonMappingException
 	 * @throws IOException
 	 */
-	public List<BigDataStackMetricValue> getMetricValues(String appID, String owner, String namepace, String objectID) throws SQLException {
+	public List<BigDataStackMetricValue> getMetricValues(String appID, String owner, String namepace, String objectID, String metricName) throws SQLException {
 		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
@@ -143,6 +143,7 @@ public class BigDataStackMetricValueIO implements Timed {
 		if (appID!=null) statementBuild.append(" AND appID='"+appID+"'");
 		if (namepace!=null) statementBuild.append(" AND namespace='"+namepace+"'");
 		if (objectID!=null) statementBuild.append(" AND objectID='"+objectID+"'");
+		if (metricName!=null) statementBuild.append(" AND metricName='"+metricName+"'");
 		statement.execute(statementBuild.toString());
 		ResultSet results = statement.getResultSet();
 
