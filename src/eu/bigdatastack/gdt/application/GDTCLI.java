@@ -42,7 +42,7 @@ public class GDTCLI {
 					manager.registerNamespace(new File(args[2]));
 					break;
 				case "playbook":
-					manager.loadPlaybook(GDTFileUtil.file2String(new File(args[2]), "UTF-8"));
+					manager.loadPlaybook(GDTFileUtil.file2String(new File(args[2]), "UTF-8"), null, null);
 					break;
 				case "object":
 					manager.registerObject(new File(args[2]));
@@ -74,12 +74,12 @@ public class GDTCLI {
 					manager.startMonitoringNamespace(namespace.getNamespace(), args[2]);
 					break;
 				case "stop":
-					namespace = manager.namespaceStateClient.getNamespace(args[2]);
+					namespace = manager.namespaceStateClient.getNamespace(args[3]);
 					if (namespace==null) {
-						System.out.println("Namespace "+args[2]+" not found");
+						System.out.println("Namespace "+args[3]+" not found");
 						return;
 					}
-					manager.stopMonitoringNamespace(namespace.getNamespace(), "GDT");
+					manager.stopMonitoringNamespace(namespace.getNamespace(), args[2]);
 					break;
 				default:
 					System.out.println("monitor [start|stop] <namespace>");

@@ -175,7 +175,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Registers a new BigDataStack Application with the database from a yaml format String
 	 * @param yaml
@@ -216,7 +216,7 @@ public class GDTManager implements Manager {
 					return null;
 				}
 			}
-				
+
 			eventUtil.registerEvent(
 					app.getAppID(),
 					app.getOwner(),
@@ -228,7 +228,7 @@ public class GDTManager implements Manager {
 					app.getAppID()
 					);
 			return app;	
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -273,7 +273,7 @@ public class GDTManager implements Manager {
 	public BigDataStackObjectDefinition registerObject(String yaml) {
 		return registerObject(yaml, null, null);
 	}
-	
+
 	/**
 	 * Registers a new BigDataStack Object Definition with the database from a yaml format String
 	 * @param yaml
@@ -298,9 +298,9 @@ public class GDTManager implements Manager {
 							);
 					return null;
 				}
-				
+
 			}
-			
+
 			eventUtil.registerEvent(
 					"GDT",
 					object.getOwner(),
@@ -333,7 +333,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Registers a new BigDataStack Object Definition with the database from a yaml format File
 	 * @param yamlFile
@@ -348,7 +348,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Registers a new BigDataStack Object Definition with the database from a yaml format File
 	 * @param yamlFile
@@ -388,7 +388,7 @@ public class GDTManager implements Manager {
 					return null;
 				}
 			}
-				
+
 			eventUtil.registerEvent(
 					"Metric",
 					object.getOwner(),
@@ -581,7 +581,7 @@ public class GDTManager implements Manager {
 	public BigDataStackOperationSequence registerOperationSequence(String yaml) {
 		return registerOperationSequence(yaml, null, null);
 	}
-	
+
 
 	/**
 	 * Registers a new operation sequence with the database
@@ -593,7 +593,7 @@ public class GDTManager implements Manager {
 			BigDataStackOperationSequence sequence = GDTFileUtil.readSequenceFromString(yaml, namespace, owner);
 			if (namespace!=null) sequence.setNamepace(namespace);
 			if (owner!=null) sequence.setOwner(owner);
-			
+
 			if (!sequenceTemplateClient.addSequence(sequence)) {
 				if (!sequenceTemplateClient.updateSequence(sequence)) {
 					eventUtil.registerEvent(
@@ -608,9 +608,9 @@ public class GDTManager implements Manager {
 							);
 					return null;
 				}
-				
+
 			}
-			
+
 			eventUtil.registerEvent(
 					sequence.getAppID(),
 					sequence.getOwner(),
@@ -642,7 +642,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Registers a new operation sequence with the database
 	 * @param yamlFile
@@ -657,7 +657,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Registers a new operation sequence with the database
 	 * @param yamlFile
@@ -683,7 +683,37 @@ public class GDTManager implements Manager {
 
 		try {
 
-			// get or register the default app
+			// load the GDT Monitor
+			loadPlaybook(GDTFileUtil.file2String(new File("resources/gdt/monitor.playbook.yaml"), "UTF-8"), owner, namespace);
+
+			// Launch the Operation Sequence
+			Map<String,String> parameters = new HashMap<String,String>();
+			// database info
+			parameters.put("dbhost", gdtConfig.getDatabase().getHost());
+			parameters.put("dbport", String.valueOf(gdtConfig.getDatabase().getPort()));
+			parameters.put("dbname", gdtConfig.getDatabase().getName());
+			// database credentials
+			parameters.put("dbusername", databaseCredential.getUsername());
+			parameters.put("dbpassword", databaseCredential.getPassword());
+			// openshift info
+			parameters.put("ochost", gdtConfig.getOpenshift().getHost());
+			parameters.put("ocport", String.valueOf(gdtConfig.getOpenshift().getPort()));
+			// openshift credentials
+			parameters.put("ocusername", openshiftCredential.getUsername());
+			parameters.put("ocpassword", openshiftCredential.getPassword());
+			// rabbitmq info
+			parameters.put("rmqhost", gdtConfig.getRabbitmq().getHost());
+			parameters.put("rmqport", String.valueOf(gdtConfig.getRabbitmq().getPort()));
+			// rabbitmq credentials
+			parameters.put("rmqusername", rabbitMQCredential.getUsername());
+			parameters.put("rmqpassword", rabbitMQCredential.getPassword());
+
+			BigDataStackOperationSequence existingSequenceTemplate = sequenceTemplateClient.getSequence("gdtdefaultapp", "seq-gdtmonitor");
+			boolean monitoringOk = executeSequenceFromTemplateSync(existingSequenceTemplate, parameters);
+
+			if (!monitoringOk) return false;
+
+			/*// get or register the default app
 			BigDataStackApplication app = getAppClient().getApp("gdtdefaultapp", owner, namespace);
 			if (app == null) app = registerApplication(new File("resources/gdt/gdtdefault.app.yaml"), namespace, owner);
 			if (app == null) {
@@ -851,70 +881,11 @@ public class GDTManager implements Manager {
 
 			boolean prometheusOk = executeSequenceFromTemplateSync(prometheusSequenceTemplate);
 
-			if (!prometheusOk) return false;
+			if (!prometheusOk) return false;*/
 
-			// get or register the monitor object
-			BigDataStackObjectDefinition monitorDC = getObjectTemplateClient().getObject("gdtdefaultapp-gdtmonitor", owner);
-			if (monitorDC == null) monitorDC = registerObject(new File("resources/gdt/gdtmain.dc.yaml"), namespace, owner);
-			if (monitorDC == null) {
 
-				eventUtil.registerEvent(
-						"gdtdefaultapp",
-						owner,
-						namespace,
-						BigDataStackEventType.GlobalDecisionTracker,
-						BigDataStackEventSeverity.Error,
-						"Failed to launch namespace monitoring for namespace: '"+namespace+"'",
-						"Tried to get or register the GDT Monitoring object, but it was rejected by the registry",
-						"gdtdefaultapp-gdtmonitor"
-						);
-				return false;
-			}
 
-			// get or create the operation sequence
-			BigDataStackOperationSequence existingSequenceTemplate = getSequenceTemplateClient().getOperationSequence("gdtdefaultapp", "seq-gdtmonitor", 0, null);
-			if (existingSequenceTemplate==null) existingSequenceTemplate = registerOperationSequence(new File("resources/gdt/gdtmonitor.seq.yaml"), namespace, owner);
-			if (existingSequenceTemplate==null) {
 
-				eventUtil.registerEvent(
-						"gdtdefaultapp",
-						owner,
-						namespace,
-						BigDataStackEventType.GlobalDecisionTracker,
-						BigDataStackEventSeverity.Error,
-						"Failed to launch namespace monitoring for namespace: '"+namespace+"'",
-						"Tried to get or register the GDT Monitoring operation sequence template, but it was rejected by the registry",
-						"seq-gdtmonitor"
-						);
-
-				return false;
-			}
-
-			// Launch the Operation Sequence
-			Map<String,String> parameters = new HashMap<String,String>();
-			// database info
-			parameters.put("dbhost", gdtConfig.getDatabase().getHost());
-			parameters.put("dbport", String.valueOf(gdtConfig.getDatabase().getPort()));
-			parameters.put("dbname", gdtConfig.getDatabase().getName());
-			// database credentials
-			parameters.put("dbusername", databaseCredential.getUsername());
-			parameters.put("dbpassword", databaseCredential.getPassword());
-			// openshift info
-			parameters.put("ochost", gdtConfig.getOpenshift().getHost());
-			parameters.put("ocport", String.valueOf(gdtConfig.getOpenshift().getPort()));
-			// openshift credentials
-			parameters.put("ocusername", openshiftCredential.getUsername());
-			parameters.put("ocpassword", openshiftCredential.getPassword());
-			// rabbitmq info
-			parameters.put("rmqhost", gdtConfig.getRabbitmq().getHost());
-			parameters.put("rmqport", String.valueOf(gdtConfig.getRabbitmq().getPort()));
-			// rabbitmq credentials
-			parameters.put("rmqusername", rabbitMQCredential.getUsername());
-			parameters.put("rmqpassword", rabbitMQCredential.getPassword());
-
-			boolean monitoringOk = executeSequenceFromTemplateSync(existingSequenceTemplate, parameters);
-
-			if (!monitoringOk) return false;
 
 
 			return true;
@@ -934,7 +905,7 @@ public class GDTManager implements Manager {
 	public boolean stopMonitoringNamespace(String namespace, String owner) {
 
 		try {
-			List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects("gdtmonitor", owner, namespace, "gdtdefaultapp");
+			/*List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects("gdtmonitor", owner, namespace, "gdtdefaultapp");
 			if (objects.size()==0) return false;
 
 			int succeeded = 0;
@@ -990,13 +961,16 @@ public class GDTManager implements Manager {
 						namespace
 						);
 				return false;
-			}
+			}*/
+			
+			return stopOperationSequenceInstances(owner, namespace, "gdtdefaultapp", "seq-gdtmonitor");
+			
+			
 
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
-		return true;
 
 	}
 
@@ -1092,7 +1066,7 @@ public class GDTManager implements Manager {
 					yaml = yaml.replaceAll("\\$"+paramKey+"\\$", parameters.get(paramKey));
 				}
 				operationsequenceDef.setYamlSource(yaml);
-				
+
 				// Now register the sequence pod (this is needed so we can track its progress)
 				int failedReg = 0;
 				boolean regOK = false;
@@ -1122,14 +1096,14 @@ public class GDTManager implements Manager {
 						break;
 					}
 				}
-				
-				
+
+
 				yaml = yaml.replaceAll("\\$runnerIndex\\$", parameters.get("runnerIndex"));
 				operationsequenceDef.setYamlSource(yaml);
 
 				newSequenceInstance.getParameters().put("runnerIndex", parameters.get("runnerIndex"));
 				sequenceInstanceClient.updateSequence(newSequenceInstance);
-				
+
 				openshiftOperationClient.applyOperation(operationsequenceDef);
 
 			} else {
@@ -1204,7 +1178,7 @@ public class GDTManager implements Manager {
 	public BigDataStackOperationSequenceIO getSequenceInstanceClient() {
 		return sequenceInstanceClient;
 	}
-	
+
 	/**
 	 * Directly deletes an object instance, if there are underlying pods they will also be deleted. 
 	 * @param owner
@@ -1217,7 +1191,7 @@ public class GDTManager implements Manager {
 		try {
 			BigDataStackObjectDefinition object = objectInstanceClient.getObject(objectID, owner, instance);
 			if (object==null) return false;
-			
+
 			boolean deleted =  openshiftOperationClient.deleteOperation(object);
 			if (!deleted) return false;
 			eventUtil.registerEvent(
@@ -1230,17 +1204,17 @@ public class GDTManager implements Manager {
 					"Deleted the cluster instance associated to '"+objectID+"("+instance+")', this will kill running pods, but the object will remain in the database.",
 					objectID
 					);
-			
+
 			object.getStatus().add("Deleted");
 			objectInstanceClient.updateObject(object);
-			
+
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Directly deletes all instances for an object, if there are underlying pods they will also be deleted. 
 	 * @param owner
@@ -1269,25 +1243,64 @@ public class GDTManager implements Manager {
 						"Deleted the cluster instance associated to '"+objectID+"("+object.getInstance()+")', this will kill running pods, but the object will remain in the database.",
 						objectID
 						);
-				
+
 				object.getStatus().add("Deleted");
 				objectInstanceClient.updateObject(object);
 			}
-			
+
 			return anyFailed;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
 	}
+
+	public boolean stopOperationSequenceInstances(String owner, String namespace, String appID, String sequenceID) {
+		try {
+			List<BigDataStackOperationSequence> sequenceInstances = sequenceInstanceClient.getOperationSequences(owner, appID, sequenceID);
+			for (BigDataStackOperationSequence sequence : sequenceInstances) {
+				if (!sequence.getNamepace().equalsIgnoreCase(namespace)) continue;
+				boolean ok = stopOperationSequenceInstance(owner, appID, sequenceID, sequence.getIndex());
+				if (ok ) {
+					eventUtil.registerEvent(
+							appID,
+							owner,
+							sequence.getNamespace(),
+							BigDataStackEventType.Openshift,
+							BigDataStackEventSeverity.Info,
+							"Stopped Operation Sequence Instance '"+sequenceID+"("+sequence.getIndex()+")'",
+							"Stopped operation sequence instance '"+sequenceID+"("+sequence.getIndex()+")' and all of its components on the cluster",
+							sequenceID
+							);
+				} else {
+					eventUtil.registerEvent(
+							appID,
+							owner,
+							sequence.getNamespace(),
+							BigDataStackEventType.Openshift,
+							BigDataStackEventSeverity.Info,
+							"Failure detected during stop for operation sequence instance '"+sequenceID+"("+sequence.getIndex()+")'",
+							"Stopped operation sequence instance '"+sequenceID+"("+sequence.getIndex()+")' failed due to an internal error",
+							sequenceID
+							);
+				}
+			}
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+	}
 	
-	public boolean stopOperationSequence(String owner, String appID, String sequenceID, int instance) {
+	public boolean stopOperationSequenceInstance(String owner, String appID, String sequenceID, int instance) {
 		try {
 			BigDataStackOperationSequence sequence = sequenceInstanceClient.getSequence(appID, sequenceID, instance);
 			if (sequence==null) return false;
-			
-			// First try and kill the sequence runner
+
+			// First try and kill the sequence runner (this may not exist)
 			List<BigDataStackObjectDefinition> sequenceRunners = objectInstanceClient.getObjects("operationsequence", "gdt", sequence.getNamepace(), appID);
+			boolean foundRunner = false;
 			for (BigDataStackObjectDefinition sequenceRunner : sequenceRunners) {
 				// weird sub-case where we want to check whether the object yaml has labels
 				JsonNode yamlSource = yamlMapper.readTree(sequenceRunner.getYamlSource());
@@ -1296,10 +1309,11 @@ public class GDTManager implements Manager {
 				if (!labels.has("appID") || !labels.get("appID").asText().equalsIgnoreCase(appID)) continue;
 				if (!labels.has("sequenceID") || !labels.get("sequenceID").asText().equalsIgnoreCase(sequenceID)) continue;
 				if (!labels.has("sequenceInstance") || !labels.get("sequenceInstance").asText().equalsIgnoreCase(String.valueOf(instance))) continue;
+				foundRunner = true;
 				
 				// if we get to here then we have found a sequence runner for the specified sequence and instance
 				boolean deleted =  openshiftOperationClient.deleteOperation(sequenceRunner); // try deleting it
-				
+
 				if (deleted) {
 					eventUtil.registerEvent(
 							appID,
@@ -1311,29 +1325,85 @@ public class GDTManager implements Manager {
 							"Deleted an operation sequence runner for '"+sequenceID+"("+instance+")', this will stop future operations from starting.",
 							sequenceID
 							);
-					
+
 					// update the object status
 					Set<String> status = new HashSet<String>();
 					status.add("Killed");
 					sequenceRunner.setStatus(status);
 					objectInstanceClient.updateObject(sequenceRunner);
 				}
-				
+
 			}
 			
+			if (!foundRunner) {
+				eventUtil.registerEvent(
+						appID,
+						owner,
+						sequence.getNamespace(),
+						BigDataStackEventType.Openshift,
+						BigDataStackEventSeverity.Info,
+						"Stop Operation Sequence: No runner found '"+sequenceID+"("+instance+")', skipping",
+						"Searcher for a matching runner pod for '"+sequenceID+"("+instance+")', but found none.",
+						sequenceID
+						);
+			}
+			
+			// Now try and delete all of the underlying objects spawned from this operation sequence
+			for (BigDataStackOperation operation : sequence.getOperations()) {
+				
+				System.err.println(operation.getClassName());
+				
+				// Apply Operations can spawn objects that need deleted
+				if (operation.getClassName().equalsIgnoreCase("eu.bigdatastack.gdt.operations.Apply")) {
+					String instanceRef = operation.getObjectID(); // apply operations use the instance ref as their object id
+					
+					// resolve the instance ref to get the identifiers for the object
+					String sourceObjectID = sequence.getParameters().get(instanceRef).split(":")[0];
+					int instanceNo = Integer.valueOf(sequence.getParameters().get(instanceRef).split(":")[1]);
+					
+					// get the object instance
+					BigDataStackObjectDefinition objectInstance = objectInstanceClient.getObject(sourceObjectID, owner, instanceNo);
+
+					if (!openshiftOperationClient.deleteOperation(objectInstance)) {
+						eventUtil.registerEvent(
+								operation.getAppID(),
+								operation.getOwner(),
+								operation.getNamespace(),
+								BigDataStackEventType.Openshift,
+								BigDataStackEventSeverity.Error,
+								"Tried to deleted object '"+sourceObjectID+"("+instanceNo+")', but failed",
+								"Tried to delete the object '"+sourceObjectID+"("+instanceNo+" on the cluster, but openshift rejected it",
+								sourceObjectID
+								);
+						
+					} else {
+						eventUtil.registerEvent(
+								operation.getAppID(),
+								operation.getOwner(),
+								operation.getNamespace(),
+								BigDataStackEventType.Openshift,
+								BigDataStackEventSeverity.Info,
+								"Deleted cluster object '"+sourceObjectID+"("+instanceNo+")'",
+								"Deleted the cluster object '"+sourceObjectID+"("+instanceNo+")",
+								sourceObjectID
+								);
+					}
+				}
+				
+			}
 			/*boolean deleted =  openshiftOperationClient.deleteOperation(object);
 			if (!deleted) return false;
-			
+
 			object.getStatus().add("Deleted");
 			objectInstanceClient.updateObject(object);*/
-			
+
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
 	}
-	
+
 
 
 	public void printTimings() {
@@ -1350,74 +1420,79 @@ public class GDTManager implements Manager {
 	}
 
 
-	public void loadPlaybook(String yaml) {
-		
+	public void loadPlaybook(String yaml, String owner, String namespace) {
+
 		try {
 			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 			JsonNode node = mapper.readTree(yaml);
-			
+
 			List<BigDataStackApplicationType> types = new ArrayList<BigDataStackApplicationType>();
 			Iterator<JsonNode> typeI = node.get("types").iterator();
 			while (typeI.hasNext()) types.add(BigDataStackApplicationType.valueOf(typeI.next().textValue()));
-			
-			BigDataStackApplication app = new BigDataStackApplication(
+
+			BigDataStackApplication app = null;
+
+			if (namespace==null) namespace = node.get("namespace").asText();
+			if (owner==null) owner = node.get("owner").asText();
+
+			app = new BigDataStackApplication(
 					node.get("appID").asText(), 
 					node.get("name").asText(), 
 					node.get("description").asText(), 
-					node.get("owner").asText(), 
-					node.get("namespace").asText(),
+					owner, 
+					namespace,
 					types);
-			
+
 			registerApplication(new YAMLMapper().writeValueAsString(app));
-			
+
 			if (node.has("metrics")) {
 				JsonNode metrics = node.get("metrics");
 				Iterator<JsonNode> metricI = metrics.iterator();
 				while (metricI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(metricI.next());
-					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), app.getOwner(), app.getNamespace());
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace);
 					registerMetric(jsonAsYaml);
 				}
 			}
-			
+
 			if (node.has("objects")) {
 				JsonNode objects = node.get("objects");
 				Iterator<JsonNode> objectsI = objects.iterator();
 				while (objectsI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(objectsI.next());
-					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), app.getOwner(), app.getNamespace());
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace);
 					registerObject(jsonAsYaml);
 				}
 			}
-			
-			
+
+
 			if (node.has("sequences")) {
 				JsonNode sequences = node.get("sequences");
 				Iterator<JsonNode> sequencesI = sequences.iterator();
 				while (sequencesI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(sequencesI.next());
-					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), app.getOwner(), app.getNamespace());
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace);
 					registerOperationSequence(jsonAsYaml);
 				}
 			}
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	protected static String replaceDefaultParameters(String yaml, String appID, String owner, String namespace) {
 		yaml = yaml.replaceAll("\\$appID\\$", appID);
 		yaml = yaml.replaceAll("\\$owner\\$", owner);
 		yaml = yaml.replaceAll("\\$namespace\\$", namespace);
-		
+
 		yaml = yaml.replaceAll("\\$appid\\$", appID);
-		
+
 		yaml = yaml.replaceAll("\\$APPID\\$", appID);
 		yaml = yaml.replaceAll("\\$OWNER\\$", owner);
 		yaml = yaml.replaceAll("\\$NAMESPACE\\$", namespace);
-		
+
 		return yaml;
 	}
 

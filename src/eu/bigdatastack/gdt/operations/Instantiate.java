@@ -3,6 +3,7 @@ package eu.bigdatastack.gdt.operations;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
+import eu.bigdatastack.gdt.lxdb.BigDataStackOperationSequenceIO;
 import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
@@ -148,6 +149,9 @@ public class Instantiate extends BigDataStackOperation{
 				return false;
 			} else {
 				parentSequenceRunner.getSequence().getParameters().put(seqInstanceRef, getObjectID()+":"+String.valueOf(instanceObject.getInstance()));
+				// we have just changed the information stored in the sequence instance, so sync that with the db
+				BigDataStackOperationSequenceIO sequenceInstanceClient = new BigDataStackOperationSequenceIO(database,false);
+				sequenceInstanceClient.updateSequence(parentSequenceRunner.getSequence());
 				eventUtil.registerEvent(
 						getAppID(),
 						getOwner(),

@@ -14,7 +14,7 @@ public class TestPlaybook {
 		// Manager
 		GDTManager manager = new GDTManager(config);
 		
-		manager.loadPlaybook(GDTFileUtil.file2String(new File("resources/atoswl/atoswl.playbook.yaml"), "UTF-8"));
+		manager.loadPlaybook(GDTFileUtil.file2String(new File("resources/atoswl/atoswl.playbook.yaml"), "UTF-8"), null, null);
 		
 	}
 	

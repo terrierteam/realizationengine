@@ -1,0 +1,94 @@
+appID: "gdtdefaultapp"
+name: "GDT Default App"
+description: "This is the default app that global decision tracker components are deployed under"
+owner: "gdt"
+namespace: "$namespace$"
+types:
+ - playbook
+
+objects:
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "gdtmonitor"
+    type: DeploymentConfig
+    yamlSource: 
+      apiVersion: v1
+      kind: DeploymentConfig
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      spec:
+        replicas: 1
+        strategy:
+          resources: {}
+        template:
+          metadata:
+            labels:
+              jobconfig: $objectID$-$instance$
+              app: $appID$
+          spec:
+            containers:
+            - name: gdtmain
+              image: "docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest"
+              resources:
+                limits:
+                  cpu: "1000m"
+                  memory: "2048Mi"
+              command:
+               - 'java'
+              args:
+               - '-jar'
+               - './target/BigDataStack-GDT-0.8.jar'
+               - 'namespaceMonitor'
+              env:
+               - name: "owner"
+                 value: "$owner$"
+               - name: "namespace"
+                 value: "$namespace$"
+               - name: "dbhost"
+                 value: "$dbhost$"
+               - name: "dbport"
+                 value: "$dbport$"
+               - name: "dbname"
+                 value: "$dbname$"
+               - name: "dbusername"
+                 value: "$dbusername$"
+               - name: "dbpassword"
+                 value: "$dbpassword$"
+               - name: "ochost"
+                 value: "$ochost$"
+               - name: "ocport"
+                 value: "$ocport$"
+               - name: "ocusername"
+                 value: "$ocusername$"
+               - name: "ocpassword"
+                 value: "$ocpassword$"
+               - name: "rmqhost"
+                 value: "$rmqhost$"
+               - name: "rmqport"
+                 value: "$rmqport$"
+               - name: "rmqusername"
+                 value: "$rmqusername$"
+               - name: "rmqpassword"
+                 value: "$rmqpassword$"
+              imagePullPolicy: Always
+            securityContext: {}
+            serviceAccount: default
+
+sequences:
+  - appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    sequenceID: "seq-gdtmonitor"
+    name: "GDT Namespace Monitor Deployment Sequence"
+    description: "Deploys the GDT monitoring pod in a specified namepace"
+    parameters: {}
+    operations:
+      - className: Instantiate
+        objectID: "gdtmonitor"
+        defineInstanceRef: "gdtmonitorInstance"
+      - className: SetSequenceParameters
+        instanceRef: "gdtmonitorInstance"
+      - className: Apply
+        instanceRef: "gdtmonitorInstance"
+    mode: Continue
