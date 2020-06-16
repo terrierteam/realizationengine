@@ -69,7 +69,7 @@ objects:
         template:
           metadata:
             labels:
-              jobconfig: $objectID$-$instance$
+              jobconfig: $appID$-$objectID$-$instance$
               app: $appID$
           spec:
             containers:
@@ -167,7 +167,7 @@ objects:
   - appID: "$appID$"
     owner: "$owner$"
     objectID: "prometheusroute"
-    type: Service
+    type: Route
     yamlSource:
       kind: Route
       apiVersion: route.openshift.io/v1
@@ -193,8 +193,8 @@ objects:
       metadata:
         name: $appID$-$objectID$-$instance$
         namespace: $namespace$
-  - appID: "gdtdefaultapp"
-    owner: "gdt"
+  - appID: "$appID$"
+    owner: "$owner$"
     objectID: "prometheussrv"
     type: Service
     yamlSource:

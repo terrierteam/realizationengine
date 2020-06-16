@@ -132,6 +132,7 @@ public class SetSequenceParameters extends BigDataStackOperation{
 						"Set paramters for object instance '"+sourceObjectID+"("+instance+")' based on operation sequence '"+parentSequenceRunner.getSequence().getSequenceID()+"'",
 						sourceObjectID
 						);
+				Thread.sleep(2000); // add a short sleep here to make sure the update went through
 			} else {
 				eventUtil.registerEvent(
 						getAppID(),

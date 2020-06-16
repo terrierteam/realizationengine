@@ -35,14 +35,17 @@ public class GDTCLI {
 		switch (args[0]) {
 		case "register":
 			if (args.length==1) {
-				System.out.println("register [namespace|playbook|object|metric|sequence] </path/to/file.yaml>");
+				System.out.println("register [namespace|object|metric|sequence] </path/to/file.yaml>");
+				System.out.println("register playbook </path/to/file.yaml>");
+				System.out.println("register playbook <owner> <namespace> </path/to/file.yaml> ");
 			} else {
 				switch (args[1]) {
 				case "namespace":
 					manager.registerNamespace(new File(args[2]));
 					break;
 				case "playbook":
-					manager.loadPlaybook(GDTFileUtil.file2String(new File(args[2]), "UTF-8"), null, null);
+					if (args.length==3) manager.loadPlaybook(GDTFileUtil.file2String(new File(args[2]), "UTF-8"), null, null);
+					else manager.loadPlaybook(GDTFileUtil.file2String(new File(args[4]), "UTF-8"), args[2], args[3]);
 					break;
 				case "object":
 					manager.registerObject(new File(args[2]));

@@ -842,7 +842,9 @@ public class GDTManager implements Manager {
 						);
 
 				BigDataStackObjectDefinition operationsequenceDef = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/gdt/operationsequence.pod.yaml"), "UTF-8"));
-
+				operationsequenceDef.setNamespace(sequenceTemplate.getNamespace());
+				operationsequenceDef.setAppID(sequenceTemplate.getAppID());
+				operationsequenceDef.setOwner(sequenceTemplate.getOwner());
 				String yaml = operationsequenceDef.getYamlSource();
 
 				for (String paramKey : parameters.keySet()) {
@@ -862,6 +864,11 @@ public class GDTManager implements Manager {
 
 					int newIndex = highestIndex+1;
 					operationsequenceDef.setInstance(newIndex);
+					
+					String yamlCopy = ""+yaml;
+					yamlCopy = yamlCopy.replaceAll("\\$runnerIndex\\$", String.valueOf(newIndex));
+					operationsequenceDef.setYamlSource(yamlCopy);
+					
 					regOK = objectInstanceClient.addObject(operationsequenceDef);
 					if (!regOK) failedReg++;
 					else parameters.put("runnerIndex", String.valueOf(newIndex));
