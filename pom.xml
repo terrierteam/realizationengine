@@ -30,12 +30,24 @@
   	<groupId>eu.bigdatastack</groupId>
     <artifactId>openshift-restclient-java</artifactId>
     <version>9.0.0.Final</version>
+    <exclusions>
+    	<exclusion>
+    		<groupId>org.slf4j</groupId>
+    		<artifactId>slf4j-api</artifactId>
+    	</exclusion>
+    </exclusions>
   </dependency>
   <!-- https://mvnrepository.com/artifact/com.rabbitmq/amqp-client -->
 <dependency>
     <groupId>com.rabbitmq</groupId>
     <artifactId>amqp-client</artifactId>
     <version>5.9.0</version>
+    <exclusions>
+    	<exclusion>
+    		<groupId>org.slf4j</groupId>
+    		<artifactId>slf4j-api</artifactId>
+    	</exclusion>
+    </exclusions>
 </dependency>
   
   <!-- https://mvnrepository.com/artifact/junit/junit -->
@@ -93,6 +105,12 @@
     <groupId>io.dropwizard</groupId>
     <artifactId>dropwizard-core</artifactId>
     <version>${dropwizard.version}</version>
+    <exclusions>
+    	<exclusion>
+    		<groupId>org.slf4j</groupId>
+    		<artifactId>log4j-over-slf4j</artifactId>
+    	</exclusion>
+    </exclusions>
 </dependency>
 
   </dependencies>
