@@ -174,9 +174,24 @@ public class OpenshiftOperationClient {
 				case DeploymentConfig:
 					resource = statusClient.getDeploymentConfig(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 					client.delete(resource);
+					
+					// deleting a deployment config does not delete the underlying replication controller, so delete that too
+					List<IResource> controllers = statusClient.getReplicationControllers(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+					for (IResource controller : controllers) {
+						client.delete(controller);
+					}
+					
+					List<IPod> pods1 = statusClient.getPods(project, true, true, "deploymentconfig="+object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+					for (IPod pod : pods1) {
+						client.delete(pod);
+					}
+					
+					
 					return true;
 				case Service:
-					return false;
+					resource = statusClient.getResource(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), "service");
+					client.delete(resource);
+					return true;
 				case Job:
 					resource = client.get("job", object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), project.getName());
 					
@@ -188,30 +203,50 @@ public class OpenshiftOperationClient {
 					}
 					return true;
 				case Route:
-					return false;
+					resource = statusClient.getResource(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), "route");
+					client.delete(resource);
+					return true;
 				case Volume:
-					return false;
+					resource = statusClient.getResource(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), "volume");
+					client.delete(resource);
+					return true;
 				case VolumeClaim:
-					return false;
+					resource = statusClient.getResource(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), "volumeclaim");
+					client.delete(resource);
+					return true;
 				case Pod:
-					return false;
+					resource = statusClient.getResource(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), "pod");
+					client.delete(resource);
+					return true;
 				case Secret:
-					return false;
+					resource = statusClient.getResource(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), "secret");
+					client.delete(resource);
+					return true;
 				case ConfigMap:
-					return false;
+					resource = statusClient.getResource(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), "configmap");
+					client.delete(resource);
+					return true;
 				case ServiceAccount:
-					return false;
+					resource = statusClient.getResource(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), "serviceaccount");
+					client.delete(resource);
+					return true;
 				case RoleBinding:
-					return false;
+					resource = statusClient.getResource(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), "rolebinding");
+					client.delete(resource);
+					return true;
 				case Role:
-					return false;
+					resource = statusClient.getResource(project, object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance(), "role");
+					client.delete(resource);
+					return true;
 				case Playbook:
+					return false;
+				default:
 					return false;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			return false;
 		}
-		return false;
 	}
 	
 	

@@ -12,6 +12,7 @@ import com.openshift.restclient.IClient;
 import com.openshift.restclient.model.IDeploymentConfig;
 import com.openshift.restclient.model.IPod;
 import com.openshift.restclient.model.IProject;
+import com.openshift.restclient.model.IReplicationController;
 import com.openshift.restclient.model.IResource;
 
 import eu.bigdatastack.gdt.structures.openshift.IJob;
@@ -220,7 +221,37 @@ public class OpenshiftStatusClient {
 			IDeploymentConfig dcObject = client.get("deploymentconfig", deploymentConfigName, project.getName());
 			return dcObject;
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Returns a specified resource
+	 * @param project
+	 * @return List<IPod>
+	 */
+	public IResource getResource(IProject project, String name, String kind) {
+		try {
+			
+			IResource dcObject = client.get(kind, name, project.getName());
+			return dcObject;
+		} catch (Exception e) {
+			//e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Returns all replication controllers for a specified project and name. Returns null if the request fails.
+	 * @param project
+	 * @return List<IResource>
+	 */
+	public List<IResource> getReplicationControllers(IProject project, String deploymentConfigName) {
+		try {
+			return client.list("replicationcontroller", project.getName(), "openshift.io/deployment-config.name="+deploymentConfigName);
+		} catch (Exception e) {
+			//e.printStackTrace();
 			return null;
 		}
 	}
@@ -251,7 +282,7 @@ public class OpenshiftStatusClient {
 
 			return formattedJobs;
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			return null;
 		}
 
@@ -270,7 +301,7 @@ public class OpenshiftStatusClient {
 			IJob formatedJob = mapper.readValue(resource.toJson(), IJob.class);
 			return formatedJob;
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return null;
 	}
