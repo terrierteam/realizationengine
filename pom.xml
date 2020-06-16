@@ -64,13 +64,6 @@
     <version>0.500</version>
 </dependency>
 
-<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->
-<dependency>
-    <groupId>org.slf4j</groupId>
-    <artifactId>slf4j-simple</artifactId>
-    <version>1.8.0-beta4</version>
-</dependency>
-
   	<!-- The client -->
 <dependency>
   <groupId>io.prometheus</groupId>

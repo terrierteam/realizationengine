@@ -94,6 +94,7 @@ public class GDTCLI {
 			if (args.length==1) {
 				System.out.println("sequence [start|startsync] <appID> <sequenceID>");
 				System.out.println("sequence [start] <appID> <sequenceID> param1=val1,param2=val2");
+				System.out.println("sequence [stop] <appID> <sequenceID> <instance>");
 			} else {
 				BigDataStackOperationSequence seq;
 				switch (args[1]) {
@@ -120,8 +121,18 @@ public class GDTCLI {
 					}
 					manager.executeSequenceFromTemplateSync(seq);
 					break;
+				case "stop":
+					seq = manager.sequenceInstanceClient.getSequence(args[2], args[3], Integer.parseInt(args[4]));
+					if (seq==null) {
+						System.out.println("Sequence in app "+args[2]+" with id "+args[3]+" not found");
+						return;
+					}
+					manager.stopOperationSequenceInstance(seq.getOwner(), seq.getAppID(), seq.getSequenceID(), seq.getIndex(), seq.getNamepace());
+					break;
 				default:
 					System.out.println("sequence [start|startsync] <appID> <sequenceID>");
+					System.out.println("sequence [start] <appID> <sequenceID> param1=val1,param2=val2");
+					System.out.println("sequence [stop] <appID> <sequenceID> <instance>");
 				}
 			}
 			
