@@ -721,7 +721,14 @@ public class GDTManager implements Manager {
 			
 			if (!prometheusOk) return false;
 			
-			
+			// load the GDT API Instance
+			loadPlaybook(GDTFileUtil.file2String(new File("resources/gdt/api.playbook.yaml"), "UTF-8"), owner, namespace);
+						
+			existingSequenceTemplate = sequenceTemplateClient.getSequence("gdtdefaultapp", "seq-gdtapi");
+			boolean apiOk = executeSequenceFromTemplateSync(existingSequenceTemplate, parameters);
+						
+			if (!apiOk) return false;
+						
 
 
 
@@ -746,8 +753,9 @@ public class GDTManager implements Manager {
 			
 			boolean stoppedMonitor =  stopOperationSequenceInstances(owner, namespace, "gdtdefaultapp", "seq-gdtmonitor");
 			boolean stoppedPrometheus =  stopOperationSequenceInstances(owner, namespace, "gdtdefaultapp", "seq-prometheusdeploy");
+			boolean stoppedAPI =  stopOperationSequenceInstances(owner, namespace, "gdtdefaultapp", "seq-gdtapi");
 			
-			return (stoppedMonitor && stoppedPrometheus);
+			return (stoppedMonitor && stoppedPrometheus && stoppedAPI);
 			
 
 		} catch (Exception e) {
