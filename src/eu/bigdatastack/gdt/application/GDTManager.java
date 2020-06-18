@@ -864,7 +864,7 @@ public class GDTManager implements Manager {
 				int failedReg = 0;
 				boolean regOK = false;
 				while (!regOK) {
-					List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects(operationsequenceDef.getObjectID(), operationsequenceDef.getOwner(), operationsequenceDef.getNamespace(), operationsequenceDef.getAppID());
+					List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects(operationsequenceDef.getObjectID(), operationsequenceDef.getOwner(), null, null);
 					int highestIndex = 0;
 					for (BigDataStackObjectDefinition objectInstance : objects) {
 						if (objectInstance.getInstance()>highestIndex) highestIndex = objectInstance.getInstance();
@@ -886,12 +886,12 @@ public class GDTManager implements Manager {
 								newSequenceInstance.getOwner(),
 								newSequenceInstance.getNamespace(),
 								BigDataStackEventType.GlobalDecisionTracker,
-								BigDataStackEventSeverity.Warning,
+								BigDataStackEventSeverity.Error,
 								"Failed to register the operation sequence running for '"+newSequenceInstance.getSequenceID()+"', with the database",
 								"The last step of launcing an operation sequence is registering the runner object, but this failed for '"+newSequenceInstance.getSequenceID()+"', this means that the sequence runner will be un-tracked and hence subsequent deletion of the sequence will not kill the runner if it is still active",
 								newSequenceInstance.getSequenceID()
 								);
-						break;
+						return false;
 					}
 				}
 

@@ -189,6 +189,30 @@ public class OpenshiftStatusClient {
 
 
 	}
+	
+	
+	/**
+	 * Returns a named pod.
+	 * @param project
+	 * @param active
+	 * @param ended
+	 * @return List<IPod>
+	 */
+	public IPod getPod(String namespace, String name) {
+
+
+		try {
+			IPod pod = client.get("pod", name, namespace);
+
+			return pod;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
+
+	}
 
 	
 	/**

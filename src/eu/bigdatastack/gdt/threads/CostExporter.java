@@ -5,6 +5,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Random;
 
+import com.openshift.restclient.model.IContainer;
+import com.openshift.restclient.model.IPod;
 import com.openshift.restclient.model.IProject;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackApplicationIO;
@@ -102,14 +104,25 @@ public class CostExporter implements Runnable{
 								
 								if (status.getStatus().equalsIgnoreCase("Running")) {
 									
-									int amountToVary = r.nextInt(100);
-									double cost = 2.0;
-									if (r.nextBoolean()) cost += (1.0*amountToVary)/100;
-									else cost -= (1.0*amountToVary)/100;
+									IPod pod = openshiftStatus.getPod(status.getNamespace(), status.getPodID());
+									if (pod == null) continue;
 									
-									// replace with actual cost estimator
+									// Sum requests across containers
+									int podTotalCPURequest = 0;
+									int podTotalMemRequest = 0;
+									for (IContainer container : pod.getContainers()) {
+										podTotalCPURequest =+ cpuToMilicores(container.getRequestsCPU());
+										podTotalMemRequest =+ memToMegabytes(container.getRequestsMemory());
+									}
+									
+									System.err.println(status.getPodID()+" "+ podTotalCPURequest+" "+podTotalMemRequest);
+									
+									double cost = calculateCPUCost(podTotalCPURequest) + calculateMemCost(podTotalMemRequest);
+									
 									
 									costPerHour.labels(app.getOwner(), app.getNamespace(), app.getAppID(), objectDef.getObjectID(), String.valueOf(objectDef.getInstance())).set(cost);
+								} else {
+									costPerHour.labels(app.getOwner(), app.getNamespace(), app.getAppID(), objectDef.getObjectID(), String.valueOf(objectDef.getInstance())).set(0.0);
 								}
 								
 							}
@@ -154,5 +167,41 @@ public class CostExporter implements Runnable{
 	public boolean hasFailed() {
 		return failed;
 	}
+	
+	
+	public double calculateCPUCost(int millicores) {
+		// 4000m = 0.048
+		return ((0.048/4000)/2)*millicores;
+	}
+	
+	public double calculateMemCost(int mb) {
+		// 16,384‬ = 0.048
+		return ((0.048/16384)/2)*mb;
+	}
+	
+	public int cpuToMilicores(String string) {
+		int milicores = 0;
+		if (string.endsWith("m")) milicores = Integer.parseInt(string.substring(0, string.length()-1));
+		else milicores = Integer.parseInt(string)*1000;
+		
+		return milicores;
+	}
+	
+	public int memToMegabytes(String string) {
+		int mb = 0;
+		if (string.endsWith("K")) mb = 1+(Integer.parseInt(string.substring(0, string.length()-1))/1024);
+		if (string.endsWith("M")) mb = Integer.parseInt(string.substring(0, string.length()-1));
+		if (string.endsWith("G")) mb = Integer.parseInt(string.substring(0, string.length()-1))*1024;
+		
+		if (string.endsWith("Ki")) mb = 1+(Integer.parseInt(string.substring(0, string.length()-2))/1024);
+		if (string.endsWith("Mi")) mb = Integer.parseInt(string.substring(0, string.length()-2));
+		if (string.endsWith("Gi")) mb = Integer.parseInt(string.substring(0, string.length()-2))*1024;
+		
+		
+		return mb;
+	}
+	
+	
+	
 
 }

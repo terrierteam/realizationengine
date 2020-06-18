@@ -85,9 +85,15 @@ public class BigDataStackObjectIO implements Timed {
 	public boolean addObject(BigDataStackObjectDefinition object) throws SQLException {
 		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
-		if (object.getYamlSource().length()>=65535) return false;
+		if (object.getYamlSource().length()>=65535) {
+			System.err.println("Yaml too long");
+			return false;
+		}
 		
-		if (getObject(object.getObjectID(), object.getOwner(), object.getInstance())!=null) return false;
+		if (getObject(object.getObjectID(), object.getOwner(), object.getInstance())!=null) {
+			System.err.println("Object match found");
+			return false;
+		}
 		
 		Connection conn = client.openConnection();
 		
