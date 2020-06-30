@@ -8,5 +8,5 @@ RUN find /gdt/ \
  && cd /gdt/ \
  && mvn initialize \
  && mvn package -DskipTests=true
-RUN apt-get -y install vim
+RUN apt-get -y install vi
 CMD ["java", "-jar", "target/BigDataStack-GDT-Data-0.0.1-SNAPSHOT.jar", "namespaceMonitor"]
