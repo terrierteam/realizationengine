@@ -113,12 +113,13 @@
     </exclusions>
 </dependency>
 
-<!-- https://mvnrepository.com/artifact/org.mongodb/mongodb-jdbc -->
+<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
 <dependency>
-    <groupId>org.mongodb</groupId>
-    <artifactId>mongodb-jdbc</artifactId>
-    <version>1.0.0</version>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.19</version>
 </dependency>
+
 
 
 

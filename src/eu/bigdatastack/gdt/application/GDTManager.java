@@ -29,7 +29,7 @@ import eu.bigdatastack.gdt.lxdb.BigDataStackPodStatusIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackSLOIO;
 import eu.bigdatastack.gdt.lxdb.JDBCDB;
 import eu.bigdatastack.gdt.lxdb.LXDB;
-import eu.bigdatastack.gdt.lxdb.MongoDB;
+import eu.bigdatastack.gdt.lxdb.MySQLDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.operations.Apply;
@@ -106,9 +106,9 @@ public class GDTManager implements Manager {
 	public void initClients() throws SQLException {
 		// initalize the database client
 		DatabaseConf dbconf = gdtConfig.getDatabase();
-		if (dbconf.getType().equalsIgnoreCase("mongodb")) {
-			if (dbconf.getPassword()!=null && dbconf.getPassword().length()>0) database = new MongoDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername(), dbconf.getPassword());
-			else database = new MongoDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername());
+		if (dbconf.getType().equalsIgnoreCase("mysql")) {
+			if (dbconf.getPassword()!=null && dbconf.getPassword().length()>0) database = new MySQLDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername(), dbconf.getPassword());
+			else database = new MySQLDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername());
 		} else if (dbconf.getType().equalsIgnoreCase("lxdb")) {
 			if (dbconf.getPassword()!=null && dbconf.getPassword().length()>0) database = new LXDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername(), dbconf.getPassword());
 			else database = new LXDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername());

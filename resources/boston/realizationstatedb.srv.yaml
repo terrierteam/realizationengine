@@ -8,6 +8,6 @@ spec:
     deploymentconfig: realizationstatedb  
   ports:
   - name: mongodb
-    port: 27017               
+    port: 3306               
     protocol: TCP
-    targetPort: 27017  
+    targetPort: 3306  

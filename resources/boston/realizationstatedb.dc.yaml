@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: apps.openshift.io/v1
 kind: DeploymentConfig
 metadata:
   name: realizationstatedb
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: realizationstatedb
-        image: mongo:4.0.4
+        image: mysql:latest
         resources:
           requests:
             cpu: "1000m"
@@ -24,11 +24,14 @@ spec:
             cpu: "2000m"
             memory: "16Gi"
         ports:
-          - containerPort: 27017
+          - containerPort: 6603
         imagePullPolicy: IfNotPresent
         volumeMounts:
-          - mountPath: /data/db/
+          - mountPath: /var/lib/mysql/
             name: database-volume
+        env:
+         - name: "MYSQL_ALLOW_EMPTY_PASSWORD"
+           value: "true"
       securityContext: {}
       volumes:
       - name: database-volume
