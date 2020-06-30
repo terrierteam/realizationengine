@@ -17,7 +17,7 @@ yamlSource:
   spec:
     containers:
     - name: gdtmain
-      image: "docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest"
+      image: "image-registry.openshift-image-registry.svc:5000/realization/is-bigdatastack-gdt:latest"
       imagePullPolicy: Always
       command:
        - 'java'
