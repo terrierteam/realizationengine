@@ -27,11 +27,11 @@ public class BigDataStackApplicationIO implements Timed {
 	protected final String tableName = "BigDataStackApplications";
 	protected ObjectMapper mapper = new ObjectMapper();
 
-	LXDB client;
+	JDBCDB client;
 	long totalTime = 0;
 	boolean init = false;
 
-	public BigDataStackApplicationIO(LXDB client) throws SQLException {
+	public BigDataStackApplicationIO(JDBCDB client) throws SQLException {
 		this.client = client;
 
 		//initTable();
@@ -253,7 +253,7 @@ public class BigDataStackApplicationIO implements Timed {
 		
 		try {
 			Statement statement = conn.createStatement();
-			statement.execute("DROP TABLE \""+client.username+"\".\""+tableName+"\"");
+			statement.execute("DROP TABLE \""+client.getUsername()+"\".\""+tableName+"\"");
 
 			conn.commit();
 			conn.close();

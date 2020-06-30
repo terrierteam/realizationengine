@@ -26,7 +26,10 @@ import eu.bigdatastack.gdt.lxdb.BigDataStackNamespaceStateIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackOperationSequenceIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackPodStatusIO;
+import eu.bigdatastack.gdt.lxdb.BigDataStackSLOIO;
+import eu.bigdatastack.gdt.lxdb.JDBCDB;
 import eu.bigdatastack.gdt.lxdb.LXDB;
+import eu.bigdatastack.gdt.lxdb.MongoDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.operations.Apply;
@@ -49,6 +52,7 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackNamespaceState;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceMode;
+import eu.bigdatastack.gdt.structures.data.BigDataStackSLO;
 import eu.bigdatastack.gdt.threads.OperationSequenceThread;
 import eu.bigdatastack.gdt.util.EventUtil;
 import eu.bigdatastack.gdt.util.GDTFileUtil;
@@ -64,7 +68,7 @@ public class GDTManager implements Manager {
 
 	ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
-	LXDB database;
+	JDBCDB database;
 	public OpenshiftOperationClient openshiftOperationClient;
 	public OpenshiftStatusClient openshiftStatusClient;
 	public RabbitMQClient mailboxClient;
@@ -83,6 +87,7 @@ public class GDTManager implements Manager {
 	public BigDataStackNamespaceStateIO namespaceStateClient;
 	public BigDataStackCredentialsIO credentialsClient;
 	public BigDataStackMetricValueIO metricValueClient;
+	public BigDataStackSLOIO sloClient;
 
 	BigDataStackCredentials databaseCredential;
 	BigDataStackCredentials openshiftCredential;
@@ -101,8 +106,17 @@ public class GDTManager implements Manager {
 	public void initClients() throws SQLException {
 		// initalize the database client
 		DatabaseConf dbconf = gdtConfig.getDatabase();
-		if (dbconf.getPassword()!=null && dbconf.getPassword().length()>0) database = new LXDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername(), dbconf.getPassword());
-		else database = new LXDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername());
+		if (dbconf.getType().equalsIgnoreCase("mongodb")) {
+			if (dbconf.getPassword()!=null && dbconf.getPassword().length()>0) database = new MongoDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername(), dbconf.getPassword());
+			else database = new MongoDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername());
+		} else if (dbconf.getType().equalsIgnoreCase("lxdb")) {
+			if (dbconf.getPassword()!=null && dbconf.getPassword().length()>0) database = new LXDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername(), dbconf.getPassword());
+			else database = new LXDB(dbconf.getHost(), dbconf.getPort(), dbconf.getName(), dbconf.getUsername());
+		} else {
+			System.err.println("Database type "+dbconf.getType()+" not recognised");
+			System.exit(1);
+		}
+		
 
 		appClient = new BigDataStackApplicationIO(database);
 		eventClient = new BigDataStackEventIO(database);
@@ -115,6 +129,7 @@ public class GDTManager implements Manager {
 		namespaceStateClient = new BigDataStackNamespaceStateIO(database);
 		credentialsClient = new BigDataStackCredentialsIO(database);
 		metricValueClient = new BigDataStackMetricValueIO(database);
+		sloClient = new BigDataStackSLOIO(database);
 
 
 		// Add database credentials
@@ -185,6 +200,81 @@ public class GDTManager implements Manager {
 		try {
 			BigDataStackApplication app = yamlMapper.readValue(yaml, BigDataStackApplication.class);
 			return registerApplication(app, namespace, owner);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	
+	/**
+	 * Registers a new BigDataStack SLO with the database from a yaml format String
+	 * @param yaml
+	 * @return
+	 */
+	public BigDataStackSLO registerSLO(String yaml) {
+		try {
+			BigDataStackSLO app = yamlMapper.readValue(yaml, BigDataStackSLO.class);
+			return registerSLO(app, null, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new BigDataStack SLO with the database from a yaml format String
+	 * @param yaml
+	 * @return
+	 */
+	public BigDataStackSLO registerSLO(String yaml, String namespace, String owner) {
+		try {
+			BigDataStackSLO app = yamlMapper.readValue(yaml, BigDataStackSLO.class);
+			return registerSLO(app, namespace, owner);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new BigDataStack Application from a BigDataStackApplication object
+	 * @param yaml
+	 * @return
+	 */
+	protected BigDataStackSLO registerSLO(BigDataStackSLO slo, String namespace, String owner) {
+		if (namespace!=null) slo.setNamespace(namespace);
+		if (owner!=null) slo.setOwner(owner);
+
+		try {
+			if (!sloClient.addSLO(slo)) {
+				if (!sloClient.updateSLO(slo)) {
+					eventUtil.registerEvent(
+							slo.getAppID(),
+							slo.getOwner(),
+							slo.getNamespace(),
+							BigDataStackEventType.ObjectRegistry,
+							BigDataStackEventSeverity.Error,
+							"New SLO Failed to Register: '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName(),
+							"Tried to create a new service level objective for '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName()+" but was rejected, likely because it already exists.",
+							slo.getObjectID()
+							);
+					return null;
+				}
+			}
+
+			eventUtil.registerEvent(
+					slo.getAppID(),
+					slo.getOwner(),
+					slo.getNamespace(),
+					BigDataStackEventType.ObjectRegistry,
+					BigDataStackEventSeverity.Info,
+					"New SLO Registered: '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName(),
+					"Created a new service level objective for '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName(),
+					slo.getAppID()
+					);
+			return slo;	
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -689,6 +779,7 @@ public class GDTManager implements Manager {
 			// Launch the Operation Sequence
 			Map<String,String> parameters = new HashMap<String,String>();
 			// database info
+			parameters.put("dbtype", gdtConfig.getDatabase().getType());
 			parameters.put("dbhost", gdtConfig.getDatabase().getHost());
 			parameters.put("dbport", String.valueOf(gdtConfig.getDatabase().getPort()));
 			parameters.put("dbname", gdtConfig.getDatabase().getName());
@@ -784,6 +875,7 @@ public class GDTManager implements Manager {
 		parameters.put("sequenceID", sequenceTemplate.getSequenceID());
 		parameters.put("dbusername", databaseCredential.getUsername());
 		parameters.put("dbpassword", databaseCredential.getPassword());
+		parameters.put("dbtype", gdtConfig.getDatabase().getType());
 		parameters.put("dbhost", gdtConfig.getDatabase().getHost());
 		parameters.put("dbport", String.valueOf(gdtConfig.getDatabase().getPort()));
 		parameters.put("dbname", gdtConfig.getDatabase().getName());
@@ -1276,6 +1368,16 @@ public class GDTManager implements Manager {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(sequencesI.next());
 					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace);
 					registerOperationSequence(jsonAsYaml);
+				}
+			}
+			
+			if (node.has("slos")) {
+				JsonNode sequences = node.get("slos");
+				Iterator<JsonNode> sequencesI = sequences.iterator();
+				while (sequencesI.hasNext()) {
+					String jsonAsYaml = new YAMLMapper().writeValueAsString(sequencesI.next());
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace);
+					registerSLO(jsonAsYaml);
 				}
 			}
 

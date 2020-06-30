@@ -26,6 +26,7 @@ public class GDTMain {
 		String appID =  System.getenv("appID");
 		String sequenceID =  System.getenv("sequenceID");
 		String sequenceInstance =  System.getenv("sequenceInstance");
+		String dbtype = System.getenv("dbtype");
 		String dbhost = System.getenv("dbhost");
 		String dbport = System.getenv("dbport");
 		String dbname = System.getenv("dbname");
@@ -70,7 +71,7 @@ public class GDTMain {
 		// Launch as a processor for an Operation Sequence
 		} else if (args[0].equalsIgnoreCase("operationSequence")) {
 			
-			DatabaseConf databaseConf = new DatabaseConf(dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
+			DatabaseConf databaseConf = new DatabaseConf(dbtype, dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
 			OpenshiftConfig openshiftConf = new OpenshiftConfig(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
 			RabbitMQConf rabbitMQConf = new RabbitMQConf(rmqhost, Integer.parseInt(rmqport), rmqusername, rmqpassword);
 			GDTConfig gdtConf = new GDTConfig(databaseConf,rabbitMQConf,openshiftConf);
@@ -144,7 +145,7 @@ public class GDTMain {
 			
 		} else if (args[0].equalsIgnoreCase("api")) {
 			
-			DatabaseConf databaseConf = new DatabaseConf(dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
+			DatabaseConf databaseConf = new DatabaseConf(dbtype, dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
 			OpenshiftConfig openshiftConf = new OpenshiftConfig(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
 			RabbitMQConf rabbitMQConf = new RabbitMQConf(rmqhost, Integer.parseInt(rmqport), rmqusername, rmqpassword);
 			GDTConfig gdtConf = new GDTConfig(databaseConf,rabbitMQConf,openshiftConf);

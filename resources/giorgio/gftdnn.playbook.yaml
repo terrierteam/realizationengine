@@ -127,7 +127,7 @@ objects:
             volumes:
               - name: nfs-access
                 persistentVolumeClaim:
-                  claimName: giorgiovol1claim
+                  claimName: richardmvol1claim
             dnsPolicy: ClusterFirst
 
 sequences:
@@ -161,16 +161,4 @@ sequences:
         instanceRef: "trainingInstance"
       - className: Apply
         instanceRef: "trainingInstance"
-      - className: NewMetricValues
-        instanceRef: "trainingInstance"
-        metrics: 
-          - "rmse"
-          - "costPerHour"
-      - className: RecordMetricsUntil
-        metrics:
-          - "rmse"
-          - "costPerHour"
-        instanceRef: "trainingInstance"
-        waitForStatus: "Complete"
-        gracePeriodSec: 30
     mode: Continue

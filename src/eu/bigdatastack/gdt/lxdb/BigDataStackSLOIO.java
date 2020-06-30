@@ -10,16 +10,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.bigdatastack.gdt.structures.Timed;
-import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
+import eu.bigdatastack.gdt.structures.data.BigDataStackSLO;
 
-public class BigDataStackPodStatusIO implements Timed {
+public class BigDataStackSLOIO implements Timed {
 
-	protected final String tableName = "BigDataStackPodStatus";
+	protected final String tableName = "BigDataStackSLO";
 
 	JDBCDB client;
 	long totalTime = 0;
 	boolean init = false;
-	public BigDataStackPodStatusIO(JDBCDB client) throws SQLException {
+	public BigDataStackSLOIO(JDBCDB client) throws SQLException {
 		this.client = client;
 
 		//initTable();
@@ -48,9 +49,9 @@ public class BigDataStackPodStatusIO implements Timed {
 		if (!tableExists) {
 			Statement statement = conn.createStatement();
 			statement.executeUpdate("CREATE TABLE " + tableName + " ( " + "appID VARCHAR(100), "
-					+ "owner VARCHAR(140), " + "podID VARCHAR(100), " + "objectID VARCHAR(100), " + "namespace VARCHAR(140), " + "instance INT, "
-					+ "status VARCHAR(100), " + "podIP VARCHAR(50), " + "hostIP VARCHAR(50), "
-					+ "PRIMARY KEY (podID)" + ")");
+					+ "owner VARCHAR(140), " + "metricName VARCHAR(140), " + "objectID VARCHAR(100), " + "namespace VARCHAR(140), " + "instance INT, "
+					+ "sloIndex INT, " + "type VARCHAR(100), " + "value DOUBLE, " + "breachSeverity VARCHAR(100), " + "isRequirement BOOLEAN, "
+					+ "PRIMARY KEY (owner,appID,objectID,instance,metricName,sloIndex)" + ")");
 
 			conn.commit();
 		}
@@ -59,14 +60,13 @@ public class BigDataStackPodStatusIO implements Timed {
 	}
 
 	/**
-	 * Add a new BigDataStack pod status to the database. The event will only be added if
-	 * it is unique.
+	 * Add a new BigDataStack SLO to the database.
 	 * 
-	 * @param status
+	 * @param slo
 	 * @return whether the insert was successful
 	 * @throws SQLException
 	 */
-	public boolean addPodStatus(BigDataStackPodStatus status) throws SQLException {
+	public boolean addSLO(BigDataStackSLO slo) throws SQLException {
 		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		
@@ -75,16 +75,18 @@ public class BigDataStackPodStatusIO implements Timed {
 		Statement statement = conn.createStatement();
 		try {
 			statement.executeUpdate("INSERT INTO " + tableName
-					+ " (appID, owner, podID, objectID, namespace, status, podIP, hostIP, instance)"
-					+ " VALUES ( " + SQLUtils.prepareText(status.getAppID(), 100) + ", "
-					+ SQLUtils.prepareText(status.getOwner(), 140) + ", "
-					+ SQLUtils.prepareText(status.getPodID(), 100) + ", "
-					+ SQLUtils.prepareText(status.getObjectID(), 100) + ", "
-					+ SQLUtils.prepareText(status.getNamespace(), 140) + ", "
-					+ SQLUtils.prepareText(status.getStatus(), 100) + ", "
-					+ SQLUtils.prepareText(status.getPodIP(), 50) + ", "
-					+ SQLUtils.prepareText(status.getHostIP(), 50) + ", "
-					+ status.getInstance() + " )");
+					+ " (appID, owner, objectID, namespace, instance, metricName, sloIndex, type, value, breachSeverity, isRequirement)"
+					+ " VALUES ( " + SQLUtils.prepareText(slo.getAppID(), 100) + ", "
+					+ SQLUtils.prepareText(slo.getOwner(), 140) + ", "
+					+ SQLUtils.prepareText(slo.getObjectID(), 100) + ", "
+					+ SQLUtils.prepareText(slo.getNamespace(), 140) + ", "
+					+ slo.getInstance() + ", "
+					+ SQLUtils.prepareText(slo.getMetricName(), 140) + ", "
+					+ slo.getSloIndex() + ", "
+					+ SQLUtils.prepareText(slo.getType(), 100) + ", "
+					+ slo.getValue() + ", "
+					+ SQLUtils.prepareText(slo.getBreachSeverity().name(),100) + ", "
+					+ slo.isRequirement() + " )");
 		} catch (Exception e) {
 			//e.printStackTrace();
 			conn.close();
@@ -98,64 +100,17 @@ public class BigDataStackPodStatusIO implements Timed {
 	}
 
 	/**
-	 * Returns the status for a particular named pod. 
+	 * Returns a specified SLO
+	 * @param owner
 	 * @param appID
 	 * @param objectID
-	 * @param podID
+	 * @param instance
+	 * @param metricName
+	 * @param sloIndex
 	 * @return
 	 * @throws SQLException
 	 */
-	public BigDataStackPodStatus getPodStatus(String podID) throws SQLException {
-		if (!init) { initTable(); init=true;}
-		long startTime = System.currentTimeMillis();
-		Connection conn = client.openConnection();
-		
-		Statement statement = conn.createStatement();
-		
-		StringBuilder baseStatement = new StringBuilder();
-		baseStatement.append("SELECT * FROM "+tableName+" WHERE podID='"+podID+"'");
-		
-		statement.execute(baseStatement.toString());
-		ResultSet results = statement.getResultSet();
-		
-		BigDataStackPodStatus status = null;
-		
-		 try {
-			while (results.next()) {
-				 
-				status = new BigDataStackPodStatus(
-						results.getString("appID"),
-						results.getString("owner"),
-						results.getString("namespace"),
-						results.getString("objectID"),
-						results.getInt("instance"),
-						results.getString("podID"),
-						results.getString("status"),
-						results.getString("hostIP"),
-						results.getString("podIP")
-						);
-
-			 }
-		} catch (Exception e) {
-			e.printStackTrace();
-		} 
-		 
-		
-		
-		conn.close();
-		totalTime+=System.currentTimeMillis()-startTime;
-		return status;
-	}
-	
-	/**
-	 * Returns the status for a particular named pod. 
-	 * @param appID
-	 * @param objectID
-	 * @param podID
-	 * @return
-	 * @throws SQLException
-	 */
-	public List<BigDataStackPodStatus> getPodStatuses(String appID, String owner, String objectID, String namespace, int instance) throws SQLException {
+	public BigDataStackSLO getSLO(String owner, String appID, String objectID, int instance, String metricName, int sloIndex) throws SQLException {
 		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
@@ -164,31 +119,32 @@ public class BigDataStackPodStatusIO implements Timed {
 		
 		StringBuilder baseStatement = new StringBuilder();
 		baseStatement.append("SELECT * FROM "+tableName+" WHERE owner='"+owner+"'");
-		if (namespace!=null) baseStatement.append(" AND namespace='"+namespace+"'");
 		if (appID!=null) baseStatement.append(" AND appID='"+appID+"'");
 		if (objectID!=null) baseStatement.append(" AND objectID='"+objectID+"'");
-		if (instance>=0) baseStatement.append(" AND instance="+instance);
+		if (instance>=0) baseStatement.append(" AND instance="+instance+"");
+		if (metricName!=null) baseStatement.append(" AND metricName='"+metricName+"'");
+		if (sloIndex>=0) baseStatement.append(" AND sloIndex="+sloIndex+"");
+		
 		statement.execute(baseStatement.toString());
 		ResultSet results = statement.getResultSet();
-		
-		List<BigDataStackPodStatus> statuses = new ArrayList<BigDataStackPodStatus>();
+		BigDataStackSLO slo = null;
 		
 		 try {
 			while (results.next()) {
 				 
-				BigDataStackPodStatus status = new BigDataStackPodStatus(
+				slo = new BigDataStackSLO(
 						results.getString("appID"),
 						results.getString("owner"),
 						results.getString("namespace"),
 						results.getString("objectID"),
 						results.getInt("instance"),
-						results.getString("podID"),
-						results.getString("status"),
-						results.getString("hostIP"),
-						results.getString("podIP")
+						results.getString("metricName"),
+						results.getInt("sloIndex"),
+						results.getString("type"),
+						results.getDouble("value"),
+						BigDataStackEventSeverity.valueOf(results.getString("breachSeverity")),
+						results.getBoolean("isRequirement")
 						);
-				
-				statuses.add(status);
 
 			 }
 		} catch (Exception e) {
@@ -199,32 +155,96 @@ public class BigDataStackPodStatusIO implements Timed {
 		
 		conn.close();
 		totalTime+=System.currentTimeMillis()-startTime;
-		return statuses;
+		return slo;
 	}
 	
 	/**
-	 * Update the data for an existing BigDataStack status for a pod. 
+	 * Returns a specified SLO
+	 * @param owner
+	 * @param appID
+	 * @param objectID
+	 * @param instance
+	 * @param metricName
+	 * @param sloIndex
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackSLO> getSLOs(String owner, String appID, String objectID, String namespace, int instance, String metricName, int sloIndex) throws SQLException {
+		if (!init) { initTable(); init=true;}
+		long startTime = System.currentTimeMillis();
+		Connection conn = client.openConnection();
+		
+		Statement statement = conn.createStatement();
+		
+		StringBuilder baseStatement = new StringBuilder();
+		baseStatement.append("SELECT * FROM "+tableName+" WHERE owner='"+owner+"'");
+		if (appID!=null) baseStatement.append(" AND appID='"+appID+"'");
+		if (objectID!=null) baseStatement.append(" AND objectID='"+objectID+"'");
+		if (namespace!=null) baseStatement.append(" AND namespace='"+namespace+"'");
+		if (instance>=0) baseStatement.append(" AND instance="+instance+"");
+		if (metricName!=null) baseStatement.append(" AND metricName='"+metricName+"'");
+		if (sloIndex>=0) baseStatement.append(" AND sloIndex="+sloIndex+"");
+		
+		statement.execute(baseStatement.toString());
+		ResultSet results = statement.getResultSet();
+		List<BigDataStackSLO> slos = new ArrayList<BigDataStackSLO>(5);
+		
+		 try {
+			while (results.next()) {
+				 
+				BigDataStackSLO slo = new BigDataStackSLO(
+						results.getString("appID"),
+						results.getString("owner"),
+						results.getString("namespace"),
+						results.getString("objectID"),
+						results.getInt("instance"),
+						results.getString("metricName"),
+						results.getInt("sloIndex"),
+						results.getString("type"),
+						results.getDouble("value"),
+						BigDataStackEventSeverity.valueOf(results.getString("breachSeverity")),
+						results.getBoolean("isRequirement")
+						);
+				slos.add(slo);
+
+			 }
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		 
+		
+		
+		conn.close();
+		totalTime+=System.currentTimeMillis()-startTime;
+		return slos;
+	}
+	
+	
+	
+	/**
+	 * Update the data for an existing BigDataStack SLO. 
 	 * @param status
 	 * @return
 	 * @throws SQLException
 	 */
-	public boolean updatePodStatus(BigDataStackPodStatus status) throws SQLException {
+	public boolean updateSLO(BigDataStackSLO slo) throws SQLException {
 		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
 		
 		try {
+			PreparedStatement statement = conn.prepareStatement("UPDATE "+tableName+" SET type=?, value=?, breachSeverity=?, isRequirement=?"+
+					" WHERE appID="+SQLUtils.prepareText(slo.getAppID(),100)+
+					" AND objectID="+SQLUtils.prepareText(slo.getObjectID(),100)+
+					" AND instance="+slo.getInstance()+
+					" AND owner="+SQLUtils.prepareText(slo.getOwner(),140)+
+					" AND metricName="+SQLUtils.prepareText(slo.getMetricName(),140)+
+					" AND sloIndex="+slo.getSloIndex());
 			
-			PreparedStatement statement = conn.prepareStatement("UPDATE "+tableName+" SET status=?, podIP=?, hostIP=?"+
-					" WHERE appID="+SQLUtils.prepareText(status.getAppID(),100)+
-					" AND objectID="+SQLUtils.prepareText(status.getObjectID(),100)+
-					" AND instance="+status.getInstance()+
-					" AND podID="+SQLUtils.prepareText(status.getPodID(),100));
-			
-			statement.setNString(1, SQLUtils.prepareTextNoQuote(status.getStatus(),100));
-			statement.setNString(2, SQLUtils.prepareTextNoQuote(status.getPodIP(),50));
-			statement.setNString(3, SQLUtils.prepareTextNoQuote(status.getHostIP(),50));
-			
+			statement.setNString(1, SQLUtils.prepareTextNoQuote(slo.getType(),100));
+			statement.setDouble(2, slo.getValue());
+			statement.setNString(3, SQLUtils.prepareTextNoQuote(slo.getBreachSeverity().name(),100));
+			statement.setBoolean(4, slo.isRequirement());
 
 			statement.executeUpdate();
 			conn.commit();
@@ -273,5 +293,4 @@ public class BigDataStackPodStatusIO implements Timed {
 	public long timeSpent() {
 		return totalTime;
 	}
-
 }

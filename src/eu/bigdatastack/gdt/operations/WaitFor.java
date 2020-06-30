@@ -6,7 +6,7 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
-import eu.bigdatastack.gdt.lxdb.LXDB;
+import eu.bigdatastack.gdt.lxdb.JDBCDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.prometheus.PrometheusDataClient;
@@ -90,7 +90,7 @@ public class WaitFor extends BigDataStackOperation{
 	}
 
 	@Override
-	public boolean execute(LXDB database, OpenshiftOperationClient openshiftOperationClient,
+	public boolean execute(JDBCDB database, OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient, RabbitMQClient mailboxClient,
 			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner,
 			EventUtil eventUtil) {

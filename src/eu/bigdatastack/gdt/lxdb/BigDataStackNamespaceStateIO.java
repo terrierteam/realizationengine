@@ -19,10 +19,10 @@ public class BigDataStackNamespaceStateIO implements Timed {
 	protected final String tableName = "BigDataStackNamespaceStatus";
 	protected ObjectMapper mapper = new ObjectMapper();
 
-	LXDB client;
+	JDBCDB client;
 	long totalTime = 0;
 	boolean init = false;
-	public BigDataStackNamespaceStateIO(LXDB client) throws SQLException {
+	public BigDataStackNamespaceStateIO(JDBCDB client) throws SQLException {
 		this.client = client;
 
 		//initTable();
@@ -37,15 +37,21 @@ public class BigDataStackNamespaceStateIO implements Timed {
 		Connection conn = client.openConnection();
 
 		DatabaseMetaData md = conn.getMetaData();
-		ResultSet rs = md.getTables(null, null, "%", null);
+		ResultSet rs = null;
+		try {
+			rs = md.getTables(null, null, "%", null);
+		} catch (java.lang.NullPointerException e) {}
 
 		boolean tableExists = false;
 
-		while (rs.next()) {
-			if (rs.getString(3).equalsIgnoreCase(tableName)) {
-				tableExists = true;
+		if (rs!=null) {
+			while (rs.next()) {
+				if (rs.getString(3).equalsIgnoreCase(tableName)) {
+					tableExists = true;
+				}
 			}
 		}
+		
 
 		if (!tableExists) {
 			Statement statement = conn.createStatement();
@@ -230,7 +236,7 @@ public class BigDataStackNamespaceStateIO implements Timed {
 		
 		try {
 			Statement statement = conn.createStatement();
-			statement.execute("DROP TABLE \""+client.username+"\".\""+tableName+"\"");
+			statement.execute("DROP TABLE \""+client.getUsername()+"\".\""+tableName+"\"");
 
 			conn.commit();
 			conn.close();

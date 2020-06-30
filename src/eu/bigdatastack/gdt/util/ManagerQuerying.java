@@ -12,6 +12,7 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
+import eu.bigdatastack.gdt.structures.data.BigDataStackSLO;
 
 /**
  * This class provides utility methods for querying the state of the application space
@@ -78,6 +79,34 @@ public class ManagerQuerying {
 	public List<BigDataStackObjectDefinition> listObjectInstances(String owner, String appID, String objectID){
 		try {
 			return manager.objectInstanceClient.getObjects(objectID, owner, null, appID);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Gets all slo instances for a specified owner, application, objectID and metric
+	 * @param owner
+	 * @return
+	 */
+	public List<BigDataStackSLO> listSLOInstances(String owner, String appID, String objectID, String metricName){
+		try {
+			return manager.sloClient.getSLOs(owner, appID, objectID, null, -1, metricName, -1);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Gets all slo instances for a specified owner, application, objectID, instance and metric
+	 * @param owner
+	 * @return
+	 */
+	public List<BigDataStackSLO> listSLOInstances(String owner, String appID, String objectID, int objectInstance, String metricName){
+		try {
+			return manager.sloClient.getSLOs(owner, appID, objectID, null, objectInstance, metricName, -1);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;

@@ -2,6 +2,7 @@ package eu.bigdatastack.gdt.structures.config;
 
 public class DatabaseConf {
 
+	String type;
 	String host;
 	int port;
 	String name;
@@ -10,8 +11,9 @@ public class DatabaseConf {
 	
 	public DatabaseConf() {};
 	
-	public DatabaseConf(String host, int port, String name, String username, String password) {
+	public DatabaseConf(String type, String host, int port, String name, String username, String password) {
 		super();
+		this.type = type;
 		this.host = host;
 		this.port = port;
 		this.name = name;
@@ -47,6 +49,14 @@ public class DatabaseConf {
 	}
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
 	}
 	
 	

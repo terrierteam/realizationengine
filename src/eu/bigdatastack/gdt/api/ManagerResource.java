@@ -26,6 +26,7 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
+import eu.bigdatastack.gdt.structures.data.BigDataStackSLO;
 import eu.bigdatastack.gdt.util.ManagerQuerying;
 
 
@@ -65,6 +66,12 @@ public class ManagerResource {
 	@Path("/registeryaml/object")
 	public BigDataStackObjectDefinition registerObject(String yaml) {
 		return manager.registerObject(yaml);
+	}
+	
+	@POST
+	@Path("/registeryaml/slo")
+	public BigDataStackSLO registerSLO(String yaml) {
+		return manager.registerSLO(yaml);
 	}
 	
 	@POST
@@ -108,6 +115,18 @@ public class ManagerResource {
 		try {
 			JsonNode node = jsonMapper.readTree(json);
 			return manager.registerObject(yamlMapper.writeValueAsString(node));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	@POST
+	@Path("/registerjson/slo")
+	public BigDataStackSLO registerSLOJson(String json) {
+		try {
+			JsonNode node = jsonMapper.readTree(json);
+			return manager.registerSLO(yamlMapper.writeValueAsString(node));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -249,6 +268,18 @@ public class ManagerResource {
 	@Path("/list/{owner}/{appID}/objects/{objectID}/pods")
 	public List<BigDataStackPodStatus> listPodStatuses(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("objectID") String objectID){
 		return querying.listPodStatuses(owner, objectID);
+	}
+	
+	@GET
+	@Path("/list/{owner}/{appID}/objects/{objectID}/slos/{metricName}")
+	public List<BigDataStackSLO> listSLOs(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("objectID") String objectID, @PathParam("metricName") String metricName){
+		return querying.listSLOInstances(owner, appID, objectID, metricName);
+	}
+	
+	@GET
+	@Path("/list/{owner}/{appID}/objects/{objectID}/instance/{instance}/slos/{metricName}")
+	public List<BigDataStackSLO> listSLOs(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("objectID") String objectID, @PathParam("metricName") String metricName, @PathParam("instance") String instance){
+		return querying.listSLOInstances(owner, appID, objectID, Integer.parseInt(instance), metricName);
 	}
 	
 	@GET

@@ -2,7 +2,7 @@ package eu.bigdatastack.gdt.operations;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import eu.bigdatastack.gdt.lxdb.LXDB;
+import eu.bigdatastack.gdt.lxdb.JDBCDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.prometheus.PrometheusDataClient;
@@ -64,7 +64,7 @@ public abstract class BigDataStackOperation {
 	 * @return
 	 */
 	public abstract boolean execute(
-			LXDB database,
+			JDBCDB database,
 			OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient,
 			RabbitMQClient mailboxClient,

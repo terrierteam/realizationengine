@@ -23,10 +23,10 @@ public class BigDataStackMetricValueIO implements Timed {
 	protected final String tableName = "BigDataStackMetricValues";
 	protected ObjectMapper mapper = new ObjectMapper();
 
-	LXDB client;
+	JDBCDB client;
 	long totalTime = 0;
 	boolean init = false;
-	public BigDataStackMetricValueIO(LXDB client) throws SQLException {
+	public BigDataStackMetricValueIO(JDBCDB client) throws SQLException {
 		this.client = client;
 
 		//initTable();
@@ -244,7 +244,7 @@ public class BigDataStackMetricValueIO implements Timed {
 		
 		try {
 			Statement statement = conn.createStatement();
-			statement.execute("DROP TABLE \""+client.username+"\".\""+tableName+"\"");
+			statement.execute("DROP TABLE \""+client.getUsername()+"\".\""+tableName+"\"");
 
 			conn.commit();
 			conn.close();

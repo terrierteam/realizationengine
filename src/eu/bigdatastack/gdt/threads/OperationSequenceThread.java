@@ -11,7 +11,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.bigdatastack.gdt.lxdb.BigDataStackEventIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackOperationSequenceIO;
-import eu.bigdatastack.gdt.lxdb.LXDB;
+import eu.bigdatastack.gdt.lxdb.JDBCDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.operations.BigDataStackOperation;
@@ -37,7 +37,7 @@ public class OperationSequenceThread implements Runnable {
 
 	OpenshiftOperationClient operationsClient;
 	OpenshiftStatusClient statusClient;
-	LXDB database;
+	JDBCDB database;
 	RabbitMQClient mailboxClient;
 	PrometheusDataClient prometheusDataClient;
 	BigDataStackOperationSequence sequence;
@@ -48,7 +48,7 @@ public class OperationSequenceThread implements Runnable {
 
 	private Map<String,String> newParameters = null;
 
-	public OperationSequenceThread(LXDB database,
+	public OperationSequenceThread(JDBCDB database,
 			OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient,
 			RabbitMQClient mailboxClient,
@@ -63,7 +63,7 @@ public class OperationSequenceThread implements Runnable {
 		this.sequence = sequence;
 	}
 
-	public OperationSequenceThread(LXDB database,
+	public OperationSequenceThread(JDBCDB database,
 			OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient,
 			RabbitMQClient mailboxClient,
@@ -80,7 +80,7 @@ public class OperationSequenceThread implements Runnable {
 		this.newParameters = newParameters;
 	}
 	
-	public OperationSequenceThread(LXDB database,
+	public OperationSequenceThread(JDBCDB database,
 			OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient,
 			RabbitMQClient mailboxClient,
@@ -97,7 +97,7 @@ public class OperationSequenceThread implements Runnable {
 		this.eventUtil = eventUtil;
 	}
 
-	public OperationSequenceThread(LXDB database,
+	public OperationSequenceThread(JDBCDB database,
 			OpenshiftOperationClient openshiftOperationClient,
 			OpenshiftStatusClient openshiftStatusClient,
 			RabbitMQClient mailboxClient,

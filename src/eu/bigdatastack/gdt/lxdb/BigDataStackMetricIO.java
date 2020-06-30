@@ -21,10 +21,10 @@ public class BigDataStackMetricIO implements Timed {
 	protected ObjectMapper mapper = new ObjectMapper();
 	protected DecimalFormat formater = new DecimalFormat("#.####");
 	
-	LXDB client;
+	JDBCDB client;
 	long totalTime = 0;
 	boolean init = false;
-	public BigDataStackMetricIO(LXDB client) throws SQLException {
+	public BigDataStackMetricIO(JDBCDB client) throws SQLException {
 		this.client = client;
 		
 		//initTable();
@@ -253,7 +253,7 @@ public class BigDataStackMetricIO implements Timed {
 		
 		try {
 			Statement statement = conn.createStatement();
-			statement.execute("DROP TABLE \""+client.username+"\".\""+tableName+"\"");
+			statement.execute("DROP TABLE \""+client.getUsername()+"\".\""+tableName+"\"");
 
 			conn.commit();
 			conn.close();

@@ -24,10 +24,10 @@ public class BigDataStackEventIO implements Timed {
 
 	protected final String tableName = "BigDataStackEvents";
 
-	LXDB client;
+	JDBCDB client;
 	long totalTime = 0;
 	boolean init = false;
-	public BigDataStackEventIO(LXDB client) throws SQLException {
+	public BigDataStackEventIO(JDBCDB client) throws SQLException {
 		this.client = client;
 
 		//initTable();
@@ -382,7 +382,7 @@ public class BigDataStackEventIO implements Timed {
 
 		try {
 			Statement statement = conn.createStatement();
-			statement.execute("DROP TABLE \""+client.username+"\".\""+tableName+"\"");
+			statement.execute("DROP TABLE \""+client.getUsername()+"\".\""+tableName+"\"");
 
 			conn.commit();
 			conn.close();

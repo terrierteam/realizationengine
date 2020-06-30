@@ -113,6 +113,15 @@
     </exclusions>
 </dependency>
 
+<!-- https://mvnrepository.com/artifact/org.mongodb/mongodb-jdbc -->
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongodb-jdbc</artifactId>
+    <version>1.0.0</version>
+</dependency>
+
+
+
 <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
 <dependency>
     <groupId>org.apache.logging.log4j</groupId>
