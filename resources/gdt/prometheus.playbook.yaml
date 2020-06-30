@@ -91,7 +91,7 @@ objects:
                - '--web.enable-lifecycle'
                - '--storage.tsdb.no-lockfile'
                - >-
-                 --web.external-url=https://prometheus-gdt-$namespace$.ida.dcs.gla.ac.uk/
+                 --web.external-url=https://prometheus-gdt-$namespace$.apps.moc.bigdatastack.com/
                - '--web.route-prefix=/'
                - '--web.listen-address=0.0.0.0:9090'
               volumeMounts:
@@ -175,7 +175,7 @@ objects:
         name: $appID$-$objectID$-$instance$
         namespace: $namespace$
       spec:
-        host: prometheus-gdt-$namespace$.ida.dcs.gla.ac.uk
+        host: prometheus-gdt-$namespace$.apps.moc.bigdatastack.com
         to:
           kind: Service
           name: $service$
