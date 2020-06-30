@@ -30,7 +30,7 @@ objects:
           spec:
             containers:
             - name: gdtapi
-              image: "docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest"
+              image: "image-registry.openshift-image-registry.svc:5000/realization/is-bigdatastack-gdt:latest"
               resources:
                 limits:
                   cpu: "1000m"
