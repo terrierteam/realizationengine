@@ -117,7 +117,7 @@ public class BigDataStackNamespaceStateIO implements Timed {
 			return false;
 		}
 
-		conn.commit();
+		if (!conn.getAutoCommit()) conn.commit();
 		conn.close();
 		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
@@ -216,7 +216,7 @@ public class BigDataStackNamespaceStateIO implements Timed {
 
 
 
-		conn.commit();
+		if (!conn.getAutoCommit()) conn.commit();
 		conn.close();
 		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
@@ -238,7 +238,7 @@ public class BigDataStackNamespaceStateIO implements Timed {
 			Statement statement = conn.createStatement();
 			statement.execute("DROP TABLE \""+client.getUsername()+"\".\""+tableName+"\"");
 
-			conn.commit();
+			if (!conn.getAutoCommit()) conn.commit();
 			conn.close();
 			
 			initTable();

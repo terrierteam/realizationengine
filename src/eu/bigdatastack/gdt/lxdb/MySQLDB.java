@@ -41,9 +41,13 @@ public class MySQLDB implements JDBCDB {
 
 	public Connection openConnection() throws SQLException {
 		if (password==null) {
-			return DriverManager.getConnection("jdbc:mysql://"+host+":"+port+"/"+databasename+";user="+username);
+			Connection conn = DriverManager.getConnection("jdbc:mysql://"+host+":"+port+"/"+databasename+";user="+username);
+			conn.setAutoCommit(false);
+			return conn;
 		} else {
-			return DriverManager.getConnection("jdbc:mysql://"+host+":"+port+"/"+databasename, username, password);
+			Connection conn = DriverManager.getConnection("jdbc:mysql://"+host+":"+port+"/"+databasename, username, password);
+			conn.setAutoCommit(false);
+			return conn;
 		}
 	}
 	
