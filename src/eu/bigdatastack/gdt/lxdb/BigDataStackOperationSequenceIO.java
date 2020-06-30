@@ -72,7 +72,7 @@ public class BigDataStackOperationSequenceIO implements Timed {
 			"sequenceID VARCHAR(100), "+
 			"name VARCHAR(140), "+
 			"description VARCHAR(1000), "+
-			"jsonOperations VARCHAR(65535), "+
+			"jsonOperations TEXT(65535), "+
 			"parameters VARCHAR(5000), "+
 			"mode VARCHAR(100), "+
 			"PRIMARY KEY (appID,sequenceID,instance)"+

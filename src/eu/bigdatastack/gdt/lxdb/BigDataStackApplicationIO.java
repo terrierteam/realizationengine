@@ -61,7 +61,7 @@ public class BigDataStackApplicationIO implements Timed {
 			statement.executeUpdate("CREATE TABLE "+tableName+" ( "+
 					"appID VARCHAR(100), "+
 					"name VARCHAR(140), "+
-					"description VARCHAR(65535), "+
+					"description TEXT(65535), "+
 					"owner VARCHAR(140), "+
 					"namespace VARCHAR(140), "+
 					"types VARCHAR(1000), "+

@@ -62,7 +62,7 @@ public class BigDataStackObjectIO implements Timed {
 			"owner VARCHAR(140), "+
 			"type VARCHAR(100), "+
 			"status VARCHAR(1000), "+
-			"yamlSource VARCHAR(65535), "+
+			"yamlSource TEXT(65535), "+
 			"instance INT, "+
 			"namespace VARCHAR(140), "+
 			"appID VARCHAR(100), "+
