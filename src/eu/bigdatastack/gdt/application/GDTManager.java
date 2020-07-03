@@ -30,6 +30,7 @@ import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.lxdb.MySQLDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClientv3;
+import eu.bigdatastack.gdt.openshift.OpenshiftOperationFabric8ioClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusFabric8ioClient;
 import eu.bigdatastack.gdt.operations.Apply;
@@ -116,7 +117,7 @@ public class GDTManager implements Manager {
 			System.err.println("Database type "+dbconf.getType()+" not recognised");
 			System.exit(1);
 		}
-		
+
 
 		appClient = new BigDataStackApplicationIO(database);
 		eventClient = new BigDataStackEventIO(database);
@@ -140,19 +141,25 @@ public class GDTManager implements Manager {
 		OpenshiftConfig openshiftConf = gdtConfig.getOpenshift();
 		openshiftCredential = new BigDataStackCredentials("GDT", gdtConfig.getOpenshift().getUsername(), gdtConfig.getOpenshift().getPassword(), BigDataStackCredentialsType.openshift);
 		//if (!credentialsClient.addCredential(openshiftCredential)) credentialsClient.updatePassweord("GDT", BigDataStackCredentialsType.openshift, gdtConfig.getOpenshift().getUsername(), gdtConfig.getOpenshift().getPassword());
-		openshiftOperationClient = new OpenshiftOperationClientv3(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
+		openshiftOperationClient = null;
+		if (openshiftConf.getClient().equalsIgnoreCase("openshiftv3")) openshiftOperationClient = new OpenshiftOperationClientv3(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
+		if (openshiftConf.getClient().equalsIgnoreCase("fabric8io")) openshiftOperationClient = new OpenshiftOperationFabric8ioClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
+		if (openshiftStatusClient==null) {
+			System.err.println("Openshift client '"+openshiftConf.getClient()+"' is not supported for operations");
+			return;
+		}
 		openshiftOperationClient.connectToOpenshift();
-		
+
 		openshiftStatusClient = null;
 		//if (occlient.equalsIgnoreCase("openshift3")) openshiftStatus = new OpenshiftStatusClientv3(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
 		if (openshiftConf.getClient().equalsIgnoreCase("fabric8io")) openshiftStatusClient = new OpenshiftStatusFabric8ioClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
 		if (openshiftStatusClient==null) {
-			System.err.println("Openshift client '"+openshiftConf.getClient()+"' is not supported");
+			System.err.println("Openshift client '"+openshiftConf.getClient()+"' is not supported for status");
 			return;
 		}
-		
+
 		openshiftStatusClient.connectToOpenshift();
-		
+
 		// Initalize RabbitMQ Client
 		RabbitMQConf rabbitMQConf = gdtConfig.getRabbitmq();
 		mailboxClient = new RabbitMQClient(rabbitMQConf.getHost(), rabbitMQConf.getPort(), rabbitMQConf.getUsername(), rabbitMQConf.getPassword());
@@ -214,8 +221,8 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
-	
+
+
 	/**
 	 * Registers a new BigDataStack SLO with the database from a yaml format String
 	 * @param yaml
@@ -230,7 +237,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Registers a new BigDataStack SLO with the database from a yaml format String
 	 * @param yaml
@@ -245,7 +252,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Registers a new BigDataStack Application from a BigDataStackApplication object
 	 * @param yaml
@@ -816,20 +823,20 @@ public class GDTManager implements Manager {
 
 			// load the GDT Prometheus Instance
 			loadPlaybook(GDTFileUtil.file2String(new File("resources/gdt/prometheus.playbook.yaml"), "UTF-8"), owner, namespace);
-			
+
 			existingSequenceTemplate = sequenceTemplateClient.getSequence("gdtdefaultapp", "seq-prometheusdeploy");
 			boolean prometheusOk = executeSequenceFromTemplateSync(existingSequenceTemplate, parameters);
-			
+
 			if (!prometheusOk) return false;
-			
+
 			// load the GDT API Instance
 			loadPlaybook(GDTFileUtil.file2String(new File("resources/gdt/api.playbook.yaml"), "UTF-8"), owner, namespace);
-						
+
 			existingSequenceTemplate = sequenceTemplateClient.getSequence("gdtdefaultapp", "seq-gdtapi");
 			boolean apiOk = executeSequenceFromTemplateSync(existingSequenceTemplate, parameters);
-						
+
 			if (!apiOk) return false;
-						
+
 
 
 
@@ -850,14 +857,14 @@ public class GDTManager implements Manager {
 	public boolean stopMonitoringNamespace(String namespace, String owner) {
 
 		try {
-			
-			
+
+
 			boolean stoppedMonitor =  stopOperationSequenceInstances(owner, namespace, "gdtdefaultapp", "seq-gdtmonitor");
 			boolean stoppedPrometheus =  stopOperationSequenceInstances(owner, namespace, "gdtdefaultapp", "seq-prometheusdeploy");
 			boolean stoppedAPI =  stopOperationSequenceInstances(owner, namespace, "gdtdefaultapp", "seq-gdtapi");
-			
+
 			return (stoppedMonitor && stoppedPrometheus && stoppedAPI);
-			
+
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -975,11 +982,11 @@ public class GDTManager implements Manager {
 
 					int newIndex = highestIndex+1;
 					operationsequenceDef.setInstance(newIndex);
-					
+
 					String yamlCopy = ""+yaml;
 					yamlCopy = yamlCopy.replaceAll("\\$runnerIndex\\$", String.valueOf(newIndex));
 					operationsequenceDef.setYamlSource(yamlCopy);
-					
+
 					regOK = objectInstanceClient.addObject(operationsequenceDef);
 					if (!regOK) failedReg++;
 					else parameters.put("runnerIndex", String.valueOf(newIndex));
@@ -1175,15 +1182,15 @@ public class GDTManager implements Manager {
 			e.printStackTrace();
 			return false;
 		}
-		
+
 	}
-	
+
 	public boolean stopOperationSequenceInstance(String owner, String appID, String sequenceID, int instance, String namespace) {
 		try {
 			BigDataStackOperationSequence sequence = sequenceInstanceClient.getSequence(appID, sequenceID, instance);
 			if (sequence==null) return false;
 			if (namespace!=null && !sequence.getNamepace().equalsIgnoreCase(namespace)) return false;
-			
+
 			// First try and kill the sequence runner (this may not exist)
 			List<BigDataStackObjectDefinition> sequenceRunners = objectInstanceClient.getObjects("operationsequence", "gdt", sequence.getNamepace(), appID);
 			boolean foundRunner = false;
@@ -1196,7 +1203,7 @@ public class GDTManager implements Manager {
 				if (!labels.has("sequenceID") || !labels.get("sequenceID").asText().equalsIgnoreCase(sequenceID)) continue;
 				if (!labels.has("sequenceInstance") || !labels.get("sequenceInstance").asText().equalsIgnoreCase(String.valueOf(instance))) continue;
 				foundRunner = true;
-				
+
 				// if we get to here then we have found a sequence runner for the specified sequence and instance
 				boolean deleted =  openshiftOperationClient.deleteOperation(sequenceRunner); // try deleting it
 
@@ -1220,7 +1227,7 @@ public class GDTManager implements Manager {
 				}
 
 			}
-			
+
 			if (!foundRunner) {
 				eventUtil.registerEvent(
 						appID,
@@ -1233,20 +1240,20 @@ public class GDTManager implements Manager {
 						sequenceID
 						);
 			}
-			
+
 			// Now try and delete all of the underlying objects spawned from this operation sequence
 			for (BigDataStackOperation operation : sequence.getOperations()) {
-				
+
 				//System.err.println(operation.getClassName());
-				
+
 				// Apply Operations can spawn objects that need deleted
 				if (operation.getClassName().equalsIgnoreCase("eu.bigdatastack.gdt.operations.Apply")) {
 					String instanceRef = operation.getObjectID(); // apply operations use the instance ref as their object id
-					
+
 					// resolve the instance ref to get the identifiers for the object
 					String sourceObjectID = sequence.getParameters().get(instanceRef).split(":")[0];
 					int instanceNo = Integer.valueOf(sequence.getParameters().get(instanceRef).split(":")[1]);
-					
+
 					// get the object instance
 					BigDataStackObjectDefinition objectInstance = objectInstanceClient.getObject(sourceObjectID, owner, instanceNo);
 
@@ -1261,14 +1268,14 @@ public class GDTManager implements Manager {
 								"Tried to delete the object '"+sourceObjectID+"("+instanceNo+" on the cluster, but openshift rejected it",
 								sourceObjectID
 								);
-						
+
 					} else {
-						
+
 						Set<String> status = new HashSet<String>();
 						status.add("Killed");
 						objectInstance.setStatus(status);
 						objectInstanceClient.updateObject(objectInstance);
-						
+
 						eventUtil.registerEvent(
 								operation.getAppID(),
 								operation.getOwner(),
@@ -1281,11 +1288,11 @@ public class GDTManager implements Manager {
 								);
 					}
 				}
-				
+
 			}
-			
-			
-			
+
+
+
 
 			return true;
 		} catch (Exception e) {
@@ -1365,7 +1372,7 @@ public class GDTManager implements Manager {
 					registerOperationSequence(jsonAsYaml);
 				}
 			}
-			
+
 			if (node.has("slos")) {
 				JsonNode sequences = node.get("slos");
 				Iterator<JsonNode> sequencesI = sequences.iterator();

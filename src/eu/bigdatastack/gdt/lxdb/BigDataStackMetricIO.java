@@ -253,7 +253,7 @@ public class BigDataStackMetricIO implements Timed {
 		
 		try {
 			Statement statement = conn.createStatement();
-			statement.execute("DROP TABLE \""+client.getUsername()+"\".\""+tableName+"\"");
+			statement.execute("DROP TABLE \""+tableName+"\"");
 
 			conn.commit();
 			conn.close();

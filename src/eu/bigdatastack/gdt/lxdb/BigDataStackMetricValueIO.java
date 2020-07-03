@@ -59,9 +59,9 @@ public class BigDataStackMetricValueIO implements Timed {
 					"appID VARCHAR(100), "+
 					"objectID VARCHAR(100), "+
 					"metricName VARCHAR(140), "+
-					"valueString VARCHAR(5000), "+
-					"lastUpdated VARCHAR(5000), "+
-					"labels VARCHAR(10000), "+
+					"valueString TEXT(5000), "+
+					"lastUpdated TEXT(5000), "+
+					"labels TEXT(10000), "+
 					"PRIMARY KEY (appID,owner,namespace,objectID,metricName)"+
 					")");
 			
@@ -244,7 +244,7 @@ public class BigDataStackMetricValueIO implements Timed {
 		
 		try {
 			Statement statement = conn.createStatement();
-			statement.execute("DROP TABLE \""+client.getUsername()+"\".\""+tableName+"\"");
+			statement.execute("DROP TABLE \""+tableName+"\"");
 
 			conn.commit();
 			conn.close();

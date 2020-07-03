@@ -77,6 +77,10 @@ public class OpenshiftStatusFabric8ioClient implements OpenshiftStatusClient {
 		this.username = username;
 		this.password = password;
 	}
+	
+	public OpenshiftStatusFabric8ioClient (OpenShiftClient osClient) {
+		this.osClient = osClient;
+	}
 
 	@Override
 	public boolean connectToOpenshift() {
