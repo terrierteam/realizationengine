@@ -144,7 +144,7 @@ public class GDTManager implements Manager {
 		openshiftOperationClient = null;
 		if (openshiftConf.getClient().equalsIgnoreCase("openshiftv3")) openshiftOperationClient = new OpenshiftOperationClientv3(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
 		if (openshiftConf.getClient().equalsIgnoreCase("fabric8io")) openshiftOperationClient = new OpenshiftOperationFabric8ioClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
-		if (openshiftStatusClient==null) {
+		if (openshiftOperationClient==null) {
 			System.err.println("Openshift client '"+openshiftConf.getClient()+"' is not supported for operations");
 			return;
 		}
