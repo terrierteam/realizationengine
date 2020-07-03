@@ -5,9 +5,9 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.openshift.restclient.model.IResource;
 
 import eu.bigdatastack.gdt.lxdb.JDBCDB;
+import eu.bigdatastack.gdt.openshift.OpenshiftObject;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.prometheus.PrometheusDataClient;
@@ -133,9 +133,9 @@ public class ParameterFromObjectLookup extends BigDataStackOperation{
 			String kind = criteriaParts[1];
 			String nameregex = criteriaParts[2];
 			
-			List<IResource> resources = openshiftOperationClient.getClient().list(kind, namespace);
-			List<IResource> matchedResources = new ArrayList<IResource>();
-			for (IResource resource : resources) {
+			List<OpenshiftObject> resources = openshiftStatusClient.getResources(namespace, kind);
+			List<OpenshiftObject> matchedResources = new ArrayList<OpenshiftObject>();
+			for (OpenshiftObject resource : resources) {
 				if (resource.getName().matches(nameregex)) {
 					matchedResources.add(resource);
 				}
@@ -156,7 +156,7 @@ public class ParameterFromObjectLookup extends BigDataStackOperation{
 			} if (matchedResources.size()>1) {
 				if (allowMultipleMatches) {
 					List<String> matches = new ArrayList<String>(matchedResources.size());
-					for (IResource resource : matchedResources) {
+					for (OpenshiftObject resource : matchedResources) {
 						matches.add(resource.getName());
 					}
 					ObjectMapper mapper = new ObjectMapper();

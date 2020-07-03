@@ -1,0 +1,210 @@
+# BigDataStack Playbook for Deploying the Visualization Service
+
+appID: "bigdatastack"
+name: "BigDataStack Visualisation Service"
+description: "This is the React based visualisation interface. It is comprised of two deployment configs: CLIENT: contains the UI of the BigDataStack Visualisation/Integration Components; and API: contains the business logic to authenticate users in the BigDS UI."
+owner: "richardm"
+namespace: "richardmproject"
+types:
+ - playbook
+
+
+objects:
+  
+  - appID: "$appID$" # Visualisation Client Deployment Config
+    owner: "$owner$"
+    objectID: "visualisation-client"
+    type: DeploymentConfig
+    yamlSource:
+      kind: DeploymentConfig
+      apiVersion: v1
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+        labels:
+          app: $appID$
+      spec:
+        replicas: 1
+        strategy:
+          resources: {}
+        template:
+          metadata:
+            labels:
+              app: $appID$
+              component: $appID$-visualisation
+          spec:
+            schedulerName: default-scheduler
+            securityContext: {}
+            containers:
+              - resources:
+                 limits:
+                    cpu: '2000m'
+                    memory: 8Gi
+                 requests:
+                    cpu: '1000m'
+                    memory: 4Gi
+                name: client
+                imagePullPolicy: Always
+                image: 'ntonis/bds:client'
+                ports:
+                  - name: ui
+                    containerPort: 8080   
+                    protocol: TCP
+                env:
+                  - name: "PUBLICDB"
+                    value: "mongodb+srv://bigds:b1gd2tas3ack@cluster0-8pnrg.mongodb.net/bigdatastack?retryWrites=true&w=majority"
+                  - name: "REACT_APP_API"
+                    value: "$visualisationServiceAddress$"
+                  - name: "appID"
+                    value: "$appID$"
+                  - name: "instance"
+                    value: "$instance$"
+                  - name: "objectID"
+                    value: "$objectID$"
+                  - name: "owner"
+                    value: "$owner$"
+                  - name: "namespace"
+                    value: "$namespace$"
+            serviceAccount: containerroot
+            dnsPolicy: ClusterFirst
+ 
+  - appID: "$appID$"  # Visualisation API Deployment Config
+    owner: "$owner$"
+    objectID: "visualisation-api"
+    type: DeploymentConfig
+    yamlSource:
+      kind: DeploymentConfig
+      apiVersion: v1
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+        labels:
+          app: $appID$
+          component: $appID$-visualisation
+      spec:
+        replicas: 1
+        strategy:
+          resources: {}
+        template:
+          metadata:
+            labels:
+              app: $appID$
+          spec:
+            schedulerName: default-scheduler
+            securityContext: {}
+            containers:
+              - resources:
+                 limits:
+                    cpu: '2000m'
+                    memory: 8Gi
+                 requests:
+                    cpu: '1000m'
+                    memory: 4Gi
+                name: api
+                imagePullPolicy: Always
+                image: 'ntonis/bds:api'
+                ports:
+                  - name: api
+                    containerPort: 3090   
+                    protocol: TCP
+                env:
+                  - name: "PUBLICDB"
+                    value: "mongodb+srv://bigds:b1gd2tas3ack@cluster0-8pnrg.mongodb.net/bigdatastack?retryWrites=true&w=majority"
+                  - name: "REACT_APP_API"
+                    value: "$visualisationServiceAddress$"
+                  - name: "appID"
+                    value: "$appID$"
+                  - name: "instance"
+                    value: "$instance$"
+                  - name: "objectID"
+                    value: "$objectID$"
+                  - name: "owner"
+                    value: "$owner$"
+                  - name: "namespace"
+                    value: "$namespace$"
+            serviceAccount: containerroot
+            dnsPolicy: ClusterFirst
+            
+  - appID: "$appID$" # Service exposing the client and API
+    owner: "$owner$"
+    objectID: "srv-visualization"
+    type: Service
+    yamlSource:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      spec:
+        selector:
+          component: $appID$-visualisation
+        ports:
+          - name: ui
+            protocol: TCP
+            port: 8080
+            targetPort: 8080
+          - name: api
+            protocol: TCP
+            port: 3090
+            targetPort: 3090
+            
+  - appID: "$appID$" # Route exposing the client
+    owner: "$owner$"
+    objectID: "route-visualisation"
+    type: Route
+    yamlSource:
+      kind: Route
+      apiVersion: route.openshift.io/v1
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      spec:
+        host: bigdatastack-$namespace$.ida.dcs.gla.ac.uk
+        to:
+          kind: Service
+          name: $visualisationServiceAddress$
+          weight: 100
+        port:
+          targetPort: ui
+        wildcardPolicy: None
+
+sequences:
+  - appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    sequenceID: "deploy"
+    name: "Deploy Visualisation Client and API"
+    description: "Creates a copy of the Client and API for the visualisation app, along with their service and route"
+    parameters: {}
+    operations:
+      - className: Instantiate
+        objectID: "srv-visualization"
+        defineInstanceRef: "visualisationService"
+      - className: Apply
+        instanceRef: "visualisationService"
+      - className: ParameterFromObjectLookup
+        parameter: "visualisationServiceAddress"
+        criteria: "$namespace$:service:$appID$-srv-visualization-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate
+        objectID: "visualisation-client"
+        defineInstanceRef: "visualisationClientInstance"
+      - className: SetSequenceParameters
+        instanceRef: "visualisationClientInstance"
+      - className: Apply
+        instanceRef: "visualisationClientInstance"
+      - className: Instantiate
+        objectID: "visualisation-api"
+        defineInstanceRef: "visualisationAPIInstance"
+      - className: SetSequenceParameters
+        instanceRef: "visualisationAPIInstance"
+      - className: Apply
+        instanceRef: "visualisationAPIInstance"
+      - className: Instantiate
+        objectID: "route-visualisation"
+        defineInstanceRef: "visualisationRoute"
+      - className: SetSequenceParameters
+        instanceRef: "visualisationRoute"
+      - className: Apply
+        instanceRef: "visualisationRoute"
+    mode: Continue

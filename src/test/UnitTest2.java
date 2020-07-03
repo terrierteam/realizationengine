@@ -98,7 +98,6 @@ public class UnitTest2 {
 		// Register Namespace
 		BigDataStackNamespaceState namespace = manager.registerNamespace(new File("resources/bigdatastack/unitTest2/unitTest2.namespace,yaml"));
 		assertNotNull(namespace);
-		manager.cleanUpEndedSequenceTemplates(namespace.getNamespace()); // clean any old sequence template runners
 
 		// Start Namespace Monitoring
 		assertTrue(manager.startMonitoringNamespace(namespace.getNamespace(), "richardm"));
@@ -142,7 +141,6 @@ public class UnitTest2 {
 		// Register Namespace
 		BigDataStackNamespaceState namespace = manager.registerNamespace(new File("resources/bigdatastack/unitTest2/unitTest2.namespace,yaml"));
 		assertNotNull(namespace);
-		manager.cleanUpEndedSequenceTemplates(namespace.getNamespace()); // clean any old sequence template runners
  
 		// Start Namespace Monitoring
 		assertTrue(manager.startMonitoringNamespace(namespace.getNamespace(), "richardm"));

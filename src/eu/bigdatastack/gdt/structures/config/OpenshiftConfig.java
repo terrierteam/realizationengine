@@ -2,6 +2,7 @@ package eu.bigdatastack.gdt.structures.config;
 
 public class OpenshiftConfig {
 
+	String client;
 	String host;
 	int port;
 	String username;
@@ -9,8 +10,9 @@ public class OpenshiftConfig {
 	
 	public OpenshiftConfig() {}
 	
-	public OpenshiftConfig(String host, int port, String username, String password) {
+	public OpenshiftConfig(String client, String host, int port, String username, String password) {
 		super();
+		this.client = client;
 		this.host = host;
 		this.port = port;
 		this.username = username;
@@ -39,6 +41,14 @@ public class OpenshiftConfig {
 	}
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public String getClient() {
+		return client;
+	}
+
+	public void setClient(String client) {
+		this.client = client;
 	}
 	
 }

@@ -14,8 +14,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.openshift.restclient.model.IPod;
-import com.openshift.restclient.model.IProject;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackApplicationIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackCredentialsIO;
@@ -31,7 +29,9 @@ import eu.bigdatastack.gdt.lxdb.JDBCDB;
 import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.lxdb.MySQLDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftOperationClient;
+import eu.bigdatastack.gdt.openshift.OpenshiftOperationClientv3;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
+import eu.bigdatastack.gdt.openshift.OpenshiftStatusFabric8ioClient;
 import eu.bigdatastack.gdt.operations.Apply;
 import eu.bigdatastack.gdt.operations.BigDataStackOperation;
 import eu.bigdatastack.gdt.operations.Instantiate;
@@ -140,10 +140,19 @@ public class GDTManager implements Manager {
 		OpenshiftConfig openshiftConf = gdtConfig.getOpenshift();
 		openshiftCredential = new BigDataStackCredentials("GDT", gdtConfig.getOpenshift().getUsername(), gdtConfig.getOpenshift().getPassword(), BigDataStackCredentialsType.openshift);
 		//if (!credentialsClient.addCredential(openshiftCredential)) credentialsClient.updatePassweord("GDT", BigDataStackCredentialsType.openshift, gdtConfig.getOpenshift().getUsername(), gdtConfig.getOpenshift().getPassword());
-		openshiftOperationClient = new OpenshiftOperationClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
+		openshiftOperationClient = new OpenshiftOperationClientv3(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
 		openshiftOperationClient.connectToOpenshift();
-		openshiftStatusClient = new OpenshiftStatusClient(openshiftOperationClient.getClient());
-
+		
+		openshiftStatusClient = null;
+		//if (occlient.equalsIgnoreCase("openshift3")) openshiftStatus = new OpenshiftStatusClientv3(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
+		if (openshiftConf.getClient().equalsIgnoreCase("fabric8io")) openshiftStatusClient = new OpenshiftStatusFabric8ioClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
+		if (openshiftStatusClient==null) {
+			System.err.println("Openshift client '"+openshiftConf.getClient()+"' is not supported");
+			return;
+		}
+		
+		openshiftStatusClient.connectToOpenshift();
+		
 		// Initalize RabbitMQ Client
 		RabbitMQConf rabbitMQConf = gdtConfig.getRabbitmq();
 		mailboxClient = new RabbitMQClient(rabbitMQConf.getHost(), rabbitMQConf.getPort(), rabbitMQConf.getUsername(), rabbitMQConf.getPassword());
@@ -787,6 +796,7 @@ public class GDTManager implements Manager {
 			parameters.put("dbusername", databaseCredential.getUsername());
 			parameters.put("dbpassword", databaseCredential.getPassword());
 			// openshift info
+			parameters.put("occlient", gdtConfig.getOpenshift().getClient());
 			parameters.put("ochost", gdtConfig.getOpenshift().getHost());
 			parameters.put("ocport", String.valueOf(gdtConfig.getOpenshift().getPort()));
 			// openshift credentials
@@ -879,6 +889,7 @@ public class GDTManager implements Manager {
 		parameters.put("dbhost", gdtConfig.getDatabase().getHost());
 		parameters.put("dbport", String.valueOf(gdtConfig.getDatabase().getPort()));
 		parameters.put("dbname", gdtConfig.getDatabase().getName());
+		parameters.put("occlient", gdtConfig.getOpenshift().getClient());
 		parameters.put("ochost", gdtConfig.getOpenshift().getHost());
 		parameters.put("ocport", String.valueOf(gdtConfig.getOpenshift().getPort()));
 		parameters.put("ocusername", openshiftCredential.getUsername());
@@ -1031,26 +1042,10 @@ public class GDTManager implements Manager {
 
 	}
 
-	/**
-	 * Deletes any sequence template runners that have been completed to avoid cluttering the cluster. In this case,
-	 * completed means any pod in Terminating, Completed or Failed status. It uses the operationsequence=True label
-	 * to find the pods.
-	 */
-	public void cleanUpEndedSequenceTemplates(String namespace) {
-
-		IProject project  = openshiftStatusClient.getProject(namespace);
-
-		List<IPod> pods = openshiftStatusClient.getPods(project, false, true, "operationsequence=True");
-
-		for (IPod pod : pods) {
-			openshiftOperationClient.getClient().delete(pod);
-		}
-
-	}
-
 
 	public void shutdown() {
 		openshiftOperationClient.close();
+		openshiftStatusClient.close();
 	}
 
 	public BigDataStackApplicationIO getAppClient() {

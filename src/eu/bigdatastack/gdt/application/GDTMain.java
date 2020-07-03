@@ -5,6 +5,7 @@ import java.util.Map;
 
 import eu.bigdatastack.gdt.lxdb.LXDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
+import eu.bigdatastack.gdt.openshift.OpenshiftStatusFabric8ioClient;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
 import eu.bigdatastack.gdt.structures.config.DatabaseConf;
 import eu.bigdatastack.gdt.structures.config.GDTConfig;
@@ -32,6 +33,7 @@ public class GDTMain {
 		String dbname = System.getenv("dbname");
 		String dbusername = System.getenv("dbusername");
 		String dbpassword = System.getenv("dbpassword");
+		String occlient =  System.getenv("occlient");
 		String ochost =  System.getenv("ochost");
 		String ocport = System.getenv("ocport");
 		String ocusername = System.getenv("ocusername");
@@ -50,6 +52,7 @@ public class GDTMain {
 			System.out.println("  monitor: start or stop monitoring");
 			System.out.println("  sequence: launch new operation sequences");
 			System.out.println("  describe: describe objects");
+			System.out.println("  reset: clear the state db");
 			return;
 		}
 		
@@ -59,7 +62,14 @@ public class GDTMain {
 			
 			LXDB database = new LXDB(dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
 			
-			OpenshiftStatusClient openshiftStatus = new OpenshiftStatusClient(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			OpenshiftStatusClient openshiftStatus = null;
+			//if (occlient.equalsIgnoreCase("openshift3")) openshiftStatus = new OpenshiftStatusClientv3(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			if (occlient.equalsIgnoreCase("fabric8io")) openshiftStatus = new OpenshiftStatusFabric8ioClient(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			if (openshiftStatus==null) {
+				System.err.println("Openshift client '"+occlient+"' is not supported");
+				return;
+			}
+			
 			openshiftStatus.connectToOpenshift();
 			
 			RabbitMQClient rabbitMQClient = new RabbitMQClient(rmqhost, Integer.parseInt(rmqport), rmqusername, rmqpassword);
@@ -72,7 +82,7 @@ public class GDTMain {
 		} else if (args[0].equalsIgnoreCase("operationSequence")) {
 			
 			DatabaseConf databaseConf = new DatabaseConf(dbtype, dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
-			OpenshiftConfig openshiftConf = new OpenshiftConfig(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			OpenshiftConfig openshiftConf = new OpenshiftConfig(occlient, ochost, Integer.parseInt(ocport), ocusername, ocpassword);
 			RabbitMQConf rabbitMQConf = new RabbitMQConf(rmqhost, Integer.parseInt(rmqport), rmqusername, rmqpassword);
 			GDTConfig gdtConf = new GDTConfig(databaseConf,rabbitMQConf,openshiftConf);
 			
@@ -133,7 +143,13 @@ public class GDTMain {
 			
 			LXDB database = new LXDB(dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
 			
-			OpenshiftStatusClient openshiftStatus = new OpenshiftStatusClient(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			OpenshiftStatusClient openshiftStatus = null;
+			//if (occlient.equalsIgnoreCase("openshift3")) openshiftStatus = new OpenshiftStatusClientv3(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			if (occlient.equalsIgnoreCase("fabric8io")) openshiftStatus = new OpenshiftStatusFabric8ioClient(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			if (openshiftStatus==null) {
+				System.err.println("Openshift client '"+occlient+"' is not supported");
+				return;
+			}
 			openshiftStatus.connectToOpenshift();
 			
 			RabbitMQClient rabbitMQClient = new RabbitMQClient(rmqhost, Integer.parseInt(rmqport), rmqusername, rmqpassword);
@@ -146,7 +162,7 @@ public class GDTMain {
 		} else if (args[0].equalsIgnoreCase("api")) {
 			
 			DatabaseConf databaseConf = new DatabaseConf(dbtype, dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
-			OpenshiftConfig openshiftConf = new OpenshiftConfig(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			OpenshiftConfig openshiftConf = new OpenshiftConfig(occlient, ochost, Integer.parseInt(ocport), ocusername, ocpassword);
 			RabbitMQConf rabbitMQConf = new RabbitMQConf(rmqhost, Integer.parseInt(rmqport), rmqusername, rmqpassword);
 			GDTConfig gdtConf = new GDTConfig(databaseConf,rabbitMQConf,openshiftConf);
 			

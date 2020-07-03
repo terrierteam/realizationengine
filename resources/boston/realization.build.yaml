@@ -1,0 +1,23 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: realizationbuild
+  namespace: realization
+spec:
+  source:
+    git:
+      ref: master
+      uri: 'http://bigdatastack-tasks.ds.unipi.gr/richardm/bigdatastack-gdt.git'
+    type: Git
+  strategy:
+    type: Docker
+    dockerStrategy:  
+  output: 
+    to:
+      kind: "ImageStreamTag"
+      name: "is-bigdatastack-gdt:latest"
+
+  triggers:
+    - type: ImageChange
+      imageChange: {}
+    - type: ConfigChange

@@ -6,16 +6,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.openshift.restclient.model.IDeploymentConfig;
-import com.openshift.restclient.model.IPod;
-import com.openshift.restclient.model.IProject;
-
 import eu.bigdatastack.gdt.lxdb.BigDataStackApplicationIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackEventIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackOperationSequenceIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackPodStatusIO;
-import eu.bigdatastack.gdt.lxdb.LXDB;
+import eu.bigdatastack.gdt.lxdb.JDBCDB;
+import eu.bigdatastack.gdt.openshift.OpenshiftObject;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
@@ -25,8 +22,6 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
-import eu.bigdatastack.gdt.structures.openshift.IJob;
-import eu.bigdatastack.gdt.util.OpenshiftUtil;
 
 /**
  * This thread monitors the state of a project and reports status changes in pods.
@@ -42,7 +37,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 
 	OpenshiftStatusClient openshiftStatus;
 	RabbitMQClient rabbitMQClient;
-	LXDB database;
+	JDBCDB database;
 	String namespace;
 	String owner;
 
@@ -55,7 +50,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	BigDataStackObjectIO objectIO;
 	BigDataStackEventIO eventIO;
 
-	public OpenshiftProjectMonitoringThread(OpenshiftStatusClient openshiftStatus, RabbitMQClient rabbitMQClient, LXDB database, String owner, String namespace) {
+	public OpenshiftProjectMonitoringThread(OpenshiftStatusClient openshiftStatus, RabbitMQClient rabbitMQClient, JDBCDB database, String owner, String namespace) {
 		this.openshiftStatus = openshiftStatus;
 		this.rabbitMQClient = rabbitMQClient;
 		this.namespace = namespace;
@@ -81,7 +76,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 			return;
 		}
 
-		IProject project = openshiftStatus.getProject(namespace); // here
+		OpenshiftObject project = openshiftStatus.getProject(namespace); // here
 
 		while (!kill) {
 
@@ -102,11 +97,11 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 							
 							if (objectDef.getType() == BigDataStackObjectType.Pod) {
 								if (objectDef.getObjectID().equalsIgnoreCase("operationsequence")) {
-									List<IPod> pods = openshiftStatus.getPods(project, true, true, "operationsequence=True");
-									for (IPod pod : pods) {
+									List<OpenshiftObject> pods = openshiftStatus.getPods(project.getName(), true, true, "operationsequence=True");
+									for (OpenshiftObject pod : pods) {
 										Map<String,String> labels = pod.getLabels();
 										if (labels.get("runnerIndex").equalsIgnoreCase(String.valueOf(objectDef.getInstance())))
-											updatePodStatus(project, app, objectDef, pod);
+											updatePodStatus(project.getName(), app, objectDef, pod);
 									}
 									
 								}
@@ -164,11 +159,11 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	 * @param objectDef
 	 * @throws Exception
 	 */
-	protected void processJob(IProject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
-		IJob job = openshiftStatus.getJob(project, objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
+	protected void processJob(OpenshiftObject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
+		OpenshiftObject job = openshiftStatus.getJob(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 
 		// Stage 1: check whether the high-level object has changed state
-		Set<String> jobStatuses = job.getJobStatuses();
+		Set<String> jobStatuses = job.getStatuses();
 
 		Set<String> newStatuses = new HashSet<>(jobStatuses);
 		newStatuses.removeAll(objectDef.getStatus());
@@ -225,9 +220,9 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		}
 
 		// Stage 2: check whether the underlying pods have changed state
-		List<IPod> pods = openshiftStatus.getPodsForJob(project, objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
-		for (IPod pod : pods) {
-			updatePodStatus(project, app, objectDef, pod);
+		List<OpenshiftObject> pods = openshiftStatus.getPodsForJob(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
+		for (OpenshiftObject pod : pods) {
+			updatePodStatus(project.getName(), app, objectDef, pod);
 		}
 		
 		for (String newStatus : newStatuses) {
@@ -261,11 +256,11 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	 * @param objectDef
 	 * @throws Exception
 	 */
-	protected void processDeploymentConfig(IProject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
-		IDeploymentConfig deploymentConfig = openshiftStatus.getDeploymentConfig(project, objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
+	protected void processDeploymentConfig(OpenshiftObject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
+		OpenshiftObject deploymentConfig = openshiftStatus.getDeploymentConfig(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 
 		// Stage 1: check whether the high-level object has changed state		
-		Set<String> deploymentStatuses = OpenshiftUtil.getDeploymentConfigStatuses(deploymentConfig);
+		Set<String> deploymentStatuses = deploymentConfig.getStatuses();
 
 		Set<String> newStatuses = new HashSet<>(deploymentStatuses);
 		newStatuses.removeAll(objectDef.getStatus());
@@ -322,9 +317,9 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		}
 
 		// Stage 2: check whether the underlying pods have changed state
-		List<IPod> pods = openshiftStatus.getPodsForDeploymentConfig(project, objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
-		for (IPod pod : pods) {
-			updatePodStatus(project, app, objectDef, pod);
+		List<OpenshiftObject> pods = openshiftStatus.getPodsForDeploymentConfig(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
+		for (OpenshiftObject pod : pods) {
+			updatePodStatus(project.getName(), app, objectDef, pod);
 		}
 		
 
@@ -341,12 +336,12 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	 * @param pod
 	 * @throws SQLException
 	 */
-	protected void updatePodStatus(IProject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef, IPod pod) throws SQLException {
+	protected void updatePodStatus(String project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef, OpenshiftObject pod) throws SQLException {
 
 		String podID = pod.getName();
-		String status = pod.getStatus();
-		String podIP = pod.getIP();
-		String hostIP = pod.getHost();
+		String status = pod.getStatuses().iterator().next();
+		String podIP = pod.ifPodGetIP();
+		String hostIP = pod.ifPodGetHost();
 
 		// check if we know about this pod already
 		BigDataStackPodStatus savedStatus = podStatusIO.getPodStatus(podID);

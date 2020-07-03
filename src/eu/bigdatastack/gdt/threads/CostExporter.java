@@ -3,18 +3,16 @@ package eu.bigdatastack.gdt.threads;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Random;
 
-import com.openshift.restclient.model.IContainer;
-import com.openshift.restclient.model.IPod;
-import com.openshift.restclient.model.IProject;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackApplicationIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackEventIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackOperationSequenceIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackPodStatusIO;
-import eu.bigdatastack.gdt.lxdb.LXDB;
+import eu.bigdatastack.gdt.lxdb.JDBCDB;
+import eu.bigdatastack.gdt.openshift.OpenshiftContainer;
+import eu.bigdatastack.gdt.openshift.OpenshiftObject;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
@@ -35,7 +33,7 @@ public class CostExporter implements Runnable{
 	
 	OpenshiftStatusClient openshiftStatus;
 	RabbitMQClient rabbitMQClient;
-	LXDB database;
+	JDBCDB database;
 	String namespace;
 	String owner;
 
@@ -48,7 +46,7 @@ public class CostExporter implements Runnable{
 	BigDataStackObjectIO objectIO;
 	BigDataStackEventIO eventIO;
 
-	public CostExporter(OpenshiftStatusClient openshiftStatus, RabbitMQClient rabbitMQClient, LXDB database, String owner, String namespace) {
+	public CostExporter(OpenshiftStatusClient openshiftStatus, RabbitMQClient rabbitMQClient, JDBCDB database, String owner, String namespace) {
 		this.openshiftStatus = openshiftStatus;
 		this.rabbitMQClient = rabbitMQClient;
 		this.namespace = namespace;
@@ -81,8 +79,6 @@ public class CostExporter implements Runnable{
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
-
-		Random r = new Random();
 		
 		while (!kill) {
 
@@ -104,15 +100,15 @@ public class CostExporter implements Runnable{
 								
 								if (status.getStatus().equalsIgnoreCase("Running")) {
 									
-									IPod pod = openshiftStatus.getPod(status.getNamespace(), status.getPodID());
+									OpenshiftObject pod = openshiftStatus.getPod(status.getNamespace(), status.getPodID());
 									if (pod == null) continue;
 									
 									// Sum requests across containers
 									int podTotalCPURequest = 0;
 									int podTotalMemRequest = 0;
-									for (IContainer container : pod.getContainers()) {
-										podTotalCPURequest =+ cpuToMilicores(container.getRequestsCPU());
-										podTotalMemRequest =+ memToMegabytes(container.getRequestsMemory());
+									for (OpenshiftContainer container : pod.ifPodGetContainers()) {
+										podTotalCPURequest =+ cpuToMilicores(container.getRequestCPU());
+										podTotalMemRequest =+ memToMegabytes(container.getRequestMemory());
 									}
 									
 									System.err.println(status.getPodID()+" "+ podTotalCPURequest+" "+podTotalMemRequest);

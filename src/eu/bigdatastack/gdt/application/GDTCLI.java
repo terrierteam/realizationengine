@@ -33,6 +33,30 @@ public class GDTCLI {
 	public void processCommand(String[] args) throws Exception {
 		
 		switch (args[0]) {
+		case "reset":
+			if (args.length==1) {
+				System.out.println("reset all");
+			} else {
+				switch (args[1]) {
+				case "all":
+					manager.appClient.clearTable();
+					manager.eventClient.clearTable();
+					manager.metricClient.clearTable();
+					manager.objectInstanceClient.clearTable();
+					manager.objectTemplateClient.clearTable();
+					manager.sequenceInstanceClient.clearTable();
+					manager.getSequenceTemplateClient().clearTable();
+					manager.podStatusClient.clearTable();
+					manager.namespaceStateClient.clearTable();
+					manager.credentialsClient.clearTable();
+					manager.metricValueClient.clearTable();
+					manager.sloClient.clearTable();
+					break;
+				default:
+					System.out.println("reset all");
+				}
+			}
+			break;
 		case "register":
 			if (args.length==1) {
 				System.out.println("register [namespace|object|metric|sequence] </path/to/file.yaml>");

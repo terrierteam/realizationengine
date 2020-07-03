@@ -7,22 +7,23 @@ import com.openshift.restclient.model.IPod;
 import com.openshift.restclient.model.IProject;
 
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
+import eu.bigdatastack.gdt.openshift.OpenshiftStatusClientv3;
 import eu.bigdatastack.gdt.structures.openshift.IJob;
 import eu.bigdatastack.gdt.util.OpenshiftUtil;
 
 public class OpenshiftStatusTest {
 
 	public static void main(String[] args) {
-		OpenshiftStatusClient statusClient = new OpenshiftStatusClient("https://idagpu-head.dcs.gla.ac.uk:8443/", "admin", "IDAAdmin2019");
+		OpenshiftStatusClientv3 statusClient = new OpenshiftStatusClientv3("https://api.moc.bigdatastack.com:6443", "bigdatastack", "Bi6_d4ta_5tacK");
 		statusClient.connectToOpenshift();
 		
-		IProject project = statusClient.getProject("richardmproject");
+		IProject project = statusClient.getProject("realization");	
 		
-		IJob job = statusClient.getJob(project, "job-appsimulator-flinksim");
+		IDeploymentConfig dc = statusClient.getDeploymentConfig(project, "realizationstatedb");
 		
-		System.err.println(job.getStatus().toString());
+		System.err.println(dc.toJson().toString());
 		
-		IProject project2 = statusClient.getProject("carolproject");
+		/*IProject project2 = statusClient.getProject("carolproject");
 		
 		List<IPod> jobPods = statusClient.getPodsForJob(project2, "autofocus-test-9");
 		for (IPod pod : jobPods) {
@@ -35,7 +36,7 @@ public class OpenshiftStatusTest {
 			System.err.println(s);
 		}
 		
-		statusClient.close();
+		statusClient.close();*/
 	}
 	
 	
