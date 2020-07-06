@@ -65,8 +65,8 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 	public boolean applyOperation(BigDataStackObjectDefinition object) {
 
 		try {
-			OpenshiftObject project = statusClient.getProject(object.getNamespace());
-			if (project==null) return false;
+			//OpenshiftObject project = statusClient.getProject(object.getNamespace());
+			//if (project==null) return false;
 
 			switch (object.getType()) {
 			case DeploymentConfig:
@@ -114,33 +114,33 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 	@Override
 	public boolean deleteOperation(BigDataStackObjectDefinition object) {
 		try {
-			OpenshiftObject project = statusClient.getProject(object.getNamespace());
-			if (project==null) return false;
+			//OpenshiftObject project = statusClient.getProject(object.getNamespace());
+			//if (project==null) return false;
 
 			switch (object.getType()) {
 			case DeploymentConfig:
 
-				OpenshiftObject openshiftObject = statusClient.getDeploymentConfig(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				OpenshiftObject openshiftObject = statusClient.getDeploymentConfig(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.deploymentConfigs().delete((DeploymentConfig)openshiftObject.getUnderlyingClientObject());
 
 				// deleting a deployment config does not delete the underlying replication controller, so delete that too
-				OpenshiftObject controller = statusClient.getReplicationController(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				OpenshiftObject controller = statusClient.getReplicationController(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.replicationControllers().delete((ReplicationController)controller.getUnderlyingClientObject());
 
-				List<OpenshiftObject> pods1 = statusClient.getPods(project.getName(), true, true, "deploymentconfig="+object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				List<OpenshiftObject> pods1 = statusClient.getPods(object.getNamespace(), true, true, "deploymentconfig="+object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				for (OpenshiftObject pod : pods1) {
 					osClient.pods().delete((Pod)pod.getUnderlyingClientObject());
 				}
 
 				return true;
 			case Service:
-				OpenshiftObject openshiftObjectService = statusClient.getService(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				OpenshiftObject openshiftObjectService = statusClient.getService(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.services().delete((Service)openshiftObjectService.getUnderlyingClientObject());
 				return true;
 			case Job:
-				OpenshiftObject openshiftObjectJob = statusClient.getJob(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				OpenshiftObject openshiftObjectJob = statusClient.getJob(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 
-				List<OpenshiftObject> pods = statusClient.getPodsForJob(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				List<OpenshiftObject> pods = statusClient.getPodsForJob(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 
 				osClient.batch().jobs().delete((Job)openshiftObjectJob.getUnderlyingClientObject());
 				for (OpenshiftObject pod : pods) {
@@ -148,31 +148,31 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 				}
 				return true;
 			case Route:
-				OpenshiftObject openshiftObjectRoute = statusClient.getRoute(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				OpenshiftObject openshiftObjectRoute = statusClient.getRoute(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.routes().delete((Route)openshiftObjectRoute.getUnderlyingClientObject());
 				return true;
 			case Pod:
-				OpenshiftObject openshiftObjectPod = statusClient.getPod(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				OpenshiftObject openshiftObjectPod = statusClient.getPod(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.pods().delete((Pod)openshiftObjectPod.getUnderlyingClientObject());
 				return true;
 			case Secret:
-				OpenshiftObject openshiftObjectSecret = statusClient.getSecret(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				OpenshiftObject openshiftObjectSecret = statusClient.getSecret(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.secrets().delete((Secret)openshiftObjectSecret.getUnderlyingClientObject());
 				return true;
 			case ConfigMap:
-				OpenshiftObject openshiftObjectConfigMap = statusClient.getConfigMap(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				OpenshiftObject openshiftObjectConfigMap = statusClient.getConfigMap(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.configMaps().delete((ConfigMap)openshiftObjectConfigMap.getUnderlyingClientObject());
 				return true;
 			case ServiceAccount:
-				OpenshiftObject openshiftObjectServiceAccount = statusClient.getServiceAccount(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				OpenshiftObject openshiftObjectServiceAccount = statusClient.getServiceAccount(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.serviceAccounts().delete((ServiceAccount)openshiftObjectServiceAccount.getUnderlyingClientObject());
 				return true;
 			case RoleBinding:
-				OpenshiftObject openshiftObjectRoleBinding = statusClient.getRoleBinding(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				OpenshiftObject openshiftObjectRoleBinding = statusClient.getRoleBinding(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.roleBindings().delete((RoleBinding)openshiftObjectRoleBinding.getUnderlyingClientObject());
 				return true;
 			case Role:
-				OpenshiftObject openshiftObjectRole = statusClient.getRole(project.getName(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				OpenshiftObject openshiftObjectRole = statusClient.getRole(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.roles().delete((Role)openshiftObjectRole.getUnderlyingClientObject());
 				return true;
 			case Playbook:

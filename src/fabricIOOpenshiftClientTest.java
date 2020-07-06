@@ -1,9 +1,13 @@
 import java.io.File;
 
+import eu.bigdatastack.gdt.application.GDTManager;
 import eu.bigdatastack.gdt.openshift.OpenshiftObject;
+import eu.bigdatastack.gdt.openshift.OpenshiftOperationFabric8ioClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusFabric8ioClient;
 import eu.bigdatastack.gdt.structures.config.GDTConfig;
+import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
+import eu.bigdatastack.gdt.util.GDTFileUtil;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceList;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -61,11 +65,22 @@ public class fabricIOOpenshiftClientTest {
 		ocClient.connectToOpenshift();
 		
 		
-		OpenshiftObject object = ocClient.getPod("realization", "realizationcli-1-rpl58");
+		OpenshiftObject object = ocClient.getPod("realization", "realizationcli-1-kcmjm");
+		
+		object = ocClient.getPod("realization", "realizationcli-1-kcmjm");
 		
 		System.err.println(object.ifPodGetContainers().get(0).getRequestCPU());
 		
+		GDTManager manager = new GDTManager(gdtconfig);
+		
+		BigDataStackObjectDefinition pod = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/boston/test/helloWorld.pod.yaml"), "UTF-8"));
+		
+		manager.openshiftOperationClient.applyOperation(pod);
+		
+		//object = ocClient2.applyOperation(object)
+		
 		ocClient.close();
+		manager.shutdown();
 		
 	}
 	
