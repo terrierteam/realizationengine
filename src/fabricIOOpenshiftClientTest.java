@@ -57,7 +57,7 @@ public class fabricIOOpenshiftClientTest {
 		osClient.close();*/
 		
 		
-		OpenshiftStatusClient ocClient = new OpenshiftStatusFabric8ioClient(
+		/*OpenshiftStatusClient ocClient = new OpenshiftStatusFabric8ioClient(
 				gdtconfig.getOpenshift().getHost(),
 				gdtconfig.getOpenshift().getPort(),
 				gdtconfig.getOpenshift().getUsername(),
@@ -71,15 +71,20 @@ public class fabricIOOpenshiftClientTest {
 		
 		System.err.println(object.ifPodGetContainers().get(0).getRequestCPU());
 		
+		ocClient.close();*/
+		
 		GDTManager manager = new GDTManager(gdtconfig);
 		
 		BigDataStackObjectDefinition pod = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/boston/test/helloWorld.pod.yaml"), "UTF-8"));
 		
 		manager.openshiftOperationClient.applyOperation(pod);
 		
+		BigDataStackObjectDefinition dc = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/boston/test/cmd.deploymentconfig.yaml"), "UTF-8"));
+		
+		manager.openshiftOperationClient.applyOperation(dc);
 		//object = ocClient2.applyOperation(object)
 		
-		ocClient.close();
+		
 		manager.shutdown();
 		
 	}

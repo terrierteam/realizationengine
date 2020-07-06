@@ -73,7 +73,7 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 			switch (object.getType()) {
 			case DeploymentConfig:
 				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
+				osClient.load(stream).createOrReplaceAnd();
 				stream.close();}
 				return true;
 			case Service:
