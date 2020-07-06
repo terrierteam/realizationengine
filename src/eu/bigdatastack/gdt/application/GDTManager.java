@@ -143,22 +143,19 @@ public class GDTManager implements Manager {
 		//if (!credentialsClient.addCredential(openshiftCredential)) credentialsClient.updatePassweord("GDT", BigDataStackCredentialsType.openshift, gdtConfig.getOpenshift().getUsername(), gdtConfig.getOpenshift().getPassword());
 		openshiftOperationClient = null;
 		if (openshiftConf.getClient().equalsIgnoreCase("openshiftv3")) openshiftOperationClient = new OpenshiftOperationClientv3(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
-		if (openshiftConf.getClient().equalsIgnoreCase("fabric8io")) openshiftOperationClient = new OpenshiftOperationFabric8ioClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
+		if (openshiftConf.getClient().equalsIgnoreCase("fabric8io")) {
+			openshiftOperationClient = new OpenshiftOperationFabric8ioClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
+			openshiftOperationClient.connectToOpenshift();
+			openshiftStatusClient = new OpenshiftStatusFabric8ioClient(((OpenshiftOperationFabric8ioClient)openshiftOperationClient).getOsClient());
+		}
 		if (openshiftOperationClient==null) {
 			System.err.println("Openshift client '"+openshiftConf.getClient()+"' is not supported for operations");
 			return;
 		}
-		openshiftOperationClient.connectToOpenshift();
+		
 
-		openshiftStatusClient = null;
 		//if (occlient.equalsIgnoreCase("openshift3")) openshiftStatus = new OpenshiftStatusClientv3(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
-		if (openshiftConf.getClient().equalsIgnoreCase("fabric8io")) openshiftStatusClient = new OpenshiftStatusFabric8ioClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
-		if (openshiftStatusClient==null) {
-			System.err.println("Openshift client '"+openshiftConf.getClient()+"' is not supported for status");
-			return;
-		}
 
-		openshiftStatusClient.connectToOpenshift();
 
 		// Initalize RabbitMQ Client
 		RabbitMQConf rabbitMQConf = gdtConfig.getRabbitmq();
