@@ -6,6 +6,7 @@ import java.util.List;
 
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ReplicationController;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -14,6 +15,7 @@ import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.batch.Job;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
+import io.fabric8.kubernetes.client.dsl.ParameterNamespaceListVisitFromServerGetDeleteRecreateWaitApplicable;
 import io.fabric8.openshift.api.model.DeploymentConfig;
 import io.fabric8.openshift.api.model.Role;
 import io.fabric8.openshift.api.model.RoleBinding;
@@ -30,8 +32,9 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 	String username;
 	String password;
 
-	OpenShiftClient osClient;
-	OpenshiftStatusFabric8ioClient statusClient;
+	Config config;
+	
+	
 
 	public OpenshiftOperationFabric8ioClient(String host, int port, String username, String password) {
 		super();
@@ -44,15 +47,13 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 	@Override
 	public boolean connectToOpenshift() {
 		try {
-			Config config = new ConfigBuilder()
+			config = new ConfigBuilder()
 					.withMasterUrl(host+":"+port)
 					.withUsername(username)
 					.withPassword(password)
 					.withTrustCerts(true)
 					.build();
 
-			osClient = new DefaultOpenShiftClient(config);
-			statusClient = new OpenshiftStatusFabric8ioClient(osClient);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
@@ -65,63 +66,88 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 	public boolean applyOperation(BigDataStackObjectDefinition object) {
 
 		try {
+			
+			DefaultOpenShiftClient osClient = new DefaultOpenShiftClient(config);
+			
 			//OpenshiftObject project = statusClient.getProject(object.getNamespace());
 			//if (project==null) return false;
 
 			switch (object.getType()) {
 			case DeploymentConfig:
 				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
+				ParameterNamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata, Boolean> fabricIOobject = osClient.load(stream);
+				fabricIOobject.createOrReplace();
+				stream.close();
+				osClient.close();}
 				return true;
 			case Service:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			ParameterNamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata, Boolean> fabricIOobject = osClient.load(stream);
+			fabricIOobject.createOrReplace();
+			stream.close();
+			osClient.close();}
 				return true;
 			case Job:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			ParameterNamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata, Boolean> fabricIOobject = osClient.load(stream);
+			fabricIOobject.createOrReplace();
+			stream.close();
+			osClient.close();}
 				return true;
 			case Route:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			ParameterNamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata, Boolean> fabricIOobject = osClient.load(stream);
+			fabricIOobject.createOrReplace();
+			stream.close();
+			osClient.close();}
 				return true;
 			case Pod:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			ParameterNamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata, Boolean> fabricIOobject = osClient.load(stream);
+			fabricIOobject.createOrReplace();
+			stream.close();
+			osClient.close();}
 				return true;
 			case Secret:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			ParameterNamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata, Boolean> fabricIOobject = osClient.load(stream);
+			fabricIOobject.createOrReplace();
+			stream.close();
+			osClient.close();}
 				return true;
 			case ConfigMap:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			ParameterNamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata, Boolean> fabricIOobject = osClient.load(stream);
+			fabricIOobject.createOrReplace();
+			stream.close();
+			osClient.close();}
 				return true;
 			case ServiceAccount:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			ParameterNamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata, Boolean> fabricIOobject = osClient.load(stream);
+			fabricIOobject.createOrReplace();
+			stream.close();
+			osClient.close();}
 				return true;
 			case RoleBinding:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			ParameterNamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata, Boolean> fabricIOobject = osClient.load(stream);
+			fabricIOobject.createOrReplace();
+			stream.close();
+			osClient.close();}
 				return true;
 			case Role:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			ParameterNamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata, Boolean> fabricIOobject = osClient.load(stream);
+			fabricIOobject.createOrReplace();
+			stream.close();
+			osClient.close();}
 				return true;
 			case Playbook:
+				osClient.close();
 				return false;
 			default:
+				osClient.close();
 				return false;
 			}
 		} catch (Exception e) {
@@ -137,6 +163,9 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 			//OpenshiftObject project = statusClient.getProject(object.getNamespace());
 			//if (project==null) return false;
 
+			DefaultOpenShiftClient osClient = new DefaultOpenShiftClient(config);
+			OpenshiftStatusFabric8ioClient statusClient = new OpenshiftStatusFabric8ioClient(osClient);
+			
 			switch (object.getType()) {
 			case DeploymentConfig:
 
@@ -151,11 +180,12 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 				for (OpenshiftObject pod : pods1) {
 					osClient.pods().delete((Pod)pod.getUnderlyingClientObject());
 				}
-
+				osClient.close();
 				return true;
 			case Service:
 				OpenshiftObject openshiftObjectService = statusClient.getService(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.services().delete((Service)openshiftObjectService.getUnderlyingClientObject());
+				osClient.close();
 				return true;
 			case Job:
 				OpenshiftObject openshiftObjectJob = statusClient.getJob(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
@@ -166,38 +196,48 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 				for (OpenshiftObject pod : pods) {
 					osClient.pods().delete((Pod)pod.getUnderlyingClientObject());
 				}
+				osClient.close();
 				return true;
 			case Route:
 				OpenshiftObject openshiftObjectRoute = statusClient.getRoute(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.routes().delete((Route)openshiftObjectRoute.getUnderlyingClientObject());
+				osClient.close();
 				return true;
 			case Pod:
 				OpenshiftObject openshiftObjectPod = statusClient.getPod(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.pods().delete((Pod)openshiftObjectPod.getUnderlyingClientObject());
+				osClient.close();
 				return true;
 			case Secret:
 				OpenshiftObject openshiftObjectSecret = statusClient.getSecret(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.secrets().delete((Secret)openshiftObjectSecret.getUnderlyingClientObject());
+				osClient.close();
 				return true;
 			case ConfigMap:
 				OpenshiftObject openshiftObjectConfigMap = statusClient.getConfigMap(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.configMaps().delete((ConfigMap)openshiftObjectConfigMap.getUnderlyingClientObject());
+				osClient.close();
 				return true;
 			case ServiceAccount:
 				OpenshiftObject openshiftObjectServiceAccount = statusClient.getServiceAccount(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.serviceAccounts().delete((ServiceAccount)openshiftObjectServiceAccount.getUnderlyingClientObject());
+				osClient.close();
 				return true;
 			case RoleBinding:
 				OpenshiftObject openshiftObjectRoleBinding = statusClient.getRoleBinding(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.roleBindings().delete((RoleBinding)openshiftObjectRoleBinding.getUnderlyingClientObject());
+				osClient.close();
 				return true;
 			case Role:
 				OpenshiftObject openshiftObjectRole = statusClient.getRole(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.roles().delete((Role)openshiftObjectRole.getUnderlyingClientObject());
+				osClient.close();
 				return true;
 			case Playbook:
+				osClient.close();
 				return false;
 			default:
+				osClient.close();
 				return false;
 			}
 		} catch (Exception e) {
@@ -208,7 +248,6 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 
 	@Override
 	public void close() {
-		osClient.close();
 
 	}
 
