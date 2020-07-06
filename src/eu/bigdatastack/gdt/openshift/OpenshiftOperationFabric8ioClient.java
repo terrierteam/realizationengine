@@ -70,34 +70,54 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 
 			switch (object.getType()) {
 			case DeploymentConfig:
-				osClient.load(new ByteArrayInputStream(object.getYamlSource().getBytes())).createOrReplace();
+				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+				osClient.load(stream).createOrReplace();
+				stream.close();}
 				return true;
 			case Service:
-				osClient.load(new ByteArrayInputStream(object.getYamlSource().getBytes())).createOrReplace();
+				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+				osClient.load(stream).createOrReplace();
+				stream.close();}
 				return true;
 			case Job:
-				osClient.load(new ByteArrayInputStream(object.getYamlSource().getBytes())).createOrReplace();
+				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+				osClient.load(stream).createOrReplace();
+				stream.close();}
 				return true;
 			case Route:
-				osClient.load(new ByteArrayInputStream(object.getYamlSource().getBytes())).createOrReplace();
+				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+				osClient.load(stream).createOrReplace();
+				stream.close();}
 				return true;
 			case Pod:
-				osClient.load(new ByteArrayInputStream(object.getYamlSource().getBytes())).createOrReplace();
+				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+				osClient.load(stream).createOrReplace();
+				stream.close();}
 				return true;
 			case Secret:
-				osClient.load(new ByteArrayInputStream(object.getYamlSource().getBytes())).createOrReplace();
+				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+				osClient.load(stream).createOrReplace();
+				stream.close();}
 				return true;
 			case ConfigMap:
-				osClient.load(new ByteArrayInputStream(object.getYamlSource().getBytes())).createOrReplace();
+				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+				osClient.load(stream).createOrReplace();
+				stream.close();}
 				return true;
 			case ServiceAccount:
-				osClient.load(new ByteArrayInputStream(object.getYamlSource().getBytes())).createOrReplace();
+				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+				osClient.load(stream).createOrReplace();
+				stream.close();}
 				return true;
 			case RoleBinding:
-				osClient.load(new ByteArrayInputStream(object.getYamlSource().getBytes())).createOrReplace();
+				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+				osClient.load(stream).createOrReplace();
+				stream.close();}
 				return true;
 			case Role:
-				osClient.load(new ByteArrayInputStream(object.getYamlSource().getBytes())).createOrReplace();
+				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+				osClient.load(stream).createOrReplace();
+				stream.close();}
 				return true;
 			case Playbook:
 				return false;
