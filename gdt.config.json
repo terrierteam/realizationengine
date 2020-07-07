@@ -16,7 +16,7 @@
 	"openshift": {
 		"client": "fabric8io",
 		"host": "https://idagpu-head.dcs.gla.ac.uk",
-		"port": 6443,
+		"port": 8443,
 		"username": "admin",
 		"password": "IDAAdmin2019"
 	}
