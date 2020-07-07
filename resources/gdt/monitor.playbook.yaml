@@ -57,6 +57,8 @@ objects:
                  value: "$dbusername$"
                - name: "dbpassword"
                  value: "$dbpassword$"
+               - name: "occlient"
+                 value: "$occlient$"
                - name: "ochost"
                  value: "$ochost$"
                - name: "ocport"
