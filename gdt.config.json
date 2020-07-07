@@ -1,10 +1,11 @@
 {
 	"database": {
-		"host": "gdtdb-richardmproject.ida.dcs.gla.ac.uk",
-		"port": 80,
+		"type": "mysql",
+		"host": "srv-realizationstatedb",
+		"port": 3306,
 		"name": "BigDataStackGDTDB",
 		"username": "GDT",
-		"password": ""
+		"password": "bigdatastack"
 	},
 	"rabbitmq": {
 		"host": "",
@@ -13,8 +14,9 @@
 		"password": ""
 	},
 	"openshift": {
+		"client": "fabric8io",
 		"host": "https://idagpu-head.dcs.gla.ac.uk",
-		"port": 8443,
+		"port": 6443,
 		"username": "admin",
 		"password": "IDAAdmin2019"
 	}
