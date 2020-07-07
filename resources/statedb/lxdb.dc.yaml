@@ -1,0 +1,69 @@
+kind: DeploymentConfig
+apiVersion: apps.openshift.io/v1
+metadata:
+  name: dc-gdt-lx-store
+  namespace: richardmproject
+spec:
+  strategy:
+    type: Rolling
+    resources: {}
+  triggers:
+    - type: ConfigChange
+  replicas: 1
+  selector:
+    app: lx-store
+    deploymentconfig: dc-gdt-lx-store
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: lx-store
+        deploymentconfig: dc-gdt-lx-store
+    spec:
+      restartPolicy: Always
+      serviceAccountName: containerroot
+      schedulerName: default-scheduler
+      containers:
+        - resources:
+            limits:
+              cpu: '6'
+              memory: 64Gi
+            requests:
+              cpu: '3'
+              memory: 32Gi
+          terminationMessagePath: /dev/termination-log
+          name: lx-store
+          env:
+            - name: dataset
+              value: GFT
+          ports:
+            - containerPort: 1529
+              protocol: TCP
+            - containerPort: 2181
+              protocol: TCP
+            - containerPort: 22
+              protocol: TCP
+            - containerPort: 23
+              protocol: TCP
+            - containerPort: 9091
+              protocol: TCP
+            - containerPort: 9089
+              protocol: TCP
+            - containerPort: 9992
+              protocol: TCP
+            - containerPort: 9994
+              protocol: TCP
+            - containerPort: 44000
+              protocol: TCP
+            - containerPort: 65111
+              protocol: TCP
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: gdtlxstoressd
+              mountPath: /lx/LX-DATA
+          image: 'docker-registry.default.svc:5000/richardmproject/is-lx-store:v0.5'
+      volumes:
+        - name: gdtlxstoressd
+          persistentVolumeClaim:
+            claimName: gdtlxstoreclaim
+      dnsPolicy: ClusterFirst

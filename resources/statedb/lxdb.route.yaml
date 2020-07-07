@@ -1,0 +1,14 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: gdtdb
+  namespace: richardmproject
+spec:
+  host: gdtdb-richardmproject.ida.dcs.gla.ac.uk
+  path: /
+  to:
+    kind: Service
+    name: srv-bigdatastack-gdt-db
+    weight: 100
+  port:
+    targetPort: 1529

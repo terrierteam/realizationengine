@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: srv-bigdatastack-gdt-db
+  namespace: richardmproject
+spec:
+  ports:
+    - protocol: TCP
+      port: 1529
+      targetPort: 1529
+  selector:
+    app: lx-store
+  type: ClusterIP

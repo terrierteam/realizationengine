@@ -1,0 +1,8 @@
+Open Terminal on Pod
+
+mysql -u root -p
+password: bigdatastack
+
+CREATE DATABASE BigDataStackGDTDB;
+CREATE USER 'GDT' IDENTIFIED BY 'bigdatastack';
+GRANT ALL ON BigDataStackGDTDB.* TO 'GDT';

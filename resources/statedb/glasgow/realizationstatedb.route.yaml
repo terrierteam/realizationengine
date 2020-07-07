@@ -1,0 +1,12 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: realizationstatedb
+  namespace: richardmproject
+spec:
+  path: /
+  to:
+    kind: Service
+    name: srv-realizationstatedb
+  port:
+    targetPort: 27017

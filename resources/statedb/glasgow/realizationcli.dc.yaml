@@ -1,0 +1,29 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: realizationcli
+  namespace: richardmproject
+spec:
+  replicas: 1
+  strategy:
+    resources: {}
+  template:
+    metadata:
+      labels:
+        jobconfig: realizationcli
+    spec:
+      containers:
+      - name: gdtapi
+        image: "docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest"
+        resources:
+          requets:
+            cpu: "500m"
+            memory: "2048Mi"
+          limits:
+            cpu: "1000m"
+            memory: "2048Mi"
+        command:
+         - 'sleep'
+        args:
+         - '365d'
+        imagePullPolicy: Always
