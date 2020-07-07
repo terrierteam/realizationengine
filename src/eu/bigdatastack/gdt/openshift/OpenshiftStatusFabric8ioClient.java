@@ -246,6 +246,30 @@ public class OpenshiftStatusFabric8ioClient implements OpenshiftStatusClient {
 			return getRoute(projectName, name);
 		case "Role":
 			return getRole(projectName, name);
+		case "project":
+			return getProject(projectName);
+		case "pod":
+			return getPod(projectName, name);
+		case "deploymentconfig":
+			return getDeploymentConfig(projectName, name);
+		case "job":
+			return getJob(projectName, name);
+		case "replicationcontroller":
+			return getReplicationController(projectName, name);
+		case "configmap":
+			return getConfigMap(projectName, name);
+		case "service":
+			return getService(projectName, name);
+		case "secret":
+			return getSecret(projectName, name);
+		case "serviceaccount":
+			return getServiceAccount(projectName, name);
+		case "rolebinding":
+			return getRoleBinding(projectName, name);
+		case "route":
+			return getRoute(projectName, name);
+		case "role":
+			return getRole(projectName, name);
 		default:
 			throw new UnsupportedOperationException("Requested Openshift Resource of type '"+kind+"', but this was not supported by OpenshiftStatusFabric8ioClient");
 		}
@@ -464,6 +488,28 @@ public class OpenshiftStatusFabric8ioClient implements OpenshiftStatusClient {
 		case "Route":
 			return getRoutes(projectName);
 		case "Role":
+			return getRoles(projectName);
+		case "pod":
+			return getPods(projectName);
+		case "deploymentconfig":
+			return getDeploymentConfigs(projectName);
+		case "job":
+			return getJobs(projectName);
+		case "replicationcontroller":
+			return getReplicationControllers(projectName);
+		case "configmap":
+			return getConfigMaps(projectName);
+		case "service":
+			return getServices(projectName);
+		case "secret":
+			return getSecrets(projectName);
+		case "serviceaccount":
+			return getServiceAccounts(projectName);
+		case "rolebinding":
+			return getRoleBindings(projectName);
+		case "route":
+			return getRoutes(projectName);
+		case "role":
 			return getRoles(projectName);
 		default:
 			throw new UnsupportedOperationException("Requested Openshift Resources of type '"+kind+"', but this was not supported by OpenshiftStatusFabric8ioClient");
