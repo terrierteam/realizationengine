@@ -162,10 +162,11 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	protected void processJob(OpenshiftObject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
 		OpenshiftObject job = openshiftStatus.getJob(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 		if (job==null) {
-			System.err.println("Unable to update Job '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
+			//System.err.println("Unable to update Job '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
 			return;
 		}
 		
+		System.err.println("Checking: '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
 		
 		// Stage 1: check whether the high-level object has changed state
 		Set<String> jobStatuses = job.getStatuses();
@@ -226,6 +227,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 
 		// Stage 2: check whether the underlying pods have changed state
 		List<OpenshiftObject> pods = openshiftStatus.getPodsForJob(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
+		System.err.println("Got "+pods.size()+" pods");
 		for (OpenshiftObject pod : pods) {
 			updatePodStatus(project.getName(), app, objectDef, pod);
 		}
@@ -264,9 +266,11 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	protected void processDeploymentConfig(OpenshiftObject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
 		OpenshiftObject deploymentConfig = openshiftStatus.getDeploymentConfig(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 		if (deploymentConfig==null) {
-			System.err.println("Unable to update DeploymentConfig '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
+			//System.err.println("Unable to update DeploymentConfig '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
 			return;
 		}
+		
+		System.err.println("Checking: '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
 		
 		// Stage 1: check whether the high-level object has changed state		
 		Set<String> deploymentStatuses = deploymentConfig.getStatuses();
@@ -327,6 +331,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 
 		// Stage 2: check whether the underlying pods have changed state
 		List<OpenshiftObject> pods = openshiftStatus.getPodsForDeploymentConfig(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
+		System.err.println("Got "+pods.size()+" pods");
 		for (OpenshiftObject pod : pods) {
 			updatePodStatus(project.getName(), app, objectDef, pod);
 		}

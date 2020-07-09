@@ -102,7 +102,7 @@ public class CostExporter implements Runnable{
 							List<BigDataStackPodStatus> statuses = podStatusIO.getPodStatuses(app.getAppID(), app.getOwner(), objectDef.getObjectID(), app.getNamespace(), objectDef.getInstance());
 							for (BigDataStackPodStatus status : statuses) {
 								
-								if (status.getStatus().equalsIgnoreCase("Running")) {
+								if (status.getStatus().equalsIgnoreCase("Running") || status.getStatus().equalsIgnoreCase("Progressing")) {
 									
 									OpenshiftObject pod = openshiftStatus.getPod(status.getNamespace(), status.getPodID());
 									if (pod == null) {
