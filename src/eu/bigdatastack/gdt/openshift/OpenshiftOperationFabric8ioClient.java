@@ -29,8 +29,6 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 	int port;
 	String username;
 	String password;
-
-	Config config;
 	
 	OpenShiftClient osClient;
 	OpenshiftStatusFabric8ioClient statusClient;
@@ -46,7 +44,7 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 	@Override
 	public boolean connectToOpenshift() {
 		try {
-			config = new ConfigBuilder()
+			Config config = new ConfigBuilder()
 					.withMasterUrl(host+":"+port)
 					.withUsername(username)
 					.withPassword(password)
@@ -55,6 +53,8 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 
 			osClient = new DefaultOpenShiftClient(config);
 			statusClient = new OpenshiftStatusFabric8ioClient(osClient);
+			
+			Thread.sleep(3000);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
