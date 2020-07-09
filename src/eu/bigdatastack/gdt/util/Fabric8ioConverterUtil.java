@@ -43,6 +43,7 @@ public class Fabric8ioConverterUtil {
 		for (ContainerStatus containerStatus : pod.getStatus().getContainerStatuses()) {
 			statuses.add(containerStatus.getName());
 		}
+		statuses.add(pod.getStatus().getPhase());
 		object.setStatuses(statuses);
 		
 		return object;
