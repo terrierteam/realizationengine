@@ -73,7 +73,7 @@ objects:
               - resources:
                  requests:
                     cpu: '4'
-                    memory: '8M'
+                    memory: '8G'
                 name: sleepcontainer
                 command:
                   - sleep
@@ -111,7 +111,7 @@ objects:
               - resources:
                  requests:
                     cpu: '8'
-                    memory: '32M'
+                    memory: '32G'
                 name: sleepcontainer
                 command:
                   - sleep
