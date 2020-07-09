@@ -161,7 +161,12 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	 */
 	protected void processJob(OpenshiftObject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
 		OpenshiftObject job = openshiftStatus.getJob(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
-
+		if (job==null) {
+			System.err.println("Unable to update Job '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
+			return;
+		}
+		
+		
 		// Stage 1: check whether the high-level object has changed state
 		Set<String> jobStatuses = job.getStatuses();
 
@@ -258,7 +263,11 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	 */
 	protected void processDeploymentConfig(OpenshiftObject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
 		OpenshiftObject deploymentConfig = openshiftStatus.getDeploymentConfig(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
-
+		if (deploymentConfig==null) {
+			System.err.println("Unable to update DeploymentConfig '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
+			return;
+		}
+		
 		// Stage 1: check whether the high-level object has changed state		
 		Set<String> deploymentStatuses = deploymentConfig.getStatuses();
 
