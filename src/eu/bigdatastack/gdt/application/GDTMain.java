@@ -3,7 +3,8 @@ package eu.bigdatastack.gdt.application;
 import java.io.File;
 import java.util.Map;
 
-import eu.bigdatastack.gdt.lxdb.LXDB;
+import eu.bigdatastack.gdt.lxdb.JDBCDB;
+import eu.bigdatastack.gdt.lxdb.MySQLDB;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusFabric8ioClient;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
@@ -60,7 +61,7 @@ public class GDTMain {
 		if (args[0].equalsIgnoreCase("namespaceMonitor")) {
 			
 			
-			LXDB database = new LXDB(dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
+			JDBCDB database = new MySQLDB(dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
 			
 			OpenshiftStatusClient openshiftStatus = null;
 			//if (occlient.equalsIgnoreCase("openshift3")) openshiftStatus = new OpenshiftStatusClientv3(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
@@ -141,7 +142,7 @@ public class GDTMain {
 		} else if (args[0].equalsIgnoreCase("costEstimator")) {
 			
 			
-			LXDB database = new LXDB(dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
+			JDBCDB database = new MySQLDB(dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
 			
 			OpenshiftStatusClient openshiftStatus = null;
 			//if (occlient.equalsIgnoreCase("openshift3")) openshiftStatus = new OpenshiftStatusClientv3(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
