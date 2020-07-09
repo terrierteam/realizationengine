@@ -179,7 +179,7 @@ public class CostExporter implements Runnable{
 	
 	public double calculateMemCost(int mb) {
 		// 16,384‬ = 0.048
-		return ((0.048/16384)/2)*mb;
+		return (((0.048*mb)/16384)/2);
 	}
 	
 	public int cpuToMilicores(String string) {
@@ -192,6 +192,9 @@ public class CostExporter implements Runnable{
 	
 	public int memToMegabytes(String string) {
 		int mb = 0;
+		
+		System.err.println(string);
+		
 		if (string.endsWith("K")) mb = 1+(Integer.parseInt(string.substring(0, string.length()-1))/1024);
 		if (string.endsWith("M")) mb = Integer.parseInt(string.substring(0, string.length()-1));
 		if (string.endsWith("G")) mb = Integer.parseInt(string.substring(0, string.length()-1))*1024;
@@ -199,6 +202,7 @@ public class CostExporter implements Runnable{
 		if (string.endsWith("Ki")) mb = 1+(Integer.parseInt(string.substring(0, string.length()-2))/1024);
 		if (string.endsWith("Mi")) mb = Integer.parseInt(string.substring(0, string.length()-2));
 		if (string.endsWith("Gi")) mb = Integer.parseInt(string.substring(0, string.length()-2))*1024;
+		
 		
 		
 		return mb;
