@@ -127,8 +127,14 @@ public class OpenshiftStatusFabric8ioClient implements OpenshiftStatusClient {
 	@Override
 	public OpenshiftObject getDeploymentConfig(String projectName, String deploymentConfigName) {
 		DeployableScalableResource<DeploymentConfig, DoneableDeploymentConfig> dc = osClient.deploymentConfigs().inNamespace(projectName).withName(deploymentConfigName);
-		if (dc==null) return null;
-		if (dc.get()==null) return null;
+		if (dc==null) {
+			System.err.println("Failed to retrieve "+deploymentConfigName+" in "+projectName);
+			return null;
+		}
+		if (dc.get()==null) {
+			System.err.println("Failed to get "+deploymentConfigName+" in "+projectName);
+			return null;
+		}
 		
 		return Fabric8ioConverterUtil.convertDeploymentConfig(dc.get());
 	}
