@@ -100,6 +100,10 @@ public class CostExporter implements Runnable{
 						if (objectDef.getType()==BigDataStackObjectType.DeploymentConfig || objectDef.getType()==BigDataStackObjectType.Job) {
 							System.out.println("    "+objectDef.getObjectID()+"("+objectDef.getInstance()+") of type "+objectDef.getType()+", states="+objectDef.getStatus());
 							List<BigDataStackPodStatus> statuses = podStatusIO.getPodStatuses(app.getAppID(), app.getOwner(), objectDef.getObjectID(), app.getNamespace(), objectDef.getInstance());
+							
+							int podTotalCPURequest = 0;
+							int podTotalMemRequest = 0;
+							boolean changePerformed = false;
 							for (BigDataStackPodStatus status : statuses) {
 								
 								if (status.getStatus().equalsIgnoreCase("Running") || status.getStatus().equalsIgnoreCase("Progressing")) {
@@ -111,8 +115,7 @@ public class CostExporter implements Runnable{
 									}
 									
 									// Sum requests across containers
-									int podTotalCPURequest = 0;
-									int podTotalMemRequest = 0;
+									
 									for (OpenshiftContainer container : pod.ifPodGetContainers()) {
 										podTotalCPURequest =+ cpuToMilicores(container.getRequestCPU());
 										podTotalMemRequest =+ memToMegabytes(container.getRequestMemory());
@@ -120,15 +123,20 @@ public class CostExporter implements Runnable{
 									
 									System.err.println(status.getPodID()+" "+ podTotalCPURequest+" "+podTotalMemRequest);
 									
-									double cost = calculateCPUCost(podTotalCPURequest) + calculateMemCost(podTotalMemRequest);
 									
 									
-									costPerHour.labels(app.getOwner(), app.getNamespace(), app.getAppID(), objectDef.getObjectID(), String.valueOf(objectDef.getInstance())).set(cost);
+									changePerformed = true;
+									
 								} else {
-									costPerHour.labels(app.getOwner(), app.getNamespace(), app.getAppID(), objectDef.getObjectID(), String.valueOf(objectDef.getInstance())).set(0.0);
+									changePerformed = true;
 								}
 								
 							}
+							if (changePerformed) {
+								double cost = calculateCPUCost(podTotalCPURequest) + calculateMemCost(podTotalMemRequest);
+								costPerHour.labels(app.getOwner(), app.getNamespace(), app.getAppID(), objectDef.getObjectID(), String.valueOf(objectDef.getInstance())).set(cost);
+							}
+							
 						}
 					}
 
