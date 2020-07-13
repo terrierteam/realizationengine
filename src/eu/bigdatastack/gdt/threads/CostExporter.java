@@ -135,6 +135,7 @@ public class CostExporter implements Runnable{
 								
 							}
 							if (changePerformed) {
+								System.err.println(podTotalCPURequest+" "+podTotalMemRequest+" "+calculateCPUCost(podTotalCPURequest) + calculateMemCost(podTotalMemRequest));
 								double cost = calculateCPUCost(podTotalCPURequest) + calculateMemCost(podTotalMemRequest);
 								costPerHour.labels(app.getOwner(), app.getNamespace(), app.getAppID(), objectDef.getObjectID(), String.valueOf(objectDef.getInstance())).set(cost);
 							}
@@ -203,7 +204,7 @@ public class CostExporter implements Runnable{
 	public int memToMegabytes(String string) {
 		int mb = 0;
 		
-		System.err.println(string);
+		//System.err.println(string);
 		
 		if (string.endsWith("K")) mb = 1+(Integer.parseInt(string.substring(0, string.length()-1))/1024);
 		if (string.endsWith("M")) mb = Integer.parseInt(string.substring(0, string.length()-1));
