@@ -116,9 +116,11 @@ public class CostExporter implements Runnable{
 									
 									// Sum requests across containers
 									
+									
 									for (OpenshiftContainer container : pod.ifPodGetContainers()) {
-										podTotalCPURequest =+ cpuToMilicores(container.getRequestCPU());
-										podTotalMemRequest =+ memToMegabytes(container.getRequestMemory());
+										System.err.println(status.getPodID()+" "+ container.getRequestCPU()+" "+container.getRequestMemory());
+										podTotalCPURequest = podTotalCPURequest + cpuToMilicores(container.getRequestCPU());
+										podTotalMemRequest = podTotalMemRequest + memToMegabytes(container.getRequestMemory());
 									}
 									
 									System.err.println(status.getPodID()+" "+ podTotalCPURequest+" "+podTotalMemRequest);
