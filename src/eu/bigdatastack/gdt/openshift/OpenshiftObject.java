@@ -127,7 +127,7 @@ public class OpenshiftObject {
 					Map<String,String> requests = new HashMap<String,String>();
 					Map<String,Quantity> fabric8ioRequests = container.getResources().getRequests();
 					for (String k : fabric8ioRequests.keySet()) {
-						System.err.println("-- "+k+" "+fabric8ioRequests.get(k).getAmount()+fabric8ioRequests.get(k).getFormat());
+						//System.err.println("-- "+k+" "+fabric8ioRequests.get(k).getAmount()+fabric8ioRequests.get(k).getFormat());
 						requests.put(k, fabric8ioRequests.get(k).getAmount()+fabric8ioRequests.get(k).getFormat());
 					}
 					OpenshiftContainer containerObject = new OpenshiftContainer(container.getName(), requests);
