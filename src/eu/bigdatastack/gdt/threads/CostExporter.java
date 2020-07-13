@@ -118,12 +118,12 @@ public class CostExporter implements Runnable{
 									
 									
 									for (OpenshiftContainer container : pod.ifPodGetContainers()) {
-										System.err.println(status.getPodID()+" "+ container.getRequestCPU()+" "+container.getRequestMemory());
+										//System.err.println(status.getPodID()+" "+ container.getRequestCPU()+" "+container.getRequestMemory());
 										podTotalCPURequest = podTotalCPURequest + cpuToMilicores(container.getRequestCPU());
 										podTotalMemRequest = podTotalMemRequest + memToMegabytes(container.getRequestMemory());
 									}
 									
-									System.err.println(status.getPodID()+" "+ podTotalCPURequest+" "+podTotalMemRequest);
+									//System.err.println(status.getPodID()+" "+ podTotalCPURequest+" "+podTotalMemRequest);
 									
 									
 									
@@ -135,8 +135,9 @@ public class CostExporter implements Runnable{
 								
 							}
 							if (changePerformed) {
-								System.err.println(podTotalCPURequest+" "+podTotalMemRequest+" "+calculateCPUCost(podTotalCPURequest) + calculateMemCost(podTotalMemRequest));
+								
 								double cost = calculateCPUCost(podTotalCPURequest) + calculateMemCost(podTotalMemRequest);
+								System.err.println("Update: "+objectDef.getObjectID()+"("+objectDef.getInstance()+") "+cost);
 								costPerHour.labels(app.getOwner(), app.getNamespace(), app.getAppID(), objectDef.getObjectID(), String.valueOf(objectDef.getInstance())).set(cost);
 							}
 							
