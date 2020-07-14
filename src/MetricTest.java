@@ -11,7 +11,7 @@ public class MetricTest {
 		
 		PrometheusDataClient client = new PrometheusDataClient("ida.dcs.gla.ac.uk");
 		
-		BigDataStackMetricValue value = client.basicQuery("richardm", "richardmproject", "gdtdefaultapp", "gdtapi", "costPerHour");
+		BigDataStackMetricValue value = client.basicQuery("richardm", "richardmproject", "gdtdefaultapp", "gdtapi", null, "costPerHour");
 		
 		ObjectMapper mapper = new ObjectMapper();
 		

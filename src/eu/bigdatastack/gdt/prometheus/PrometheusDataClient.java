@@ -170,7 +170,7 @@ public class PrometheusDataClient {
 
 	}
 	
-	public BigDataStackMetricValue basicQuery(String owner, String namespace, String appID, String objectID, String metricname) {
+	public BigDataStackMetricValue basicQuery(String owner, String namespace, String appID, String objectID, String instance, String metricname) {
 
 		StringBuffer content = new StringBuffer();
 		try {
@@ -182,6 +182,7 @@ public class PrometheusDataClient {
 			if (namespace!=null) { if (first) { first=false; } else { queryBuilder.append(","); };  queryBuilder.append("namespace%3D\""+namespace+"\""); }
 			if (appID!=null) { if (first) { first=false; } else { queryBuilder.append(","); }; queryBuilder.append("appID%3D\""+appID+"\""); }
 			if (objectID!=null) { if (first) { first=false; } else { queryBuilder.append(","); }; queryBuilder.append("objectID%3D\""+objectID+"\""); }
+			if (instance!=null) { if (first) { first=false; } else { queryBuilder.append(","); }; queryBuilder.append("instance%3D\""+instance+"\""); }
 			queryBuilder.append("}");
 			
 			//System.err.println(queryBuilder.toString());
