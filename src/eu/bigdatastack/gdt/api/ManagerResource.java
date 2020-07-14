@@ -319,9 +319,9 @@ public class ManagerResource {
 	}
 	
 	@GET
-	@Path("/query/{owner}/{appID}/metrics/{metricName}/{objectID}")
-	public BigDataStackMetricValue queryMetricValues(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("metricName") String metricName, @PathParam("objectID") String objectID){
-		return manager.prometheusDataClient.basicQuery(owner, null, appID, objectID, metricName);
+	@Path("/query/{owner}/{appID}/{namespace}/metrics/{metricName}/{objectID}")
+	public BigDataStackMetricValue queryMetricValues(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("namespace") String namespace, @PathParam("metricName") String metricName, @PathParam("objectID") String objectID){
+		return manager.prometheusDataClient.basicQuery(owner, namespace, appID, objectID, metricName);
 	}
 	
 	//----------------------------------------------------------
