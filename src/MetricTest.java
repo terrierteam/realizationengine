@@ -8,18 +8,15 @@ public class MetricTest {
 
 	public static void main(String[] args) throws JsonProcessingException {
 		
-		BigDataStackMetricValue metricValue = new BigDataStackMetricValue(
-				"richardm", "richardmproject", "atoswl", "atoswl-0",
-				"ndcg_at_k_valid");
 		
-		PrometheusDataClient client = new PrometheusDataClient();
+		PrometheusDataClient client = new PrometheusDataClient("ida.dcs.gla.ac.uk");
 		
-		client.update(metricValue);
+		BigDataStackMetricValue value = client.basicQuery("richardm", "richardmproject", "gdtdefaultapp", "gdtapi", "costPerHour");
 		
 		ObjectMapper mapper = new ObjectMapper();
 		
-		for (int i =0; i<metricValue.getLabels().size(); i++) {
-			System.err.println(mapper.writeValueAsString(metricValue.getLabels().get(i))+" "+metricValue.getLastUpdated().get(i)+" "+metricValue.getValue().get(i));
+		for (int i =0; i<value.getLabels().size(); i++) {
+			System.err.println(mapper.writeValueAsString(value.getLabels().get(i))+" "+value.getLastUpdated().get(i)+" "+value.getValue().get(i));
 		}
 
 

@@ -165,7 +165,7 @@ public class GDTManager implements Manager {
 
 
 		// Initalize Prometheus Data Client
-		prometheusDataClient = new PrometheusDataClient();
+		prometheusDataClient = new PrometheusDataClient(openshiftConf.getHostExtension());
 
 
 		// Initalize Utilities
@@ -803,6 +803,7 @@ public class GDTManager implements Manager {
 			parameters.put("occlient", gdtConfig.getOpenshift().getClient());
 			parameters.put("ochost", gdtConfig.getOpenshift().getHost());
 			parameters.put("ocport", String.valueOf(gdtConfig.getOpenshift().getPort()));
+			parameters.put("ochostextension", gdtConfig.getOpenshift().getHostExtension());
 			// openshift credentials
 			parameters.put("ocusername", openshiftCredential.getUsername());
 			parameters.put("ocpassword", openshiftCredential.getPassword());

@@ -18,6 +18,7 @@
 		"host": "https://idagpu-head.dcs.gla.ac.uk",
 		"port": 8443,
 		"username": "admin",
-		"password": "IDAAdmin2019"
+		"password": "IDAAdmin2019",
+		"hostExtension": "ida.dcs.gla.ac.uk"
 	}
 }

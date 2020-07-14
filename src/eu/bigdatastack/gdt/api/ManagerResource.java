@@ -318,6 +318,12 @@ public class ManagerResource {
 		return querying.listEvents(owner, appID, objectID);
 	}
 	
+	@GET
+	@Path("/query/{owner}/{appID}/metrics/{metricName}/{objectID}")
+	public BigDataStackMetricValue queryMetricValues(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("metricName") String metricName, @PathParam("objectID") String objectID){
+		return manager.prometheusDataClient.basicQuery(owner, null, appID, objectID, metricName);
+	}
+	
 	//----------------------------------------------------------
 	// Operations
 	//----------------------------------------------------------

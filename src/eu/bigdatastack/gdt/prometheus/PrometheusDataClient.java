@@ -17,6 +17,12 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackMetricValue;
 
 public class PrometheusDataClient {
 
+	String hostExtension;
+	
+	public PrometheusDataClient(String hostExtension) {
+		this.hostExtension = hostExtension;
+	}
+	
 	ObjectMapper mapper = new ObjectMapper();
 	
 	
@@ -136,7 +142,7 @@ public class PrometheusDataClient {
 
 		StringBuffer content = new StringBuffer();
 		try {
-			URL url = new URL("http://prometheus-gdt-"+existingValue.getNamespace()+".ida.dcs.gla.ac.uk/api/v1/query?query="+existingValue.getMetricname());
+			URL url = new URL("http://prometheus-gdt-"+existingValue.getNamespace()+"."+hostExtension+"/api/v1/query?query="+existingValue.getMetricname());
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
 			con.setRequestMethod("GET");
 
@@ -157,6 +163,94 @@ public class PrometheusDataClient {
 		try {
 			JsonNode node = mapper.readTree(content.toString());
 			return node;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
+	}
+	
+	public BigDataStackMetricValue basicQuery(String owner, String namespace, String appID, String objectID, String metricname) {
+
+		StringBuffer content = new StringBuffer();
+		try {
+			
+			StringBuilder queryBuilder = new StringBuilder();
+			queryBuilder.append(metricname+"{");
+			boolean first = true;
+			if (owner!=null) { if (first) { first=false; } else { queryBuilder.append(","); };  queryBuilder.append("owner%3D\""+owner+"\""); };
+			if (namespace!=null) { if (first) { first=false; } else { queryBuilder.append(","); };  queryBuilder.append("namespace%3D\""+namespace+"\""); }
+			if (appID!=null) { if (first) { first=false; } else { queryBuilder.append(","); }; queryBuilder.append("appID%3D\""+appID+"\""); }
+			if (objectID!=null) { if (first) { first=false; } else { queryBuilder.append(","); }; queryBuilder.append("objectID%3D\""+objectID+"\""); }
+			queryBuilder.append("}");
+			
+			//System.err.println(queryBuilder.toString());
+			
+			URL url = new URL("http://prometheus-gdt-"+namespace+"."+hostExtension+"/api/v1/query?query="+queryBuilder.toString());
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setRequestMethod("GET");
+
+			BufferedReader in = new BufferedReader(
+					new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			while ((inputLine = in.readLine()) != null) {
+				content.append(inputLine);
+			}
+			in.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		if (content.length()==0) return null;
+		
+		try {
+			JsonNode node = mapper.readTree(content.toString());
+			
+			if (node.has("status") && !node.get("status").asText().equalsIgnoreCase("success")) return null;
+			
+			JsonNode data = node.get("data");
+			if (data.has("resultType") && !data.get("resultType").asText().equalsIgnoreCase("vector")) return null;
+			
+			Iterator<JsonNode> resultIterator = data.get("result").iterator();
+			
+			List<String> values = new ArrayList<String>();
+			List<Long> times = new ArrayList<Long>();
+			List<Map<String,String>> labelSets = new ArrayList<Map<String,String>>();
+			
+			while (resultIterator.hasNext()) {
+				JsonNode result = resultIterator.next();
+				
+				JsonNode metricData = result.get("metric");
+				Iterator<String> fieldNames = metricData.fieldNames();
+				Map<String,String> map = new HashMap<String,String>();
+				while (fieldNames.hasNext()) {
+					String fieldName = fieldNames.next();
+					String fieldvalue = metricData.get(fieldName).asText();
+					map.put(fieldName, fieldvalue);
+				}
+				
+				JsonNode value = result.get("value");
+				double time = value.get(0).asDouble();
+				String valueString = value.get(1).asText();
+				
+				values.add(valueString);
+				times.add(Double.valueOf(time).longValue()*1000);
+				labelSets.add(map);
+			}
+			
+
+			BigDataStackMetricValue metricValue = new BigDataStackMetricValue();
+			metricValue.setOwner(owner);
+			metricValue.setNamespace(namespace);
+			metricValue.setObjectID(objectID);
+			metricValue.setAppID(appID);
+			metricValue.setLabels(labelSets);
+			metricValue.setValue(values);
+			metricValue.setLastUpdated(times);
+			metricValue.setMetricname(metricname);
+			
+			return metricValue;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;

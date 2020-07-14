@@ -7,40 +7,19 @@ public class OpenshiftConfig {
 	int port;
 	String username;
 	String password;
+	String hostExtension;
 	
 	public OpenshiftConfig() {}
-	
-	public OpenshiftConfig(String client, String host, int port, String username, String password) {
+
+	public OpenshiftConfig(String client, String host, int port, String username, String password,
+			String hostExtension) {
 		super();
 		this.client = client;
 		this.host = host;
 		this.port = port;
 		this.username = username;
 		this.password = password;
-	}
-	public String getHost() {
-		return host;
-	}
-	public void setHost(String host) {
-		this.host = host;
-	}
-	public int getPort() {
-		return port;
-	}
-	public void setPort(int port) {
-		this.port = port;
-	}
-	public String getUsername() {
-		return username;
-	}
-	public void setUsername(String username) {
-		this.username = username;
-	}
-	public String getPassword() {
-		return password;
-	}
-	public void setPassword(String password) {
-		this.password = password;
+		this.hostExtension = hostExtension;
 	}
 
 	public String getClient() {
@@ -50,5 +29,47 @@ public class OpenshiftConfig {
 	public void setClient(String client) {
 		this.client = client;
 	}
+
+	public String getHost() {
+		return host;
+	}
+
+	public void setHost(String host) {
+		this.host = host;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getHostExtension() {
+		return hostExtension;
+	}
+
+	public void setHostExtension(String hostExtension) {
+		this.hostExtension = hostExtension;
+	}
+	
+	
 	
 }

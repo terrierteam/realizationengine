@@ -1,0 +1,102 @@
+appID: "trainsimulator"
+name: "App for Simulating ML Model Training"
+description: "This application deploys containers that perform short pseudo training cycles and export the MAE metric"
+owner: "$owner$"
+namespace: "$namespace$"
+types:
+ - playbook
+
+metrics:
+  - owner: "$owner$"
+    name: "mae"
+    metricClassname: "Double"
+    summary: "Mean Absolute Error (MAE) is a measure of the difference between a true and predicted value." 
+    maximumValue: 1.0
+    minimumValue: 0.0
+    higherIsBetter: False
+    displayUnit: "MAE"
+  - owner: "$owner$"
+    name: "costPerHour"
+    metricClassname: "Double"
+    summary: "The cost of running this Pod per hour in US dollars." 
+    maximumValue: 1000.0
+    minimumValue: 0.0
+    higherIsBetter: True
+    displayUnit: "$/hour"
+
+objects:
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "train"
+    type: Job
+    yamlSource:
+      kind: Job
+      apiVersion: batch/v1
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+        labels:
+          app: $appID$
+      spec:
+        parallelism: 1
+        completions: 1
+        backoffLimit: 3
+        template:
+          metadata:
+            labels:
+              app: $appID$
+          spec:
+            restartPolicy: OnFailure
+            schedulerName: default-scheduler
+            securityContext: {}
+            containers:
+              - resources:
+                 requests:
+                    cpu: '1'
+                    memory: '256M'
+                name: simulator
+                imagePullPolicy: Always
+                image: 'docker-registry.default.svc:5000/richardmproject/is-bigdatastack-simulator:latest'
+                env:
+                - name: "owner"
+                  value: "$owner$"
+                - name: "namespace"
+                  value: "$namespace$"
+                - name: "appID"
+                  value: "$appID$"
+                - name: "objectID"
+                  value: "$objectID$"
+                - name: "instance"
+                  value: "$instance$"
+                - name: "numEpocs"
+                  value: "$numEpocs$"
+                - name: "epocTimeSec"
+                  value: "$epocTimeSec$"
+                - name: "alpha"
+                  value: "$alpha$"
+                - name: "beta"
+                  value: "$beta$"
+            serviceAccount: default
+            dnsPolicy: ClusterFirst
+
+sequences:
+  - appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    sequenceID: "train"
+    name: "Start Training"
+    description: "Launches the a container to perform training after setting the parameters"
+    parameters:
+      numEpocs: "10"
+      epocTimeSec: "30"
+      alpha: "1.0"
+      beta: "1.0"
+    operations:
+      - className: Instantiate
+        objectID: "simulatedmodeltrainer"
+        defineInstanceRef: "simulatedmodeltrainerInstance"
+      - className: SetSequenceParameters
+        instanceRef: "simulatedmodeltrainerInstance"
+      - className: Apply
+        instanceRef: "simulatedmodeltrainerInstance"
+    mode: Continue

@@ -88,17 +88,17 @@ public class CostExporter implements Runnable{
 
 				for (BigDataStackApplication app : applications) {
 
-					System.err.println("App: "+app.getName());
+					//System.err.println("App: "+app.getName());
 					
 					List<BigDataStackObjectDefinition> objectInstances = objectIO.getObjectList(owner, namespace, app.getAppID(), null);
 
 					for (BigDataStackObjectDefinition objectDef : objectInstances) {
 						
-						System.err.println("  Object: "+objectDef.getObjectID()+":"+objectDef.getInstance());
+						//System.err.println("  Object: "+objectDef.getObjectID()+":"+objectDef.getInstance());
 						
 						if (objectDef==null) continue;
 						if (objectDef.getType()==BigDataStackObjectType.DeploymentConfig || objectDef.getType()==BigDataStackObjectType.Job) {
-							System.out.println("    "+objectDef.getObjectID()+"("+objectDef.getInstance()+") of type "+objectDef.getType()+", states="+objectDef.getStatus());
+							//System.out.println("    "+objectDef.getObjectID()+"("+objectDef.getInstance()+") of type "+objectDef.getType()+", states="+objectDef.getStatus());
 							List<BigDataStackPodStatus> statuses = podStatusIO.getPodStatuses(app.getAppID(), app.getOwner(), objectDef.getObjectID(), app.getNamespace(), objectDef.getInstance());
 							
 							int podTotalCPURequest = 0;
