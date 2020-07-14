@@ -183,7 +183,7 @@ public class PrometheusDataClient {
 			if (appID!=null) { if (first) { first=false; } else { queryBuilder.append(","); }; queryBuilder.append("appID%3D\""+appID+"\""); }
 			if (objectID!=null) { if (first) { first=false; } else { queryBuilder.append(","); }; queryBuilder.append("objectID%3D\""+objectID+"\""); }
 			if (instance!=null) { if (first) { first=false; } else { queryBuilder.append(","); }; queryBuilder.append("instance%3D\""+instance+"\""); }
-			queryBuilder.append("}");
+			queryBuilder.append("}[5m]");
 			
 			//System.err.println(queryBuilder.toString());
 			
@@ -210,34 +210,67 @@ public class PrometheusDataClient {
 			
 			if (node.has("status") && !node.get("status").asText().equalsIgnoreCase("success")) return null;
 			
-			JsonNode data = node.get("data");
-			if (data.has("resultType") && !data.get("resultType").asText().equalsIgnoreCase("vector")) return null;
-			
-			Iterator<JsonNode> resultIterator = data.get("result").iterator();
-			
 			List<String> values = new ArrayList<String>();
 			List<Long> times = new ArrayList<Long>();
 			List<Map<String,String>> labelSets = new ArrayList<Map<String,String>>();
 			
-			while (resultIterator.hasNext()) {
-				JsonNode result = resultIterator.next();
+			JsonNode data = node.get("data");
+			if (data.has("resultType") && data.get("resultType").asText().equalsIgnoreCase("vector")) {
+				Iterator<JsonNode> resultIterator = data.get("result").iterator();
 				
-				JsonNode metricData = result.get("metric");
-				Iterator<String> fieldNames = metricData.fieldNames();
-				Map<String,String> map = new HashMap<String,String>();
-				while (fieldNames.hasNext()) {
-					String fieldName = fieldNames.next();
-					String fieldvalue = metricData.get(fieldName).asText();
-					map.put(fieldName, fieldvalue);
+				while (resultIterator.hasNext()) {
+					JsonNode result = resultIterator.next();
+					
+					JsonNode metricData = result.get("metric");
+					Iterator<String> fieldNames = metricData.fieldNames();
+					Map<String,String> map = new HashMap<String,String>();
+					while (fieldNames.hasNext()) {
+						String fieldName = fieldNames.next();
+						String fieldvalue = metricData.get(fieldName).asText();
+						map.put(fieldName, fieldvalue);
+					}
+					
+					JsonNode value = result.get("value");
+					double time = value.get(0).asDouble();
+					String valueString = value.get(1).asText();
+					
+					values.add(valueString);
+					times.add(Double.valueOf(time).longValue()*1000);
+					labelSets.add(map);
 				}
+			}
+			
+			if (data.has("resultType") && data.get("resultType").asText().equalsIgnoreCase("matrix")) {
+				Iterator<JsonNode> resultIterator = data.get("result").iterator();
 				
-				JsonNode value = result.get("value");
-				double time = value.get(0).asDouble();
-				String valueString = value.get(1).asText();
 				
-				values.add(valueString);
-				times.add(Double.valueOf(time).longValue()*1000);
-				labelSets.add(map);
+				
+				while (resultIterator.hasNext()) {
+					JsonNode result = resultIterator.next();
+					JsonNode metricData = result.get("metric");
+					Iterator<String> fieldNames = metricData.fieldNames();
+					Map<String,String> map = new HashMap<String,String>();
+					while (fieldNames.hasNext()) {
+						String fieldName = fieldNames.next();
+						String fieldvalue = metricData.get(fieldName).asText();
+						map.put(fieldName, fieldvalue);
+					}
+					
+					String valueString = null;
+					double time = 0.0;
+					JsonNode valueList = result.get("values");
+					Iterator<JsonNode> valueIterator = valueList.iterator();
+					while (valueIterator.hasNext()) {
+						JsonNode value = valueIterator.next();
+						time = value.get(0).asDouble();
+						valueString = value.get(1).asText();
+					}
+					
+					values.add(valueString);
+					times.add(Double.valueOf(time).longValue()*1000);
+					labelSets.add(map);
+					
+				}
 			}
 			
 
