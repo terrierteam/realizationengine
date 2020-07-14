@@ -27,7 +27,7 @@ metrics:
 objects:
   - appID: "$appID$"
     owner: "$owner$"
-    objectID: "train"
+    objectID: "simulatedmodeltrainer"
     type: Job
     yamlSource:
       kind: Job
@@ -76,6 +76,10 @@ objects:
                   value: "$alpha$"
                 - name: "beta"
                   value: "$beta$"
+                ports:
+                  - name: promexporter
+                    containerPort: 9678
+                    protocol: TCP
             serviceAccount: default
             dnsPolicy: ClusterFirst
 
