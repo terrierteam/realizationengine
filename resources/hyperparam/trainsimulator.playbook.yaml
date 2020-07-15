@@ -8,21 +8,13 @@ types:
 
 metrics:
   - owner: "$owner$"
-    name: "mae"
+    name: "F1"
     metricClassname: "Double"
-    summary: "Mean Absolute Error (MAE) is a measure of the difference between a true and predicted value." 
+    summary: "Harmonic mean between precision and recall." 
     maximumValue: 1.0
     minimumValue: 0.0
-    higherIsBetter: False
-    displayUnit: "MAE"
-  - owner: "$owner$"
-    name: "costPerHour"
-    metricClassname: "Double"
-    summary: "The cost of running this Pod per hour in US dollars." 
-    maximumValue: 1000.0
-    minimumValue: 0.0
     higherIsBetter: True
-    displayUnit: "$/hour"
+    displayUnit: "F1"
 
 objects:
   - appID: "$appID$"

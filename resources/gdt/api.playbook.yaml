@@ -68,6 +68,8 @@ objects:
                  value: "$ocusername$"
                - name: "ocpassword"
                  value: "$ocpassword$"
+               - name: "ochostextension"
+                 value: "$ochostextension$"
                - name: "rmqhost"
                  value: "$rmqhost$"
                - name: "rmqport"
