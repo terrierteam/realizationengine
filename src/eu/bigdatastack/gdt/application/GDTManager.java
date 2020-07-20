@@ -901,6 +901,8 @@ public class GDTManager implements Manager {
 		parameters.put("ocport", String.valueOf(gdtConfig.getOpenshift().getPort()));
 		parameters.put("ocusername", openshiftCredential.getUsername());
 		parameters.put("ocpassword", openshiftCredential.getPassword());
+		parameters.put("ochostextension", gdtConfig.getOpenshift().getHostExtension());
+		parameters.put("ocimagerepositoryhost", gdtConfig.getOpenshift().getImageRepositoryHost());
 		parameters.put("rmqhost", gdtConfig.getRabbitmq().getHost());
 		parameters.put("rmqport", String.valueOf(gdtConfig.getRabbitmq().getPort()));
 		parameters.put("rmqusername", rabbitMQCredential.getUsername());
