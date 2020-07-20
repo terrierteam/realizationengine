@@ -73,16 +73,28 @@ public class GDTFileUtil {
 			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 			JsonNode node = mapper.readTree(yaml);
 			
+			BigDataStackObjectDefinition object;
 			
-			String appID = node.get("appID").asText();
-			String namespace = node.get("namespace").asText();
-			String objectID = node.get("objectID").asText();
-			String owner = node.get("owner").asText();
-			BigDataStackObjectType type = BigDataStackObjectType.valueOf(node.get("type").asText());
-			String yamlSource = mapper.writeValueAsString(node.get("yamlSource"));
+			if (node.has("appID") && node.has("namespace")) {
+				String appID = node.get("appID").asText();
+				String namespace = node.get("namespace").asText();
+				String objectID = node.get("objectID").asText();
+				String owner = node.get("owner").asText();
+				BigDataStackObjectType type = BigDataStackObjectType.valueOf(node.get("type").asText());
+				String yamlSource = mapper.writeValueAsString(node.get("yamlSource"));
+				
+				 object = new BigDataStackObjectDefinition(objectID, owner, type,
+						yamlSource, new HashSet<String>(), namespace, appID);
+			} else {
+				String objectID = node.get("objectID").asText();
+				String owner = node.get("owner").asText();
+				BigDataStackObjectType type = BigDataStackObjectType.valueOf(node.get("type").asText());
+				String yamlSource = mapper.writeValueAsString(node.get("yamlSource"));
+				
+				 object = new BigDataStackObjectDefinition(objectID, owner, type,
+						yamlSource, new HashSet<String>());
+			}
 			
-			BigDataStackObjectDefinition object = new BigDataStackObjectDefinition(objectID, owner, type,
-					yamlSource, new HashSet<String>(), namespace, appID);
 			
 			return object;
 		} catch (Exception e) {
