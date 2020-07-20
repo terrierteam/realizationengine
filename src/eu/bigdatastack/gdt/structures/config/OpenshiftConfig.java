@@ -8,11 +8,12 @@ public class OpenshiftConfig {
 	String username;
 	String password;
 	String hostExtension;
+	String imageRepositoryHost;
 	
 	public OpenshiftConfig() {}
 
-	public OpenshiftConfig(String client, String host, int port, String username, String password,
-			String hostExtension) {
+	public OpenshiftConfig(String client, String host, int port, String username, String password, String hostExtension,
+			String imageRepositoryHost) {
 		super();
 		this.client = client;
 		this.host = host;
@@ -20,6 +21,7 @@ public class OpenshiftConfig {
 		this.username = username;
 		this.password = password;
 		this.hostExtension = hostExtension;
+		this.imageRepositoryHost = imageRepositoryHost;
 	}
 
 	public String getClient() {
@@ -69,6 +71,16 @@ public class OpenshiftConfig {
 	public void setHostExtension(String hostExtension) {
 		this.hostExtension = hostExtension;
 	}
+
+	public String getImageRepositoryHost() {
+		return imageRepositoryHost;
+	}
+
+	public void setImageRepositoryHost(String imageRepositoryHost) {
+		this.imageRepositoryHost = imageRepositoryHost;
+	}
+
+	
 	
 	
 	

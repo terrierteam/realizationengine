@@ -30,7 +30,7 @@ objects:
           spec:
             containers:
             - name: gdtapi
-              image: "docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest"
+              image: "$ocimagerepositoryhost$/$namespace$/is-bigdatastack-gdt:latest"
               resources:
                 limits:
                   cpu: "1000m"
@@ -70,6 +70,8 @@ objects:
                  value: "$ocpassword$"
                - name: "ochostextension"
                  value: "$ochostextension$"
+               - name: "ocimagerepositoryhost"
+                 value: "$ocimagerepositoryhost$"
                - name: "rmqhost"
                  value: "$rmqhost$"
                - name: "rmqport"

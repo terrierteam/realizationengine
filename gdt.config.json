@@ -19,6 +19,7 @@
 		"port": 8443,
 		"username": "admin",
 		"password": "IDAAdmin2019",
-		"hostExtension": "ida.dcs.gla.ac.uk"
+		"hostExtension": "ida.dcs.gla.ac.uk",
+		"imageRepositoryHost": "docker-registry.default.svc:5000"
 	}
 }

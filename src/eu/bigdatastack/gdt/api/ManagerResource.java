@@ -57,6 +57,18 @@ public class ManagerResource {
 	//----------------------------------------------------------
 	
 	@POST
+	@Path("/registeryaml/playbook/{owner}/{namespace}")
+	public void registerPlaybook(@PathParam("owner") String owner, @PathParam("namespace") String namespace, String yaml) {
+		manager.loadPlaybook(yaml, owner, namespace);
+	}
+	
+	@POST
+	@Path("/registeryaml/playbook")
+	public void registerPlaybook(String yaml) {
+		manager.loadPlaybook(yaml, null, null);
+	}
+	
+	@POST
 	@Path("/registeryaml/application")
 	public BigDataStackApplication registerApplication(String yaml) {
 		return manager.registerApplication(yaml);	
@@ -96,6 +108,28 @@ public class ManagerResource {
 	//----------------------------------------------------------
 	// JSON Registration
 	//----------------------------------------------------------
+	
+	@POST
+	@Path("/registerjson/playbook/{owner}/{namespace}")
+	public void registerPlaybookJson(@PathParam("owner") String owner, @PathParam("namespace") String namespace, String json) {
+		try {
+			JsonNode node = jsonMapper.readTree(json);
+			manager.loadPlaybook(yamlMapper.writeValueAsString(node), owner, namespace);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@POST
+	@Path("/registerjson/playbook")
+	public void registerPlaybookJson(String json) {
+		try {
+			JsonNode node = jsonMapper.readTree(json);
+			manager.loadPlaybook(yamlMapper.writeValueAsString(node), null, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 	@POST
 	@Path("/registerjson/application")

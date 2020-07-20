@@ -804,6 +804,8 @@ public class GDTManager implements Manager {
 			parameters.put("ochost", gdtConfig.getOpenshift().getHost());
 			parameters.put("ocport", String.valueOf(gdtConfig.getOpenshift().getPort()));
 			parameters.put("ochostextension", gdtConfig.getOpenshift().getHostExtension());
+			parameters.put("ocimagerepositoryhost", gdtConfig.getOpenshift().getImageRepositoryHost());
+			
 			// openshift credentials
 			parameters.put("ocusername", openshiftCredential.getUsername());
 			parameters.put("ocpassword", openshiftCredential.getPassword());
@@ -1314,7 +1316,7 @@ public class GDTManager implements Manager {
 		System.out.println("> credentialsClient: "+(credentialsClient.timeSpent()/1000)+"s");
 	}
 
-
+	
 	public void loadPlaybook(String yaml, String owner, String namespace) {
 
 		try {

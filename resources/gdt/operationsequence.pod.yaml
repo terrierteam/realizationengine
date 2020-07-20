@@ -17,7 +17,7 @@ yamlSource:
   spec:
     containers:
     - name: gdtmain
-      image: "docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest"
+      image: "$ocimagerepositoryhost$/$namespace$/is-bigdatastack-gdt:latest"
       imagePullPolicy: Always
       command:
        - 'java'
@@ -54,6 +54,8 @@ yamlSource:
          value: "$ocpassword$"
        - name: "ochostextension"
          value: "$ochostextension$"
+       - name: "ocimagerepositoryhost"
+         value: "$ocimagerepositoryhost$"
        - name: "rmqhost"
          value: "$rmqhost$"
        - name: "rmqport"
