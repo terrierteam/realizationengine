@@ -29,16 +29,18 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 	int port;
 	String username;
 	String password;
+	String namespace;
 	
 	OpenShiftClient osClient;
 	OpenshiftStatusFabric8ioClient statusClient;
 
-	public OpenshiftOperationFabric8ioClient(String host, int port, String username, String password) {
+	public OpenshiftOperationFabric8ioClient(String host, int port, String username, String password, String namespace) {
 		super();
 		this.host = host;
 		this.port = port;
 		this.username = username;
 		this.password = password;
+		this.namespace= namespace;
 	}
 
 	@Override
@@ -49,6 +51,7 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 					.withUsername(username)
 					.withPassword(password)
 					.withTrustCerts(true)
+					.withNamespace(namespace)
 					.build();
 
 			osClient = new DefaultOpenShiftClient(config);
@@ -76,7 +79,7 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 				osClient.load(stream).createOrReplace();
 				stream.close();}
 				
-				osClient.deploymentConfigs().withName(object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance()).deployLatest(true);
+				osClient.deploymentConfigs().inNamespace(object.getNamespace()).withName(object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance()).deployLatest(true);
 				
 				return true;
 			case Service:

@@ -1,5 +1,5 @@
 
-appID: "DeepRecSys"
+appID: "deeprecsys"
 owner: "bigdatastack"
 namespace: "realization"
 objectID: "cmd"
@@ -9,7 +9,7 @@ yamlSource:
   apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
   metadata:
-    name: deeprecsys-cmd
+    name: deeprecsys-cmd-0
     namespace: realization
   spec:
     replicas: 1

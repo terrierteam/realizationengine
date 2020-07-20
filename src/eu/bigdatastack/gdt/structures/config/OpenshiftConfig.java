@@ -9,11 +9,12 @@ public class OpenshiftConfig {
 	String password;
 	String hostExtension;
 	String imageRepositoryHost;
+	String namespace;
 	
 	public OpenshiftConfig() {}
 
 	public OpenshiftConfig(String client, String host, int port, String username, String password, String hostExtension,
-			String imageRepositoryHost) {
+			String imageRepositoryHost, String namespace) {
 		super();
 		this.client = client;
 		this.host = host;
@@ -22,6 +23,7 @@ public class OpenshiftConfig {
 		this.password = password;
 		this.hostExtension = hostExtension;
 		this.imageRepositoryHost = imageRepositoryHost;
+		this.namespace = namespace;
 	}
 
 	public String getClient() {
@@ -79,6 +81,16 @@ public class OpenshiftConfig {
 	public void setImageRepositoryHost(String imageRepositoryHost) {
 		this.imageRepositoryHost = imageRepositoryHost;
 	}
+
+	public String getNamespace() {
+		return namespace;
+	}
+
+	public void setNamespace(String namespace) {
+		this.namespace = namespace;
+	}
+
+	
 
 	
 	

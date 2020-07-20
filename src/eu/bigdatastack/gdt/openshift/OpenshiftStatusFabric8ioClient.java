@@ -67,15 +67,17 @@ public class OpenshiftStatusFabric8ioClient implements OpenshiftStatusClient {
 	int port;
 	String username;
 	String password;
+	String namespace;
 	
 	OpenShiftClient osClient;
 	
-	public OpenshiftStatusFabric8ioClient(String host, int port, String username, String password) {
+	public OpenshiftStatusFabric8ioClient(String host, int port, String username, String password, String namespace) {
 		super();
 		this.host = host;
 		this.port = port;
 		this.username = username;
 		this.password = password;
+		this.namespace = namespace;
 	}
 	
 	public OpenshiftStatusFabric8ioClient (OpenShiftClient osClient) {
@@ -90,6 +92,7 @@ public class OpenshiftStatusFabric8ioClient implements OpenshiftStatusClient {
 					.withUsername(username)
 					.withPassword(password)
 					.withTrustCerts(true)
+					.withNamespace(namespace)
 					.build();
 			
 			osClient = new DefaultOpenShiftClient(config);

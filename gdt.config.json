@@ -20,6 +20,7 @@
 		"username": "admin",
 		"password": "IDAAdmin2019",
 		"hostExtension": "ida.dcs.gla.ac.uk",
-		"imageRepositoryHost": "docker-registry.default.svc:5000"
+		"imageRepositoryHost": "docker-registry.default.svc:5000",
+		"namespace": "richardmproject"
 	}
 }

@@ -67,7 +67,7 @@ public class GDTMain {
 			
 			OpenshiftStatusClient openshiftStatus = null;
 			//if (occlient.equalsIgnoreCase("openshift3")) openshiftStatus = new OpenshiftStatusClientv3(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
-			if (occlient.equalsIgnoreCase("fabric8io")) openshiftStatus = new OpenshiftStatusFabric8ioClient(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			if (occlient.equalsIgnoreCase("fabric8io")) openshiftStatus = new OpenshiftStatusFabric8ioClient(ochost, Integer.parseInt(ocport), ocusername, ocpassword, namespace);
 			if (openshiftStatus==null) {
 				System.err.println("Openshift client '"+occlient+"' is not supported");
 				return;
@@ -85,7 +85,7 @@ public class GDTMain {
 		} else if (args[0].equalsIgnoreCase("operationSequence")) {
 			
 			DatabaseConf databaseConf = new DatabaseConf(dbtype, dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
-			OpenshiftConfig openshiftConf = new OpenshiftConfig(occlient, ochost, Integer.parseInt(ocport), ocusername, ocpassword, ochostExtension,ocimagerepositoryhost);
+			OpenshiftConfig openshiftConf = new OpenshiftConfig(occlient, ochost, Integer.parseInt(ocport), ocusername, ocpassword, ochostExtension,ocimagerepositoryhost,namespace);
 			RabbitMQConf rabbitMQConf = new RabbitMQConf(rmqhost, Integer.parseInt(rmqport), rmqusername, rmqpassword);
 			GDTConfig gdtConf = new GDTConfig(databaseConf,rabbitMQConf,openshiftConf);
 			
@@ -148,7 +148,7 @@ public class GDTMain {
 			
 			OpenshiftStatusClient openshiftStatus = null;
 			//if (occlient.equalsIgnoreCase("openshift3")) openshiftStatus = new OpenshiftStatusClientv3(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
-			if (occlient.equalsIgnoreCase("fabric8io")) openshiftStatus = new OpenshiftStatusFabric8ioClient(ochost, Integer.parseInt(ocport), ocusername, ocpassword);
+			if (occlient.equalsIgnoreCase("fabric8io")) openshiftStatus = new OpenshiftStatusFabric8ioClient(ochost, Integer.parseInt(ocport), ocusername, ocpassword, namespace);
 			if (openshiftStatus==null) {
 				System.err.println("Openshift client '"+occlient+"' is not supported");
 				return;
@@ -165,7 +165,7 @@ public class GDTMain {
 		} else if (args[0].equalsIgnoreCase("api")) {
 			
 			DatabaseConf databaseConf = new DatabaseConf(dbtype, dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
-			OpenshiftConfig openshiftConf = new OpenshiftConfig(occlient, ochost, Integer.parseInt(ocport), ocusername, ocpassword, ochostExtension,ocimagerepositoryhost);
+			OpenshiftConfig openshiftConf = new OpenshiftConfig(occlient, ochost, Integer.parseInt(ocport), ocusername, ocpassword, ochostExtension,ocimagerepositoryhost,namespace);
 			RabbitMQConf rabbitMQConf = new RabbitMQConf(rmqhost, Integer.parseInt(rmqport), rmqusername, rmqpassword);
 			GDTConfig gdtConf = new GDTConfig(databaseConf,rabbitMQConf,openshiftConf);
 			

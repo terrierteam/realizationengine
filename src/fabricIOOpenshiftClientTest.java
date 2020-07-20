@@ -75,9 +75,9 @@ public class fabricIOOpenshiftClientTest {
 		
 		GDTManager manager = new GDTManager(gdtconfig);
 		
-		BigDataStackObjectDefinition pod = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/boston/test/helloWorld.pod.yaml"), "UTF-8"));
+		//BigDataStackObjectDefinition pod = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/boston/test/helloWorld.pod.yaml"), "UTF-8"));
 		
-		manager.openshiftOperationClient.applyOperation(pod);
+		//manager.openshiftOperationClient.applyOperation(pod);
 		
 		BigDataStackObjectDefinition dc = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/boston/test/cmd.deploymentconfig.yaml"), "UTF-8"));
 		

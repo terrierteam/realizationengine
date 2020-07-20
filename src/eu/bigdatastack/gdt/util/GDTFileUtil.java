@@ -74,13 +74,15 @@ public class GDTFileUtil {
 			JsonNode node = mapper.readTree(yaml);
 			
 			
+			String appID = node.get("appID").asText();
+			String namespace = node.get("namespace").asText();
 			String objectID = node.get("objectID").asText();
 			String owner = node.get("owner").asText();
 			BigDataStackObjectType type = BigDataStackObjectType.valueOf(node.get("type").asText());
 			String yamlSource = mapper.writeValueAsString(node.get("yamlSource"));
 			
 			BigDataStackObjectDefinition object = new BigDataStackObjectDefinition(objectID, owner, type,
-					yamlSource, new HashSet<String>());
+					yamlSource, new HashSet<String>(), namespace, appID);
 			
 			return object;
 		} catch (Exception e) {

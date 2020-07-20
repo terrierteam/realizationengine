@@ -144,7 +144,7 @@ public class GDTManager implements Manager {
 		openshiftOperationClient = null;
 		if (openshiftConf.getClient().equalsIgnoreCase("openshiftv3")) openshiftOperationClient = new OpenshiftOperationClientv3(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
 		if (openshiftConf.getClient().equalsIgnoreCase("fabric8io")) {
-			openshiftOperationClient = new OpenshiftOperationFabric8ioClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
+			openshiftOperationClient = new OpenshiftOperationFabric8ioClient(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword(), openshiftConf.getNamespace());
 			openshiftOperationClient.connectToOpenshift();
 			openshiftStatusClient = new OpenshiftStatusFabric8ioClient(((OpenshiftOperationFabric8ioClient)openshiftOperationClient).getOsClient());
 		}
@@ -596,7 +596,7 @@ public class GDTManager implements Manager {
 				openshiftOperationClient,
 				openshiftStatusClient,
 				mailboxClient,
-				prometheusDataClient, 
+				prometheusDataClient,
 				sequenceTemplate,
 				parameters,
 				eventUtil);
