@@ -3,7 +3,7 @@ objectID: "operationsequence"
 type: Pod
 
 yamlSource:
-  apiVersion: v1
+  apiVersion: apps.openshift.io/v1
   kind: Pod
   metadata:
     name: $appID$-$sequenceID$-$sequenceInstance$

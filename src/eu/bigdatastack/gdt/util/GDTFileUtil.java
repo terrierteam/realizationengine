@@ -95,6 +95,8 @@ public class GDTFileUtil {
 						yamlSource, new HashSet<String>());
 			}
 			
+			if (node.has("instance")) object.setInstance(node.get("instance").asInt());
+			
 			
 			return object;
 		} catch (Exception e) {
