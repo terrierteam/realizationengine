@@ -160,7 +160,6 @@ objects:
           apiGroups:
             - ''
           resources:
-            - nodes
             - services
             - endpoints
             - pods
