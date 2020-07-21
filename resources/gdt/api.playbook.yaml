@@ -116,7 +116,7 @@ objects:
         name: $appID$-$objectID$-$instance$
         namespace: $namespace$
       spec:
-        host: gdtapi-$namespace$.ida.dcs.gla.ac.uk
+        host: gdtapi-$namespace$.$hostExtension$
         to:
           kind: Service
           name: $service$

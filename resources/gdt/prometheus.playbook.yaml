@@ -174,7 +174,7 @@ objects:
         name: $appID$-$objectID$-$instance$
         namespace: $namespace$
       spec:
-        host: prometheus-gdt-$namespace$.ida.dcs.gla.ac.uk
+        host: prometheus-gdt-$namespace$.$hostExtension$
         to:
           kind: Service
           name: $service$
