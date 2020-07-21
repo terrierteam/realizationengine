@@ -57,7 +57,7 @@ objects:
     objectID: "prometheus"
     type: DeploymentConfig
     yamlSource: 
-      apiVersion: v1
+      apiVersion: apps.openshift.io/v1
       kind: DeploymentConfig
       metadata:
         name: $appID$-$objectID$-$instance$
