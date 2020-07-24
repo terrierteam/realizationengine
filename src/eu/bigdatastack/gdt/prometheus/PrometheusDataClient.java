@@ -301,7 +301,7 @@ public class PrometheusDataClient {
 	
 	public PerHourTimeSeries perHourAvg(String owner, String namespace, String appID, String objectID, String instance, String metricname, String timeExpression) {
 
-		StringBuffer content = new StringBuffer();
+		StringBuilder content = new StringBuilder();
 		try {
 			
 			StringBuilder queryBuilder = new StringBuilder();
