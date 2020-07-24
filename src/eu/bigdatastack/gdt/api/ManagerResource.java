@@ -412,31 +412,31 @@ public class ManagerResource {
 	@GET
 	@Path("/report/{owner}/{namespace}/realizationStatus")
 	public RealizationStatus realizationStatus(@PathParam("owner") String owner, @PathParam("namespace") String namespace) {
-		return manager.generateRealizationStatus(namespace, owner);
+		return manager.generateRealizationStatus(owner, namespace);
 	}
 	
 	@GET
 	@Path("/report/{owner}/{namespace}/eventTimeSeries")
 	public EventTimeSeries eventTimeSeries(@PathParam("owner") String owner, @PathParam("namespace") String namespace) {
-		return manager.generateEventTimeSeries(namespace, owner);
+		return manager.generateEventTimeSeries(owner, namespace);
 	}
 	
 	@GET
 	@Path("/report/{owner}/{namespace}/costPerHour")
 	public PerHourTimeSeries costPerHour(@PathParam("owner") String owner, @PathParam("namespace") String namespace) {
-		return manager.generatePerHourTimeSeries(namespace, owner, "costPerHour");
+		return manager.generatePerHourTimeSeries(owner, namespace, "costPerHour");
 	}
 	
 	@GET
 	@Path("/report/{owner}/{namespace}/executingStatus")
 	public ExecutingStatus executingStatus(@PathParam("owner") String owner, @PathParam("namespace") String namespace) {
-		return manager.generateExecutingStatus(namespace, owner);
+		return manager.generateExecutingStatus(owner, namespace);
 	}
 	
 	@GET
 	@Path("/report/{owner}/{namespace}/routeList")
 	public RouteList routeList(@PathParam("owner") String owner, @PathParam("namespace") String namespace) {
-		return manager.generateRouteList(namespace, owner);
+		return manager.generateRouteList(owner, namespace);
 	}
 	
 	

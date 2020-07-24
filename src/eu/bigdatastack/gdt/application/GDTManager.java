@@ -1370,7 +1370,7 @@ public class GDTManager implements Manager {
 			}
 			
 			Collections.sort(allEvents);
-			
+			System.err.println("generateEventTimeSeries: Matched "+allEvents.size()+" events");
 			
 			List<Integer> infoCountPerHour = new ArrayList<Integer>();
 			List<Integer> warnCountPerHour = new ArrayList<Integer>();
