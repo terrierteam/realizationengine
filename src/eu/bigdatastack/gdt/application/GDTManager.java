@@ -1438,7 +1438,7 @@ public class GDTManager implements Manager {
 	 * @return
 	 */
 	public PerHourTimeSeries generatePerHourTimeSeries(String owner, String namespace, String metric) {
-		return prometheusDataClient.perHourAvg(owner, namespace, null, null, null, metric, "2d");
+		return prometheusDataClient.perHourAvg(owner, namespace, null, null, null, metric, "1w:15m");
 	}
 	
 	/**
