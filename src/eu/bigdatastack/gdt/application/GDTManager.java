@@ -3,6 +3,7 @@ package eu.bigdatastack.gdt.application;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -46,14 +47,23 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplicationType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackCredentials;
 import eu.bigdatastack.gdt.structures.data.BigDataStackCredentialsType;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackMetric;
+import eu.bigdatastack.gdt.structures.data.BigDataStackMetricValue;
 import eu.bigdatastack.gdt.structures.data.BigDataStackNamespaceState;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
+import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceMode;
 import eu.bigdatastack.gdt.structures.data.BigDataStackSLO;
+import eu.bigdatastack.gdt.structures.reports.EventTimeSeries;
+import eu.bigdatastack.gdt.structures.reports.ExecutingStatus;
+import eu.bigdatastack.gdt.structures.reports.PerHourTimeSeries;
+import eu.bigdatastack.gdt.structures.reports.RealizationReport;
+import eu.bigdatastack.gdt.structures.reports.RealizationStatus;
+import eu.bigdatastack.gdt.structures.reports.RouteList;
 import eu.bigdatastack.gdt.threads.OperationSequenceThread;
 import eu.bigdatastack.gdt.util.EventUtil;
 import eu.bigdatastack.gdt.util.GDTFileUtil;
@@ -1303,6 +1313,259 @@ public class GDTManager implements Manager {
 		}
 	}
 
+	/**
+	 * Aggregates status information for the Realization Core Components
+	 * @param owner
+	 * @param namespace
+	 * @return
+	 */
+	public RealizationStatus generateRealizationStatus(String owner, String namespace) {
+		try {
+			// Stage 1: Get Realization engine status
+			RealizationStatus realizationStatuses = new RealizationStatus();
+			
+			List<BigDataStackObjectDefinition> deploymentconfigs = objectInstanceClient.getObjectList(owner, namespace, "gdtdefaultapp", BigDataStackObjectType.DeploymentConfig);
+			
+			for (BigDataStackObjectDefinition dc :  deploymentconfigs) {
+				Set<String> reportedStatuses = dc.getStatus();
+				if (reportedStatuses.contains("Available")) {
+					if (dc.getObjectID().equalsIgnoreCase("gdtapi")) realizationStatuses.getApiInstance2Status().put(String.valueOf(dc.getInstance()), reportedStatuses);
+					if (dc.getObjectID().equalsIgnoreCase("costestimator")) realizationStatuses.getCostestimatorInstance2Status().put(String.valueOf(dc.getInstance()), reportedStatuses);
+					if (dc.getObjectID().equalsIgnoreCase("gdtmonitor")) realizationStatuses.getMonitorInstance2Status().put(String.valueOf(dc.getInstance()), reportedStatuses);
+					if (dc.getObjectID().equalsIgnoreCase("prometheus")) realizationStatuses.getPrometheusInstance2Status().put(String.valueOf(dc.getInstance()), reportedStatuses);
+				}
+			}
+			
+			// if we got this far then the db is ok
+			Set<String> dbStatus = new HashSet<String>();
+			dbStatus.add("Available");
+			realizationStatuses.getDbInstance2Status().put("unmanaged", dbStatus);
+			
+			return realizationStatuses;
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Generates a per-hour sum of the different event severity types 
+	 * @param owner
+	 * @param namespace
+	 * @return
+	 */
+	public EventTimeSeries generateEventTimeSeries(String owner, String namespace) {
+		try {
+			List<BigDataStackApplication> apps = appClient.getApplications(owner);
+			
+			
+			List<BigDataStackEvent> allEvents = new ArrayList<BigDataStackEvent>();
+			
+			for (BigDataStackApplication app : apps) {
+				if (app.getNamespace().equalsIgnoreCase(namespace)) {
+					List<BigDataStackEvent> events = eventClient.getEvents(app.getAppID(), owner);
+					allEvents.addAll(events);
+				}
+			}
+			
+			Collections.sort(allEvents);
+			
+			
+			List<Integer> infoCountPerHour = new ArrayList<Integer>();
+			List<Integer> warnCountPerHour = new ArrayList<Integer>();
+			List<Integer> errCountPerHour = new ArrayList<Integer>();
+			List<Integer> alertCountPerHour = new ArrayList<Integer>();
+			
+			long startOfFirstHour = -1;
+			long startOfHour = -1;
+			int countInfoCurrentHour = 0;
+			int countWarnCurrentHour = 0;
+			int countErrCurrentHour = 0;
+			int countAlertCurrentHour = 0;
+			
+			long oneHour = 1000*60*60;
+			
+			for (BigDataStackEvent event : allEvents) {
+				if (startOfHour==-1) {
+					startOfHour=event.getEventTime();
+					startOfFirstHour = event.getEventTime();
+				}
+				
+				while (event.getEventTime()>(startOfHour+oneHour)) {
+					// new hour
+					infoCountPerHour.add(countInfoCurrentHour);
+					warnCountPerHour.add(countWarnCurrentHour);
+					errCountPerHour.add(countErrCurrentHour);
+					alertCountPerHour.add(countAlertCurrentHour);
+					
+					countInfoCurrentHour = 0;
+					countWarnCurrentHour = 0;
+					countErrCurrentHour = 0;
+					countAlertCurrentHour = 0;
+					
+					startOfHour = (startOfHour+oneHour);
+				}
+				
+				if (event.getSeverity() == BigDataStackEventSeverity.Info) countInfoCurrentHour++;
+				if (event.getSeverity() == BigDataStackEventSeverity.Warning) countWarnCurrentHour++;
+				if (event.getSeverity() == BigDataStackEventSeverity.Error) countErrCurrentHour++;
+				if (event.getSeverity() == BigDataStackEventSeverity.Alert) countAlertCurrentHour++;
+				
+			}
+			infoCountPerHour.add(countInfoCurrentHour);
+			warnCountPerHour.add(countWarnCurrentHour);
+			errCountPerHour.add(countErrCurrentHour);
+			alertCountPerHour.add(countAlertCurrentHour);
+			
+			return new EventTimeSeries(infoCountPerHour, warnCountPerHour, errCountPerHour, alertCountPerHour, startOfFirstHour, startOfHour);
+			
+			
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Generates a time series vector that contains the average values of all datapoints for a single pod during each hour. If multiple pods are 
+	 * matched then pod averages are summed per hour. This can only retrieve data from up to a week in the past. 
+	 * @param owner
+	 * @param namespace
+	 * @param metric
+	 * @return
+	 */
+	public PerHourTimeSeries generatePerHourTimeSeries(String owner, String namespace, String metric) {
+		return prometheusDataClient.perHourAvg(owner, namespace, null, null, null, metric, "1w");
+	}
+	
+	/**
+	 * Returns the number of sequences, deploymentconfigs, jobs, pods and services currently running
+	 * @param owner
+	 * @param namespace
+	 * @return
+	 */
+	public ExecutingStatus generateExecutingStatus(String owner, String namespace) {
+		try {
+			List<BigDataStackApplication> apps = appClient.getApplications(owner);
+			
+			
+			// Check Sequences
+			int activeSequences = 0;
+			for (BigDataStackApplication app : apps) {
+				if (app.getNamespace().equalsIgnoreCase(namespace)) {
+					
+					List<BigDataStackOperationSequence> sequences = sequenceInstanceClient.getOperationSequences(owner, app.getAppID(), null);
+					for (BigDataStackOperationSequence sequence : sequences) {
+						if (sequence.isInProgress()) activeSequences++;
+					}	
+				}
+			}
+			
+			// Check Deployment Configs, Jobs, Pods and Services
+			int deploymentsActive = 0;
+			int jobsActive = 0;
+			int podsActive = 0;
+			int servicesActive = 0;
+			List<BigDataStackObjectDefinition> objectsForNamespace = objectInstanceClient.getObjectList(owner, namespace, null, null);
+			for (BigDataStackObjectDefinition object : objectsForNamespace) {
+				if (object.getStatus().contains("Available") || object.getStatus().contains("Running") || object.getStatus().contains("In Progress")) {
+					if (object.getType() == BigDataStackObjectType.DeploymentConfig) deploymentsActive++;
+					if (object.getType() == BigDataStackObjectType.Job) jobsActive++;
+					if (object.getType() == BigDataStackObjectType.Pod) podsActive++;
+				}
+				
+				if (object.getType() == BigDataStackObjectType.Service) servicesActive++;
+			}
+			ExecutingStatus exeStatus = new ExecutingStatus(activeSequences, deploymentsActive, jobsActive, podsActive, servicesActive);
+			return exeStatus;
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		
+	}
+	
+	/**
+	 * Returns a list of routes for each app in a namespace for an owner
+	 * @param owner
+	 * @param namespace
+	 * @return
+	 */
+	public RouteList generateRouteList(String owner, String namespace) {
+		
+		Map<String,Map<String,String>> app2URLs = new HashMap<String,Map<String,String>>();
+		
+		try {
+			List<BigDataStackApplication> apps = appClient.getApplications(owner);
+			
+			for (BigDataStackApplication app : apps) {
+				
+				Map<String,String> urls2Descs = new HashMap<String,String>();
+				List<BigDataStackObjectDefinition> objectsForNamespace = objectInstanceClient.getObjectList(owner, namespace, app.getAppID(), BigDataStackObjectType.Route);
+				for (BigDataStackObjectDefinition route : objectsForNamespace) {
+					
+					JsonNode routeAsJson = yamlMapper.readTree(route.getYamlSource());
+					if (routeAsJson.has("spec")) {
+						JsonNode spec = routeAsJson.get("spec");
+						if (spec.has("host")) {
+							if (!spec.has("to")) urls2Descs.put(spec.get("host").asText(), "External http endpoint, unknown target");
+							else {
+								JsonNode to = spec.get("to");
+								urls2Descs.put(spec.get("host").asText(), "External http endpoint, directing traffic to "+to.get("name")+" (type="+to.get("kind")+")");
+							}
+							
+						}
+					}
+					
+				}
+				app2URLs.put(app.getAppID()+": "+app.getName(), urls2Descs);
+				
+				
+			}
+			RouteList rl = new RouteList(app2URLs);
+			
+			return rl;
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	
+	public RealizationReport generateStatusReport(String owner, String namespace) {
+		
+		try {
+			// Stage 1: Get Realization engine status
+			RealizationStatus realizationStatuses = generateRealizationStatus(owner, namespace);
+			
+			// Stage 2: Get Event Time Series Data
+			EventTimeSeries eventTimeSeries = generateEventTimeSeries(owner, namespace);
+			
+			// Stage 3: Get Pod Costs
+			PerHourTimeSeries costTimeSeries = generatePerHourTimeSeries(owner, namespace, "costPerHour");
+			
+			// Stage 4: Get Number of Objects running
+			ExecutingStatus exeStatus = generateExecutingStatus(owner, namespace);
+			
+			// Stage 5: Get Routes
+			RouteList routeList = generateRouteList(owner, namespace);
+			
+			RealizationReport report = new RealizationReport(realizationStatuses,eventTimeSeries,costTimeSeries,exeStatus,routeList);
+			
+			return report;
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 
 	public void printTimings() {

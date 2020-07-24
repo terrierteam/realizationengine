@@ -28,7 +28,7 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
 import eu.bigdatastack.gdt.structures.data.BigDataStackSLO;
 import eu.bigdatastack.gdt.util.ManagerQuerying;
-
+import eu.bigdatastack.gdt.structures.reports.*;
 
 @Path("/api/v1")
 @Produces(MediaType.APPLICATION_JSON)
@@ -403,6 +403,42 @@ public class ManagerResource {
 			return false;
 		}
 	}
+	
+	
+	//----------------------------------------------------------
+	// Reports
+	//----------------------------------------------------------
+	
+	@GET
+	@Path("/report/{owner}/{namespace}/realizationStatus")
+	public RealizationStatus realizationStatus(@PathParam("owner") String owner, @PathParam("namespace") String namespace) {
+		return manager.generateRealizationStatus(namespace, owner);
+	}
+	
+	@GET
+	@Path("/report/{owner}/{namespace}/eventTimeSeries")
+	public EventTimeSeries eventTimeSeries(@PathParam("owner") String owner, @PathParam("namespace") String namespace) {
+		return manager.generateEventTimeSeries(namespace, owner);
+	}
+	
+	@GET
+	@Path("/report/{owner}/{namespace}/costPerHour")
+	public PerHourTimeSeries costPerHour(@PathParam("owner") String owner, @PathParam("namespace") String namespace) {
+		return manager.generatePerHourTimeSeries(namespace, owner, "costPerHour");
+	}
+	
+	@GET
+	@Path("/report/{owner}/{namespace}/executingStatus")
+	public ExecutingStatus executingStatus(@PathParam("owner") String owner, @PathParam("namespace") String namespace) {
+		return manager.generateExecutingStatus(namespace, owner);
+	}
+	
+	@GET
+	@Path("/report/{owner}/{namespace}/routeList")
+	public RouteList routeList(@PathParam("owner") String owner, @PathParam("namespace") String namespace) {
+		return manager.generateRouteList(namespace, owner);
+	}
+	
 	
 	
 }

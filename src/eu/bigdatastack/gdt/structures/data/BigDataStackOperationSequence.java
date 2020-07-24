@@ -200,6 +200,34 @@ public class BigDataStackOperationSequence {
 		
 	}
 	
+	/**
+	 * Checks if all operations are marked as complete
+	 * @return
+	 */
+	public boolean isComplete() {
+
+		for (BigDataStackOperation operation : operations) {
+			if (operation.getState() != BigDataStackOperationState.Completed) return false;
+		}
+		
+		return true;
+		
+	}
+	
+	/**
+	 * Checks if all operations are marked as complete
+	 * @return
+	 */
+	public boolean isInProgress() {
+
+		for (BigDataStackOperation operation : operations) {
+			if (operation.getState() != BigDataStackOperationState.Completed && operation.getState() == BigDataStackOperationState.InProgress) return true;
+		}
+		
+		return false;
+		
+	}
+	
 	public BigDataStackOperationSequence clone() {
 		return new BigDataStackOperationSequence(appID, owner, namepace, index, sequenceID, name,
 				description, parameters, operations, mode);
