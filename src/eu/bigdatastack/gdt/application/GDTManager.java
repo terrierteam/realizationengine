@@ -1471,6 +1471,9 @@ public class GDTManager implements Manager {
 			int servicesActive = 0;
 			List<BigDataStackObjectDefinition> objectsForNamespace = objectInstanceClient.getObjectList(owner, namespace, null, null);
 			for (BigDataStackObjectDefinition object : objectsForNamespace) {
+				
+				System.err.println(object.getObjectID()+" "+object.getInstance()+" "+object.getType().name()+" "+object.getStatus().contains("Running"));
+				
 				if (object.getStatus().contains("Available") || object.getStatus().contains("Running") || object.getStatus().contains("In Progress")) {
 					if (object.getType() == BigDataStackObjectType.DeploymentConfig) deploymentsActive++;
 					if (object.getType() == BigDataStackObjectType.Job) jobsActive++;
