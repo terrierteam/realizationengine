@@ -58,6 +58,7 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceMode;
+import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
 import eu.bigdatastack.gdt.structures.data.BigDataStackSLO;
 import eu.bigdatastack.gdt.structures.reports.EventTimeSeries;
 import eu.bigdatastack.gdt.structures.reports.ExecutingStatus;
@@ -1478,10 +1479,20 @@ public class GDTManager implements Manager {
 				if (object.getStatus().contains("Available") || object.getStatus().contains("Running") || object.getStatus().contains("In Progress")) {
 					if (object.getType() == BigDataStackObjectType.DeploymentConfig) deploymentsActive++;
 					if (object.getType() == BigDataStackObjectType.Job) jobsActive++;
-					if (object.getType() == BigDataStackObjectType.Pod) podsActive++;
+					//if (object.getType() == BigDataStackObjectType.Pod) podsActive++;
+					
+					if (object.getType() == BigDataStackObjectType.DeploymentConfig || object.getType() == BigDataStackObjectType.Job) {
+						List<BigDataStackPodStatus> podStatuses = podStatusClient.getPodStatuses(null, object.getOwner(), object.getObjectID(), null, -1);
+						for (BigDataStackPodStatus podStatus : podStatuses) {
+							if (podStatus.getStatus().equalsIgnoreCase("Running")) podsActive++;
+							
+						}
+					}
+					
 				}
 				
-				if (object.getType() == BigDataStackObjectType.Service) servicesActive++;
+				if (object.getType() == BigDataStackObjectType.Service && !object.getStatus().contains("Deleted") && !object.getStatus().contains("Killed")) servicesActive++;
+
 			}
 			ExecutingStatus exeStatus = new ExecutingStatus(activeSequences, deploymentsActive, jobsActive, podsActive, servicesActive);
 			return exeStatus;
