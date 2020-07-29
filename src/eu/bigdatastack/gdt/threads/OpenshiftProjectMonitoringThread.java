@@ -89,12 +89,12 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					List<BigDataStackObjectDefinition> objectInstances = objectIO.getObjectList(owner, namespace, app.getAppID(), null);
 
 					for (BigDataStackObjectDefinition objectDef : objectInstances) {
-						
+
 						try {
 							if (objectDef.getType() == BigDataStackObjectType.DeploymentConfig) processDeploymentConfig(project, app, objectDef);
-							
+
 							if (objectDef.getType() == BigDataStackObjectType.Job) processJob(project, app, objectDef);
-							
+
 							if (objectDef.getType() == BigDataStackObjectType.Pod) {
 								if (objectDef.getObjectID().equalsIgnoreCase("operationsequence")) {
 									List<OpenshiftObject> pods = openshiftStatus.getPods(project.getName(), true, true, "operationsequence=True");
@@ -103,9 +103,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 										if (labels.get("runnerIndex").equalsIgnoreCase(String.valueOf(objectDef.getInstance())))
 											updatePodStatus(project.getName(), app, objectDef, pod);
 									}
-									
+
 								}
-								
 							}
 						} catch (com.openshift.restclient.NotFoundException e) {
 							// TODO Auto-generated catch block
@@ -115,6 +114,9 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					}
 
 				}
+				
+				
+				// now clean up pod statuses
 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -135,6 +137,42 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 
 	}
 
+	public void cleanUpPodsStatuses(BigDataStackApplication app, BigDataStackObjectDefinition object) {
+		try {
+			List<BigDataStackPodStatus> podStatuses = podStatusIO.getPodStatuses(null, app.getOwner(), object.getObjectID(), null, -1);
+			for (BigDataStackPodStatus podStatus : podStatuses) {
+				if (podStatus.getStatus().equalsIgnoreCase("Deleted")) continue;
+				OpenshiftObject oobject = openshiftStatus.getPod(app.getNamespace(), podStatus.getPodID());
+				if (oobject==null) {
+					int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
+
+					BigDataStackEvent newEvent = new BigDataStackEvent(
+							app.getAppID(),
+							owner,
+							previousEvents,
+							namespace,
+							BigDataStackEventType.Openshift,
+							BigDataStackEventSeverity.Warning,
+							"Pod '"+podStatus.getPodID()+"' was checked but was not found on the cluster",
+							"Openshift project monitoring for '"+namespace+"' ran a scheduled chech on '"+podStatus.getPodID()+"' connected to object '"+object.getObjectID()+"("+object.getInstance()+")', but did not find it, it may have been deleted, marking as such",
+							object.getObjectID()
+							);
+
+					podStatus.setStatus("Deleted");
+
+					podStatusIO.updatePodStatus(podStatus);
+					eventIO.addEvent(newEvent);
+					rabbitMQClient.publishEvent(newEvent);
+				}
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
 
 	/**
 	 * Call this to kill the thread
@@ -162,12 +200,38 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	protected void processJob(OpenshiftObject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
 		OpenshiftObject job = openshiftStatus.getJob(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 		if (job==null) {
+			// This should have been running but was not. It may have been manually deleted. Report and perform Update
+			if (!objectDef.getStatus().contains("Deleted")) {
+				int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
+				BigDataStackEvent newEvent = new BigDataStackEvent(
+						app.getAppID(),
+						owner,
+						previousEvents,
+						namespace,
+						BigDataStackEventType.Openshift,
+						BigDataStackEventSeverity.Warning,
+						"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' was expected but not found",
+						"Openshift project monitoring for '"+namespace+"' checked Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+") on the cluster but did not find it, it may have been manually deleted. Marking as such. ",
+						objectDef.getObjectID()
+						);
+
+				eventIO.addEvent(newEvent);
+				rabbitMQClient.publishEvent(newEvent);
+
+				Set<String> newStatuses = new HashSet<String>();
+				newStatuses.add("Deleted");
+				objectDef.setStatus(newStatuses);
+
+				objectIO.updateObject(objectDef);
+
+			}
+
 			//System.err.println("Unable to update Job '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
 			return;
 		}
-		
+
 		System.err.println("Checking: '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
-		
+
 		// Stage 1: check whether the high-level object has changed state
 		Set<String> jobStatuses = job.getStatuses();
 
@@ -231,11 +295,11 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		for (OpenshiftObject pod : pods) {
 			updatePodStatus(project.getName(), app, objectDef, pod);
 		}
-		
+
 		for (String newStatus : newStatuses) {
 			if (newStatus.equalsIgnoreCase("Complete")) {
 				int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
-				
+
 				BigDataStackEvent newEvent = new BigDataStackEvent(
 						app.getAppID(),
 						owner,
@@ -247,13 +311,13 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 						"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' reached Completed status",
 						objectDef.getObjectID()
 						);
-				
+
 				eventIO.addEvent(newEvent);
 				rabbitMQClient.publishEvent(newEvent);
 			}
 		}
-		
 
+		cleanUpPodsStatuses(app, objectDef);
 	}
 
 	/**
@@ -266,12 +330,38 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 	protected void processDeploymentConfig(OpenshiftObject project, BigDataStackApplication app, BigDataStackObjectDefinition objectDef) throws Exception {
 		OpenshiftObject deploymentConfig = openshiftStatus.getDeploymentConfig(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 		if (deploymentConfig==null) {
+			// This should have been running but was not. It may have been manually deleted. Report and perform Update
+			if (!objectDef.getStatus().contains("Deleted")) {
+				int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
+				BigDataStackEvent newEvent = new BigDataStackEvent(
+						app.getAppID(),
+						owner,
+						previousEvents,
+						namespace,
+						BigDataStackEventType.Openshift,
+						BigDataStackEventSeverity.Warning,
+						"Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' was expected but not found",
+						"Openshift project monitoring for '"+namespace+"' checked Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+") on the cluster but did not find it, it may have been manually deleted. Marking as such. ",
+						objectDef.getObjectID()
+						);
+
+				eventIO.addEvent(newEvent);
+				rabbitMQClient.publishEvent(newEvent);
+
+				Set<String> newStatuses = new HashSet<String>();
+				newStatuses.add("Deleted");
+				objectDef.setStatus(newStatuses);
+
+				objectIO.updateObject(objectDef);
+
+			}
+
 			//System.err.println("Unable to update DeploymentConfig '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
 			return;
 		}
-		
+
 		System.err.println("Checking: '"+objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance()+"'");
-		
+
 		// Stage 1: check whether the high-level object has changed state		
 		Set<String> deploymentStatuses = deploymentConfig.getStatuses();
 
@@ -335,7 +425,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		for (OpenshiftObject pod : pods) {
 			updatePodStatus(project.getName(), app, objectDef, pod);
 		}
-		
+
+		cleanUpPodsStatuses(app, objectDef);
 
 	}
 
