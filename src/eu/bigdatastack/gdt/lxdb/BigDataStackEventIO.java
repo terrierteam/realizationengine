@@ -121,7 +121,8 @@ public class BigDataStackEventIO implements Timed {
 		Statement statement = conn.createStatement();
 
 		StringBuilder baseStatement = new StringBuilder();
-		baseStatement.append("SELECT * FROM "+tableName+" WHERE appID='"+appID+"' AND owner='"+owner+"'");
+		baseStatement.append("SELECT * FROM "+tableName+" WHERE owner='"+owner+"'");
+		if (appID!=null) baseStatement.append(" AND appID='"+appID+"'");
 		if (type!=null) baseStatement.append(" AND type='"+type.name()+"'");
 		if (severity!=null) baseStatement.append(" AND severity='"+severity.name()+"'");
 		if (objectID!=null) baseStatement.append(" AND objectID='"+objectID+"'");

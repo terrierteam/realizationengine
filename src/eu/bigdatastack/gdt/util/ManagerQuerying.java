@@ -6,6 +6,8 @@ import java.util.List;
 import eu.bigdatastack.gdt.application.GDTManager;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackMetric;
 import eu.bigdatastack.gdt.structures.data.BigDataStackMetricValue;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
@@ -282,6 +284,63 @@ public class ManagerQuerying {
 			return null;
 		}
 	}
+	
+	/**
+	 * Lists all events for an owner
+	 * @param owner
+	 * @return
+	 */
+	public List<BigDataStackEvent> listEvents(String owner){
+		try {
+			return manager.eventClient.getEvents(null, owner);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Lists all events for an owner
+	 * @param owner
+	 * @return
+	 */
+	public List<BigDataStackEvent> listEvents(String owner, BigDataStackEventType type){
+		try {
+			return manager.eventClient.getEvents(null, owner, type);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Lists all events for an owner
+	 * @param owner
+	 * @return
+	 */
+	public List<BigDataStackEvent> listEvents(String owner, BigDataStackEventSeverity severity){
+		try {
+			return manager.eventClient.getEvents(null, owner, severity);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Lists all events for an owner
+	 * @param owner
+	 * @return
+	 */
+	public List<BigDataStackEvent> listEvents(String owner, BigDataStackEventSeverity severity, BigDataStackEventType type){
+		try {
+			return manager.eventClient.getEvents(null, owner, type, severity );
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
 	
 	/**
 	 * Lists all events for an app and object

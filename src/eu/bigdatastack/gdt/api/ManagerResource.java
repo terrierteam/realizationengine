@@ -19,6 +19,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import eu.bigdatastack.gdt.application.GDTManager;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
+import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackMetric;
 import eu.bigdatastack.gdt.structures.data.BigDataStackMetricValue;
 import eu.bigdatastack.gdt.structures.data.BigDataStackNamespaceState;
@@ -344,6 +346,172 @@ public class ManagerResource {
 	@Path("/list/{owner}/{appID}/events")
 	public List<BigDataStackEvent> listEvents(@PathParam("owner") String owner, @PathParam("appID") String appID){
 		return querying.listEvents(owner, appID);
+	}
+	
+	@GET
+	@Path("/list/{owner}/events")
+	public List<BigDataStackEvent> listEvents(@PathParam("owner") String owner){
+		return querying.listEvents(owner);
+	}
+	
+	@GET
+	@Path("/list/{owner}/events/all")
+	public List<BigDataStackEvent> listEventsAll(@PathParam("owner") String owner){
+		return querying.listEvents(owner);
+	}
+	
+	@GET
+	@Path("/list/{owner}/events/error")
+	public List<BigDataStackEvent> listEventsError(@PathParam("owner") String owner){
+		return querying.listEvents(owner, BigDataStackEventSeverity.Error);
+	}
+	
+	@GET
+	@Path("/list/{owner}/events/alert")
+	public List<BigDataStackEvent> listEventsAlert(@PathParam("owner") String owner){
+		return querying.listEvents(owner, BigDataStackEventSeverity.Alert);
+	}
+	
+	@GET
+	@Path("/list/{owner}/events/info")
+	public List<BigDataStackEvent> listEventsInfo(@PathParam("owner") String owner){
+		return querying.listEvents(owner, BigDataStackEventSeverity.Info);
+	}
+	
+	@GET
+	@Path("/list/{owner}/events/warning")
+	public List<BigDataStackEvent> listEventsWarning(@PathParam("owner") String owner){
+		return querying.listEvents(owner, BigDataStackEventSeverity.Warning);
+	}
+	
+	@GET
+	@Path("/list/{owner}/events/all/{type}")
+	public List<BigDataStackEvent> listEventsAll(@PathParam("owner") String owner, @PathParam("type") String type){
+		return querying.listEvents(owner, BigDataStackEventType.valueOf(type));
+	}
+	
+	@GET
+	@Path("/list/{owner}/events/error/{type}")
+	public List<BigDataStackEvent> listEventsError(@PathParam("owner") String owner, @PathParam("type") String type){
+		return querying.listEvents(owner, BigDataStackEventSeverity.Error, BigDataStackEventType.valueOf(type));
+	}
+	
+	@GET
+	@Path("/list/{owner}/events/alert/{type}")
+	public List<BigDataStackEvent> listEventsAlert(@PathParam("owner") String owner, @PathParam("type") String type){
+		return querying.listEvents(owner, BigDataStackEventSeverity.Alert, BigDataStackEventType.valueOf(type));
+	}
+	
+	@GET
+	@Path("/list/{owner}/events/info/{type}")
+	public List<BigDataStackEvent> listEventsInfo(@PathParam("owner") String owner, @PathParam("type") String type){
+		return querying.listEvents(owner, BigDataStackEventSeverity.Info, BigDataStackEventType.valueOf(type));
+	}
+	
+	@GET
+	@Path("/list/{owner}/events/warning/{type}")
+	public List<BigDataStackEvent> listEventsWarning(@PathParam("owner") String owner, @PathParam("type") String type){
+		return querying.listEvents(owner, BigDataStackEventSeverity.Warning, BigDataStackEventType.valueOf(type));
+	}
+	
+	
+	@GET
+	@Path("/list/{owner}/kevents")
+	public List<BigDataStackEvent> listEventsK(@PathParam("owner") String owner, @QueryParam("k") String k){
+		List<BigDataStackEvent> events = querying.listEvents(owner);
+		int kValue = Integer.valueOf(k);
+		if (events.size()<kValue) return events;
+		else return events.subList(0, kValue);
+	}
+	
+	@GET
+	@Path("/list/{owner}/kevents/all")
+	public List<BigDataStackEvent> listEventsAllK(@PathParam("owner") String owner, @QueryParam("k") String k){
+		List<BigDataStackEvent> events =  querying.listEvents(owner);
+		int kValue = Integer.valueOf(k);
+		if (events.size()<kValue) return events;
+		else return events.subList(0, kValue);
+	}
+	
+	@GET
+	@Path("/list/{owner}/kevents/error")
+	public List<BigDataStackEvent> listEventsErrorK(@PathParam("owner") String owner, @QueryParam("k") String k){
+		List<BigDataStackEvent> events =  querying.listEvents(owner, BigDataStackEventSeverity.Error);
+		int kValue = Integer.valueOf(k);
+		if (events.size()<kValue) return events;
+		else return events.subList(0, kValue);
+	}
+	
+	@GET
+	@Path("/list/{owner}/kevents/alert")
+	public List<BigDataStackEvent> listEventsAlertK(@PathParam("owner") String owner, @QueryParam("k") String k){
+		List<BigDataStackEvent> events =  querying.listEvents(owner, BigDataStackEventSeverity.Alert);
+		int kValue = Integer.valueOf(k);
+		if (events.size()<kValue) return events;
+		else return events.subList(0, kValue);
+	}
+	
+	@GET
+	@Path("/list/{owner}/kevents/info")
+	public List<BigDataStackEvent> listEventsInfoK(@PathParam("owner") String owner, @QueryParam("k") String k){
+		List<BigDataStackEvent> events =  querying.listEvents(owner, BigDataStackEventSeverity.Info);
+		int kValue = Integer.valueOf(k);
+		if (events.size()<kValue) return events;
+		else return events.subList(0, kValue);
+	}
+	
+	@GET
+	@Path("/list/{owner}/kevents/warning")
+	public List<BigDataStackEvent> listEventsWarningK(@PathParam("owner") String owner, @QueryParam("k") String k){
+		List<BigDataStackEvent> events =  querying.listEvents(owner, BigDataStackEventSeverity.Warning);
+		int kValue = Integer.valueOf(k);
+		if (events.size()<kValue) return events;
+		else return events.subList(0, kValue);
+	}
+	
+	@GET
+	@Path("/list/{owner}/kevents/all/{type}")
+	public List<BigDataStackEvent> listEventsAllK(@PathParam("owner") String owner, @PathParam("type") String type, @QueryParam("k") String k){
+		List<BigDataStackEvent> events =  querying.listEvents(owner, BigDataStackEventType.valueOf(type));
+		int kValue = Integer.valueOf(k);
+		if (events.size()<kValue) return events;
+		else return events.subList(0, kValue);
+	}
+	
+	@GET
+	@Path("/list/{owner}/kevents/error/{type}")
+	public List<BigDataStackEvent> listEventsErrorK(@PathParam("owner") String owner, @PathParam("type") String type, @QueryParam("k") String k){
+		List<BigDataStackEvent> events =  querying.listEvents(owner, BigDataStackEventSeverity.Error, BigDataStackEventType.valueOf(type));
+		int kValue = Integer.valueOf(k);
+		if (events.size()<kValue) return events;
+		else return events.subList(0, kValue);
+	}
+	
+	@GET
+	@Path("/list/{owner}/kevents/alert/{type}")
+	public List<BigDataStackEvent> listEventsAlertK(@PathParam("owner") String owner, @PathParam("type") String type, @QueryParam("k") String k){
+		List<BigDataStackEvent> events =  querying.listEvents(owner, BigDataStackEventSeverity.Alert, BigDataStackEventType.valueOf(type));
+		int kValue = Integer.valueOf(k);
+		if (events.size()<kValue) return events;
+		else return events.subList(0, kValue);
+	}
+	
+	@GET
+	@Path("/list/{owner}/kevents/info/{type}")
+	public List<BigDataStackEvent> listEventsInfoK(@PathParam("owner") String owner, @PathParam("type") String type, @QueryParam("k") String k){
+		List<BigDataStackEvent> events =  querying.listEvents(owner, BigDataStackEventSeverity.Info, BigDataStackEventType.valueOf(type));
+		int kValue = Integer.valueOf(k);
+		if (events.size()<kValue) return events;
+		else return events.subList(0, kValue);
+	}
+	
+	@GET
+	@Path("/list/{owner}/kevents/warning/{type}")
+	public List<BigDataStackEvent> listEventsWarningK(@PathParam("owner") String owner, @PathParam("type") String type, @QueryParam("k") String k){
+		List<BigDataStackEvent> events =  querying.listEvents(owner, BigDataStackEventSeverity.Warning, BigDataStackEventType.valueOf(type));
+		int kValue = Integer.valueOf(k);
+		if (events.size()<kValue) return events;
+		else return events.subList(0, kValue);
 	}
 	
 	@GET
