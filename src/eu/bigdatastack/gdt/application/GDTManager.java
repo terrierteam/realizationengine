@@ -3,6 +3,7 @@ package eu.bigdatastack.gdt.application;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1472,7 +1473,7 @@ public class GDTManager implements Manager {
 			List<BigDataStackObjectDefinition> objectsForNamespace = objectInstanceClient.getObjectList(owner, namespace, null, null);
 			for (BigDataStackObjectDefinition object : objectsForNamespace) {
 				
-				System.err.println(object.getObjectID()+" "+object.getInstance()+" "+object.getType().name()+" "+object.getStatus().contains("Running"));
+				System.err.println(object.getObjectID()+" "+object.getInstance()+" "+object.getType().name()+" "+Arrays.toString(object.getStatus().toArray()));
 				
 				if (object.getStatus().contains("Available") || object.getStatus().contains("Running") || object.getStatus().contains("In Progress")) {
 					if (object.getType() == BigDataStackObjectType.DeploymentConfig) deploymentsActive++;
