@@ -112,7 +112,7 @@ public class GDTFileUtil {
 				ObjectNode yamlSource = (ObjectNode)node.get("yamlSource");
 				ObjectNode metadata = null;
 				
-				if (yamlSource.has("metadata")) metadata = (ObjectNode)node.get("metadata");
+				if (yamlSource.has("metadata")) metadata = (ObjectNode)yamlSource.get("metadata");
 				else metadata = mapper.createObjectNode();
 				
 				if (node.has("instance")) metadata.put("name", appID+"-"+objectID+"-"+node.get("instance").asInt());
