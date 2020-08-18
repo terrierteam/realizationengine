@@ -1015,9 +1015,8 @@ public class GDTManager implements Manager {
 						newSequenceInstance.getSequenceID()
 						);
 
-				BigDataStackApplication appObject = appClient.getApp(sequenceTemplate.getAppID(), sequenceTemplate.getOwner(), sequenceTemplate.getNamespace());
 				
-				BigDataStackObjectDefinition operationsequenceDef = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/gdt/operationsequence.pod.yaml"), "UTF-8"),appObject);
+				BigDataStackObjectDefinition operationsequenceDef = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/gdt/operationsequence.pod.yaml"), "UTF-8"),null);
 				operationsequenceDef.setNamespace(sequenceTemplate.getNamespace());
 				operationsequenceDef.setAppID(sequenceTemplate.getAppID());
 				operationsequenceDef.setOwner(sequenceTemplate.getOwner());

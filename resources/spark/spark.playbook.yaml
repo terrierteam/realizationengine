@@ -117,7 +117,6 @@ objects:
     yamlSource:
       apiVersion: v1
       kind: Service
-      metadata:
       spec:
         selector:
           jobconfig: $appID$-$objectID$-$instance$
