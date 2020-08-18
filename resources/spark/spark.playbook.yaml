@@ -1,0 +1,186 @@
+appID: "spark"
+name: "Apache Spark"
+description: "Apache Spark is an open-source distributed general-purpose cluster-computing framework. Spark provides an interface for programming entire clusters with implicit data parallelism and fault tolerance."
+owner: "$owner$"
+namespace: "$namespace$"
+types:
+ - playbook
+
+
+objects:
+  # Deployment Config: spark-master
+  - objectID: "spark-master"
+    type: DeploymentConfig
+    yamlSource:
+      apiVersion: apps.openshift.io/v1
+      kind: DeploymentConfig
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+        labels:
+         - "Orchestrator"
+         - "Light Weight"
+      spec:
+        replicas: 1
+        strategy:
+          resources: {}
+        template:
+          metadata:
+            labels:
+              jobconfig: $appID$-$objectID$-$instance$
+          spec:
+            containers:
+             - name: master
+               image: "bitnami/spark:latest"
+               ports: 
+                - name: "masterport"
+                  containerPort: 7077
+                  protocol: "TCP"
+               env:
+                - name: "owner"
+                  value: "$owner$"
+                - name: "namespace"
+                  value: "$namespace$"
+                - name: "appID"
+                  value: "$appID$"
+                - name: "objectID"
+                  value: "$objectID$"
+                - name: "instance"
+                  value: "$instance$"
+                - name: "SPARK_MODE"
+                  value: "master"
+               resources: 
+                 limits:
+                   cpu: "1000m"
+                   memory: "2048Mi"
+                 requests:
+                   cpu: "1000m"
+                   memory: "2048Mi"
+               securityContext: {}
+               serviceAccount: default
+               imagePullPolicy: "Always"
+            restartPolicy: "Always"
+  
+  # Deployment Config: spark-worker
+  - objectID: "spark-worker"
+    type: DeploymentConfig
+    yamlSource:
+      apiVersion: apps.openshift.io/v1
+      kind: DeploymentConfig
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+        labels:
+         - "Worker"
+      spec:
+        replicas: 1
+        strategy:
+          resources: {}
+        template:
+          metadata:
+            labels:
+              jobconfig: $appID$-$objectID$-$instance$
+          spec:
+            containers:
+             - name: master
+               image: "bitnami/spark:latest"
+               ports: 
+                - name: "workerport"
+                  containerPort: 7077
+                  protocol: "TCP"
+               env:
+                - name: "owner"
+                  value: "$owner$"
+                - name: "namespace"
+                  value: "$namespace$"
+                - name: "appID"
+                  value: "$appID$"
+                - name: "objectID"
+                  value: "$objectID$"
+                - name: "instance"
+                  value: "$instance$"
+                - name: "SPARK_MODE"
+                  value: "worker"
+                - name: "SPARK_MASTER_URL"
+                  value: "$sparkmasterservice$"
+               resources: 
+                 limits:
+                   cpu: "1000m"
+                   memory: "2048Mi"
+                 requests:
+                   cpu: "1000m"
+                   memory: "2048Mi"
+               securityContext: {}
+               serviceAccount: default
+               imagePullPolicy: "Always"
+            restartPolicy: "Always"
+  
+  # Service: srv-recommendation-ui
+  - objectID: "srv-spark-master"
+    type: Service
+    yamlSource:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      spec:
+        selector:
+          jobconfig: $appID$-$objectID$-$instance$
+        ports:
+          - name: "master"
+            protocol: "TCP"
+            port: 7077
+            targetPort: 7077
+
+sequences:
+  - sequenceID: "master"
+    name: "Start Spark Master"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Deploys the spark master container on the cluster along with its network service so it can be accessed"
+    parameters: {}
+    operations:
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "spark-master"
+        defineInstanceRef: "master"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "master"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "master"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "master"
+        waitForStatus: "Available"
+      # Now create the service
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "srv-spark-master"
+        defineInstanceRef: "newService"
+      - className: Apply # Create the service on the cluster
+        instanceRef: "newService"
+    mode: Continue
+  - sequenceID: "worker"
+    name: "Start Spark Worker"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Deploys the spark worker container on the cluster"
+    parameters: {}
+    operations:
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "spark-worker"
+        defineInstanceRef: "worker"
+      - className: ParameterFromObjectLookup # lookup the name of the master's service
+        parameter: "sparkmasterservice"
+        criteria: "$namespace$:service:$appID$-srv-spark-master-.*"
+        multipleMatches: "SelectFirst"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "worker"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "worker"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "worker"
+        waitForStatus: "Available"
+    mode: Continue
