@@ -10,5 +10,8 @@ public enum BigDataStackApplicationType {
 
 	playbook,
 	file,
+	inferMissingValues,
+	overrideValues,
+	setObjectMetadata
 	
 }

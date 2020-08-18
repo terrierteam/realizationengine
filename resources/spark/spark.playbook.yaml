@@ -5,18 +5,18 @@ owner: "$owner$"
 namespace: "$namespace$"
 types:
  - playbook
+ - inferMissingValues
+ - overrideValues
+ - setObjectMetadata
 
 
 objects:
   # Deployment Config: spark-master
   - objectID: "spark-master"
-    type: DeploymentConfig
     yamlSource:
       apiVersion: apps.openshift.io/v1
       kind: DeploymentConfig
       metadata:
-        name: $appID$-$objectID$-$instance$
-        namespace: $namespace$
         labels:
          - "Orchestrator"
          - "Light Weight"
@@ -63,13 +63,10 @@ objects:
   
   # Deployment Config: spark-worker
   - objectID: "spark-worker"
-    type: DeploymentConfig
     yamlSource:
       apiVersion: apps.openshift.io/v1
       kind: DeploymentConfig
       metadata:
-        name: $appID$-$objectID$-$instance$
-        namespace: $namespace$
         labels:
          - "Worker"
       spec:
@@ -117,13 +114,10 @@ objects:
   
   # Service: srv-recommendation-ui
   - objectID: "srv-spark-master"
-    type: Service
     yamlSource:
       apiVersion: v1
       kind: Service
       metadata:
-        name: $appID$-$objectID$-$instance$
-        namespace: $namespace$
       spec:
         selector:
           jobconfig: $appID$-$objectID$-$instance$

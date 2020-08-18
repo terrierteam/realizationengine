@@ -386,7 +386,7 @@ public class GDTManager implements Manager {
 	 * @return
 	 */
 	public BigDataStackObjectDefinition registerObject(String yaml) {
-		return registerObject(yaml, null, null);
+		return registerObject(yaml, null);
 	}
 
 	/**
@@ -394,11 +394,53 @@ public class GDTManager implements Manager {
 	 * @param yaml
 	 * @return
 	 */
+	public BigDataStackObjectDefinition registerObject(String yaml, BigDataStackApplication app) {
+		try {
+			BigDataStackObjectDefinition object = GDTFileUtil.readObjectFromString(yaml, app);
+			if (!objectTemplateClient.addObject(object)) {
+				if (!objectTemplateClient.updateObject(object)) {
+					eventUtil.registerEvent(
+							"GDT",
+							object.getOwner(),
+							"None",
+							BigDataStackEventType.ObjectRegistry,
+							BigDataStackEventSeverity.Info,
+							"New Object Definition Template Failed to Register: '"+object.getObjectID()+"'",
+							"Tried to create a new object template '"+object.getObjectID()+"' but failed, likely due to a template with the same ID already existing",
+							object.getObjectID()
+							);
+					return null;
+				}
+
+			}
+
+			eventUtil.registerEvent(
+					"GDT",
+					object.getOwner(),
+					"None",
+					BigDataStackEventType.ObjectRegistry,
+					BigDataStackEventSeverity.Info,
+					"New Object Definition Template Registered: '"+object.getObjectID()+"'",
+					"A new object template was created '"+object.getObjectID()+"'",
+					object.getObjectID()
+					);
+			return object;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Registers a new BigDataStack Object Definition with the database from a yaml format String
+	 * @param yaml
+	 * @return
+	 */
 	public BigDataStackObjectDefinition registerObject(String yaml, String namespace, String owner) {
 		try {
-			BigDataStackObjectDefinition object = GDTFileUtil.readObjectFromString(yaml);
-			if (namespace!=null) object.setNamespace(namespace);
-			if (owner!=null) object.setOwner(owner);
+			BigDataStackObjectDefinition object = GDTFileUtil.readObjectFromString(yaml, null);
+			object.setNamespace(namespace);
+			object.setOwner(owner);
 			if (!objectTemplateClient.addObject(object)) {
 				if (!objectTemplateClient.updateObject(object)) {
 					eventUtil.registerEvent(
@@ -973,7 +1015,9 @@ public class GDTManager implements Manager {
 						newSequenceInstance.getSequenceID()
 						);
 
-				BigDataStackObjectDefinition operationsequenceDef = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/gdt/operationsequence.pod.yaml"), "UTF-8"));
+				BigDataStackApplication appObject = appClient.getApp(sequenceTemplate.getAppID(), sequenceTemplate.getOwner(), sequenceTemplate.getNamespace());
+				
+				BigDataStackObjectDefinition operationsequenceDef = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/gdt/operationsequence.pod.yaml"), "UTF-8"),appObject);
 				operationsequenceDef.setNamespace(sequenceTemplate.getNamespace());
 				operationsequenceDef.setAppID(sequenceTemplate.getAppID());
 				operationsequenceDef.setOwner(sequenceTemplate.getOwner());
@@ -1638,7 +1682,7 @@ public class GDTManager implements Manager {
 				while (objectsI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(objectsI.next());
 					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace);
-					registerObject(jsonAsYaml);
+					registerObject(jsonAsYaml, app);
 				}
 			}
 
