@@ -52,7 +52,6 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackMetric;
-import eu.bigdatastack.gdt.structures.data.BigDataStackMetricValue;
 import eu.bigdatastack.gdt.structures.data.BigDataStackNamespaceState;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
@@ -1670,7 +1669,7 @@ public class GDTManager implements Manager {
 				Iterator<JsonNode> metricI = metrics.iterator();
 				while (metricI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(metricI.next());
-					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace);
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
 					registerMetric(jsonAsYaml);
 				}
 			}
@@ -1680,7 +1679,7 @@ public class GDTManager implements Manager {
 				Iterator<JsonNode> objectsI = objects.iterator();
 				while (objectsI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(objectsI.next());
-					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace);
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
 					registerObject(jsonAsYaml, app);
 				}
 			}
@@ -1691,7 +1690,7 @@ public class GDTManager implements Manager {
 				Iterator<JsonNode> sequencesI = sequences.iterator();
 				while (sequencesI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(sequencesI.next());
-					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace);
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
 					registerOperationSequence(jsonAsYaml);
 				}
 			}
@@ -1701,7 +1700,7 @@ public class GDTManager implements Manager {
 				Iterator<JsonNode> sequencesI = sequences.iterator();
 				while (sequencesI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(sequencesI.next());
-					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace);
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
 					registerSLO(jsonAsYaml);
 				}
 			}
@@ -1712,10 +1711,13 @@ public class GDTManager implements Manager {
 
 	}
 
-	protected static String replaceDefaultParameters(String yaml, String appID, String owner, String namespace) {
+	protected static String replaceDefaultParameters(String yaml, String appID, String owner, String namespace, String hostExtension, String imageRepositoryHost) {
 		yaml = yaml.replaceAll("\\$appID\\$", appID);
 		yaml = yaml.replaceAll("\\$owner\\$", owner);
 		yaml = yaml.replaceAll("\\$namespace\\$", namespace);
+		yaml = yaml.replaceAll("\\$hostExtension\\$", hostExtension);
+		yaml = yaml.replaceAll("\\$imageRepositoryHost\\$", imageRepositoryHost);
+
 
 		yaml = yaml.replaceAll("\\$appid\\$", appID);
 
