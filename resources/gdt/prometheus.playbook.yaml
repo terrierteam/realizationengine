@@ -5,6 +5,9 @@ owner: "gdt"
 namespace: "$namespace$"
 types:
  - playbook
+ - inferMissingValues
+ - overrideValues
+ - setObjectMetadata
 
 objects:
   - objectID: "prometheusconfig"

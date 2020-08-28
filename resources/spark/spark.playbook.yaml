@@ -16,10 +16,6 @@ objects:
     yamlSource:
       apiVersion: apps.openshift.io/v1
       kind: DeploymentConfig
-      metadata:
-        labels:
-         - "Orchestrator"
-         - "Light Weight"
       spec:
         replicas: 1
         strategy:
@@ -28,6 +24,7 @@ objects:
           metadata:
             labels:
               jobconfig: $appID$-$objectID$-$instance$
+              sparkmaster: $appID$-$objectID$
           spec:
             containers:
              - name: master
@@ -35,6 +32,9 @@ objects:
                ports: 
                 - name: "masterport"
                   containerPort: 7077
+                  protocol: "TCP"
+                - name: "masterui"
+                  containerPort: 8080
                   protocol: "TCP"
                env:
                 - name: "owner"
@@ -66,9 +66,6 @@ objects:
     yamlSource:
       apiVersion: apps.openshift.io/v1
       kind: DeploymentConfig
-      metadata:
-        labels:
-         - "Worker"
       spec:
         replicas: 1
         strategy:
@@ -99,7 +96,7 @@ objects:
                 - name: "SPARK_MODE"
                   value: "worker"
                 - name: "SPARK_MASTER_URL"
-                  value: "$sparkmasterservice$"
+                  value: "$sparkmasterservice$:7077"
                resources: 
                  limits:
                    cpu: "1000m"
@@ -119,12 +116,31 @@ objects:
       kind: Service
       spec:
         selector:
-          jobconfig: $appID$-$objectID$-$instance$
+          sparkmaster: $appID$-"spark-master"
         ports:
           - name: "master"
             protocol: "TCP"
             port: 7077
             targetPort: 7077
+          - name: "ui"
+            protocol: "TCP"
+            port: 8080
+            targetPort: 8080
+  
+  # Route: route-spark
+  - objectID: "sparkui"
+    yamlSource:
+      kind: Route
+      apiVersion: route.openshift.io/v1
+      spec:
+        host: sparkui-$namespace$.$hostExtension$
+        to:
+          kind: Service
+          name: $serviceLookup$
+          weight: 100
+        port:
+          targetPort: ui
+        wildcardPolicy: None
 
 sequences:
   - sequenceID: "master"
@@ -132,7 +148,7 @@ sequences:
     appID: "$appID$"
     owner: "$owner$"
     namespace: "$namespace$"
-    description: "Deploys the spark master container on the cluster along with its network service so it can be accessed"
+    description: "Deploys the spark master container on the cluster along with its network service and route so it can be accessed"
     parameters: {}
     operations:
       # Steps for creating the deployment config
@@ -152,6 +168,18 @@ sequences:
         defineInstanceRef: "newService"
       - className: Apply # Create the service on the cluster
         instanceRef: "newService"
+      # Now create the route
+      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+        parameter: "serviceLookup"
+        criteria: "$namespace$:service:$appID$-srv-spark-master-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "sparkui"
+        defineInstanceRef: "newRoute"
+      - className: SetSequenceParameters # Fill in any missing placeholders (most notably 'serviceLookup' found above)
+        instanceRef: "newRoute"
+      - className: Apply # Create the route on the cluster
+        instanceRef: "newRoute"
     mode: Continue
   - sequenceID: "worker"
     name: "Start Spark Worker"

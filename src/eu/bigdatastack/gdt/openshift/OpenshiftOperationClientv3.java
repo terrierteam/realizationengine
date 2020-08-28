@@ -261,6 +261,11 @@ public class OpenshiftOperationClientv3 implements OpenshiftOperationClient {
 	public IClient getClient() {
 		return client;
 	}
+
+	@Override
+	public String execCommand(BigDataStackObjectDefinition object, int instance, String[] command) {
+		return null;
+	}
 	
 	
 	

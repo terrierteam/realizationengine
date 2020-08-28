@@ -1,8 +1,13 @@
 package eu.bigdatastack.gdt.openshift;
 
 import java.io.ByteArrayInputStream;
+import java.io.StringReader;
 import java.util.List;
-
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -12,14 +17,19 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.batch.Job;
+import io.fabric8.kubernetes.client.Callback;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
+import io.fabric8.kubernetes.client.dsl.ExecListener;
+import io.fabric8.kubernetes.client.dsl.ExecWatch;
+import io.fabric8.kubernetes.client.utils.InputStreamPumper;
 import io.fabric8.openshift.api.model.DeploymentConfig;
 import io.fabric8.openshift.api.model.Role;
 import io.fabric8.openshift.api.model.RoleBinding;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
+import okhttp3.Response;
 
 public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClient{
 
@@ -30,7 +40,7 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 	String username;
 	String password;
 	String namespace;
-	
+
 	OpenShiftClient osClient;
 	OpenshiftStatusFabric8ioClient statusClient;
 
@@ -56,7 +66,7 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 
 			osClient = new DefaultOpenShiftClient(config);
 			statusClient = new OpenshiftStatusFabric8ioClient(osClient);
-			
+
 			Thread.sleep(3000);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -75,58 +85,58 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 
 			switch (object.getType()) {
 			case DeploymentConfig:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
-				
-				osClient.deploymentConfigs().inNamespace(object.getNamespace()).withName(object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance()).deployLatest(true);
-				
-				return true;
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
+
+			osClient.deploymentConfigs().inNamespace(object.getNamespace()).withName(object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance()).deployLatest(true);
+
+			return true;
 			case Service:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
-				return true;
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
+			return true;
 			case Job:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
-				return true;
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
+			return true;
 			case Route:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
-				return true;
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
+			return true;
 			case Pod:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
-				return true;
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
+			return true;
 			case Secret:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
-				return true;
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
+			return true;
 			case ConfigMap:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
-				return true;
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
+			return true;
 			case ServiceAccount:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
-				return true;
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
+			return true;
 			case RoleBinding:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
-				return true;
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
+			return true;
 			case Role:
-				{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
-				osClient.load(stream).createOrReplace();
-				stream.close();}
-				return true;
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
+			return true;
 			case Playbook:
 				return false;
 			default:
@@ -224,6 +234,78 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 		return osClient;
 	}
 
-	
+	@Override
+	public String execCommand(BigDataStackObjectDefinition object, int instance, String[] command) {
+
+		ScheduledExecutorService executorService = Executors.newScheduledThreadPool(20);
+
+	        try {
+				for (int i = 0; i < 10; System.out.println("i=" + i), i++) {
+				  ExecWatch watch = null;
+				  InputStreamPumper pump = null;
+				  final CountDownLatch latch = new CountDownLatch(1);
+				  watch = osClient.pods().withName(object.getAppID()+"-"+object.getObjectID()+"-"+instance).redirectingOutput().usingListener(new ExecListener() {
+				    @Override
+				    public void onOpen(Response response) {
+				    }
+
+				    @Override
+				    public void onFailure(Throwable t, Response response) {
+				      latch.countDown();
+				    }
+
+				    @Override
+				    public void onClose(int code, String reason) {
+				      latch.countDown();
+				    }
+				  }).exec("date");
+				  pump = new InputStreamPumper(watch.getOutput(), new SystemOutCallback());
+				  executorService.submit(pump);
+				  Future<String> outPumpFuture = executorService.submit(pump, "Done");
+				  executorService.scheduleAtFixedRate(new FutureChecker("Pump " + (i + 1), outPumpFuture), 0, 2, TimeUnit.SECONDS);
+
+				  latch.await(5, TimeUnit.SECONDS);
+				  //We need to wait or the pumper (ws -> System.out) will not be able to print the message.
+				  //Thread.sleep(1000);
+				  watch.close();
+				  pump.close();
+
+				}
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	  
+
+	    executorService.shutdown();
+	    System.out.println("Done.");
+		return null;
+	}
+
+	private static class SystemOutCallback implements Callback<byte[]> {
+		@Override
+		public void call(byte[] data) {
+			System.out.print(new String(data));
+		}
+	}
+
+	private static class FutureChecker implements Runnable {
+		private final String name;
+		private final Future<String> future;
+
+		private FutureChecker(String name, Future<String> future) {
+			this.name = name;
+			this.future = future;
+		}
+
+		@Override
+		public void run() {
+			if(!future.isDone()) {
+				System.out.println("Future:[" + name + "] is not done yet");
+			}
+		}
+	}
+
+
 
 }

@@ -44,4 +44,13 @@ public interface OpenshiftOperationClient {
 	 * Close the connection to Openshift.
 	 */
 	public void close();
+	
+	/**
+	 * Executes a command on a specified Pod object
+	 * @param object
+	 * @param instance
+	 * @param command
+	 * @return
+	 */
+	public String execCommand(BigDataStackObjectDefinition object, int instance, String[] command);
 }
