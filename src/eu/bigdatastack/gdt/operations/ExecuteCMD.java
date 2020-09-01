@@ -184,7 +184,10 @@ public class ExecuteCMD extends BigDataStackOperation {
 				String commandPart = secondLevelNodes.next().asText();
 				commandParts.add(commandPart);
 			}
-			String[] command = (String[])commandParts.toArray();
+			String[] command = new String[commandParts.size()];
+			for (int j =0; j<commandParts.size(); j++) {
+				command[j] = commandParts.get(j);
+			}
 			commands[i] = command;
 			i++;
 		}
