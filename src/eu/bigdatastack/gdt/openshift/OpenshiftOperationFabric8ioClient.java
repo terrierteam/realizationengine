@@ -32,6 +32,7 @@ import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
 import okhttp3.Response;
 
+@SuppressWarnings("deprecation")
 public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClient{
 
 	final String client = "fabric8io";
@@ -238,14 +239,10 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 	@Override
 	public List<String> execCommands(BigDataStackPodStatus pod, String[][] commands) {
 
-		return execCommands(pod.getAppID(), pod.getObjectID(), pod.getInstance(), commands);
+		return execCommands(pod.getPodID(), commands);
 	}
 	
-	public List<String> execCommands(String appID, String objectID, int instance, String[][] commands) {
-		return execCommands(appID+"-"+objectID+"-"+instance, commands);
-	}
 	
-	@SuppressWarnings("deprecation")
 	public List<String> execCommands(String podName, String[][] commands) {
 		
 		List<String> commandOutput = new ArrayList<String>();
