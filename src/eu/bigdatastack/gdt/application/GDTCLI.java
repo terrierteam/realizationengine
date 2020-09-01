@@ -339,6 +339,16 @@ public class GDTCLI {
 			}
 			
 			break;
+			
+		case "delete":
+			if (args.length==1) {
+				System.out.println("delete app <owner> <namespace> <appID>");
+			} else {
+				if (args[1].equalsIgnoreCase("app")) {
+					manager.deleteApp(args[2], args[3], args[4]);
+				}
+			}
+			break;
 		}
 		
 		manager.shutdown();

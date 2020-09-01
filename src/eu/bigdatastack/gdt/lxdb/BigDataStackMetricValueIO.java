@@ -230,6 +230,36 @@ public class BigDataStackMetricValueIO implements Timed {
 		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
 	}
+	
+	public boolean delete(String owner, String namespace, String appID, String objectID, String metricName) {
+
+		try {
+			if (!init) { initTable(); init=true;}
+			long startTime = System.currentTimeMillis();
+			Connection conn = client.openConnection();
+
+			Statement statement = conn.createStatement();
+
+			StringBuilder baseStatement = new StringBuilder();
+			baseStatement.append("DELETE FROM "+tableName+" WHERE owner='"+owner+"'");
+			if (namespace!=null) baseStatement.append(" AND namespace='"+namespace+"'");
+			if (appID!=null) baseStatement.append(" AND appID='"+appID+"'");
+			if (objectID!=null) baseStatement.append(" AND objectID='"+objectID+"'");
+			if (metricName!=null) baseStatement.append(" AND metricName='"+metricName+"'");
+			
+
+			
+			statement.execute(baseStatement.toString());
+				
+
+			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 
 	
 	/**

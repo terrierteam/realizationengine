@@ -241,6 +241,33 @@ public class BigDataStackMetricIO implements Timed {
 		return true;
 	}
 	
+	public boolean delete(String owner, String name) {
+
+		try {
+			if (!init) { initTable(); init=true;}
+			long startTime = System.currentTimeMillis();
+			Connection conn = client.openConnection();
+
+			Statement statement = conn.createStatement();
+
+			StringBuilder baseStatement = new StringBuilder();
+			baseStatement.append("DELETE FROM "+tableName+" WHERE owner='"+owner+"'");
+			if (name!=null) baseStatement.append(" AND name='"+name+"'");
+			
+
+			
+			statement.execute(baseStatement.toString());
+				
+
+			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
 	/**
 	 * Deletes the table in the database and re-creates it
 	 * @return

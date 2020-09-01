@@ -240,6 +240,36 @@ public class BigDataStackPodStatusIO implements Timed {
 		return true;
 	}
 	
+	public boolean delete(String owner, String namespace, String appID, String objectID, int instance) {
+
+		try {
+			if (!init) { initTable(); init=true;}
+			long startTime = System.currentTimeMillis();
+			Connection conn = client.openConnection();
+
+			Statement statement = conn.createStatement();
+
+			StringBuilder baseStatement = new StringBuilder();
+			baseStatement.append("DELETE FROM "+tableName+" WHERE owner='"+owner+"'");
+			if (namespace!=null) baseStatement.append(" AND namespace='"+namespace+"'");
+			if (appID!=null) baseStatement.append(" AND appID='"+appID+"'");
+			if (objectID!=null) baseStatement.append(" AND objectID='"+objectID+"'");
+			if (instance>=0) baseStatement.append(" AND instance="+instance);
+			
+
+			
+			statement.execute(baseStatement.toString());
+				
+
+			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
 	/**
 	 * Deletes the table in the database and re-creates it
 	 * @return

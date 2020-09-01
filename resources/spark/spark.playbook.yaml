@@ -116,7 +116,7 @@ objects:
       kind: Service
       spec:
         selector:
-          sparkmaster: $appID$-"spark-master"
+          sparkmaster: $appID$-spark-master
         ports:
           - name: "master"
             protocol: "TCP"

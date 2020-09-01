@@ -370,6 +370,34 @@ public class BigDataStackEventIO implements Timed {
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventSeverity severity, String objectID, long startTime, long endTime) throws SQLException {
 		return getEvents(appID,owner,null, severity, objectID,startTime,endTime);
 	}
+	
+	public boolean delete(String owner, String namespace, String appID, String objectID) {
+
+		try {
+			if (!init) { initTable(); init=true;}
+			long startTime = System.currentTimeMillis();
+			Connection conn = client.openConnection();
+
+			Statement statement = conn.createStatement();
+
+			StringBuilder baseStatement = new StringBuilder();
+			baseStatement.append("DELETE FROM "+tableName+" WHERE owner='"+owner+"'");
+			if (namespace!=null) baseStatement.append(" AND namespace='"+namespace+"'");
+			if (appID!=null) baseStatement.append(" AND appID='"+appID+"'");
+			if (objectID!=null) baseStatement.append(" AND objectID='"+objectID+"'");
+
+			
+			statement.execute(baseStatement.toString());
+				
+
+			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 
 	/**
 	 * Deletes the table in the database and re-creates it

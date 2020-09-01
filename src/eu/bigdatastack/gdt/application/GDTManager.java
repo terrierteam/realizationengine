@@ -1710,6 +1710,45 @@ public class GDTManager implements Manager {
 		}
 
 	}
+	
+	/**
+	 * Perform a full shutdown of a user application and delete all underlying object trackers
+	 * @param owner
+	 * @param namespace
+	 * @param appID
+	 */
+	public boolean deleteApp(String owner, String namespace, String appID) {
+		
+		try {
+			// Stage 1: Get App
+			BigDataStackApplication app = appClient.getApp(appID, owner, namespace);
+			if (app==null) return false;
+			
+			
+			// Stage 2: Delete objects on the cluster
+			List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects(null, owner, namespace, appID);
+			for (BigDataStackObjectDefinition object : objects) {
+				openshiftOperationClient.deleteOperation(object);
+			}
+			
+			// Stage 3: Delete realization engine objects
+			sloClient.delete(owner, namespace, appID, null, -1);
+			metricValueClient.delete(owner, namespace, appID, null, null);
+			objectInstanceClient.delete(owner, namespace, appID, null, -1);
+			sequenceTemplateClient.delete(owner, namespace, appID, null, -1);
+			sequenceInstanceClient.delete(owner, namespace, appID, null, -1);
+			sequenceTemplateClient.delete(owner, namespace, appID, null, -1);
+			podStatusClient.delete(owner, namespace, appID, null, -1);
+			appClient.delete(owner, namespace, appID);
+			eventClient.delete(owner, namespace, appID, null);
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		
+	}
 
 	protected static String replaceDefaultParameters(String yaml, String appID, String owner, String namespace, String hostExtension, String imageRepositoryHost) {
 		yaml = yaml.replaceAll("\\$appID\\$", appID);
