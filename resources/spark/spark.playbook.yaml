@@ -204,6 +204,7 @@ sequences:
       - className: WaitFor # Wait until the deployment config is reporting available
         instanceRef: "worker"
         waitForStatus: "Available"
+    mode: Continue
   - sequenceID: "deployjar"
     name: "Deploy Job"
     appID: "$appID$"
