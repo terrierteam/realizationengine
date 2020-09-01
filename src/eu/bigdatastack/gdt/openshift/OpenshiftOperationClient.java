@@ -1,6 +1,9 @@
 package eu.bigdatastack.gdt.openshift;
 
+import java.util.List;
+
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
+import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
 
 /**
  * This is a standard interface for communicating with Openshift to
@@ -52,5 +55,5 @@ public interface OpenshiftOperationClient {
 	 * @param command
 	 * @return
 	 */
-	public String execCommand(BigDataStackObjectDefinition object, int instance, String[] command);
+	public List<String> execCommands(BigDataStackPodStatus pod, String[][] commands);
 }

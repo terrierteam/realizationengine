@@ -204,4 +204,46 @@ sequences:
       - className: WaitFor # Wait until the deployment config is reporting available
         instanceRef: "worker"
         waitForStatus: "Available"
+  - sequenceID: "deployjar"
+    name: "Deploy Job"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Deploys a job onto the Spark instance"
+    parameters: {}
+    operations:
+     - className: "ExecuteCMD"
+       objectID: "spark-master"
+       instancelookupCriteria: "first"
+       commands:
+        - - "ls"
+          - "-l"
+        - - "echo"
+          - "hello"
+  - sequenceID: "scaleworker"
+    name: "Scale Up Worker"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Increases the replication factor for a worker"
+    parameters: {}
+    operations:
+     - className: "ScaleUp"
+       instance: 1
+       increaseBy: 1
+    mode: Continue
+  - sequenceID: "deleteworker"
+    name: "Delete Worker"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Deletes a worker"
+    parameters: {}
+    operations:
+     - className: "InstanceRefFromObjectLookup"
+       defineInstanceRef: "workerInstance"
+       criteria: "$namespace$:deploymentconfig:$appID$-spark-worker-.*"
+       multipleMatches: "SelectFirst"
+     - className: "Delete"
+       instanceRef: "workerInstance"
     mode: Continue

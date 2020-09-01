@@ -16,6 +16,7 @@ import com.openshift.restclient.model.IResource;
 
 
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
+import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
 
 public class OpenshiftOperationClientv3 implements OpenshiftOperationClient {
 
@@ -263,7 +264,7 @@ public class OpenshiftOperationClientv3 implements OpenshiftOperationClient {
 	}
 
 	@Override
-	public String execCommand(BigDataStackObjectDefinition object, int instance, String[] command) {
+	public List<String> execCommands(BigDataStackPodStatus pod, String[][] commands) {
 		return null;
 	}
 	

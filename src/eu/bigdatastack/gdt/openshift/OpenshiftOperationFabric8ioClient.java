@@ -1,7 +1,7 @@
 package eu.bigdatastack.gdt.openshift;
 
 import java.io.ByteArrayInputStream;
-import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -10,6 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
+import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ReplicationController;
@@ -235,57 +236,87 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 	}
 
 	@Override
-	public String execCommand(BigDataStackObjectDefinition object, int instance, String[] command) {
+	public List<String> execCommands(BigDataStackPodStatus pod, String[][] commands) {
 
+		return execCommands(pod.getAppID(), pod.getObjectID(), pod.getInstance(), commands);
+	}
+	
+	public List<String> execCommands(String appID, String objectID, int instance, String[][] commands) {
+		return execCommands(appID+"-"+objectID+"-"+instance, commands);
+	}
+	
+	@SuppressWarnings("deprecation")
+	public List<String> execCommands(String podName, String[][] commands) {
+		
+		List<String> commandOutput = new ArrayList<String>();
+		
 		ScheduledExecutorService executorService = Executors.newScheduledThreadPool(20);
 
-	        try {
-				for (int i = 0; i < 10; System.out.println("i=" + i), i++) {
-				  ExecWatch watch = null;
-				  InputStreamPumper pump = null;
-				  final CountDownLatch latch = new CountDownLatch(1);
-				  watch = osClient.pods().withName(object.getAppID()+"-"+object.getObjectID()+"-"+instance).redirectingOutput().usingListener(new ExecListener() {
-				    @Override
-				    public void onOpen(Response response) {
-				    }
+		try {
+			int i =0;
+			for (String[] command : commands) {
+				ExecWatch watch = null;
+				InputStreamPumper pump = null;
+				InputStreamPumper pumpErr = null;
+				final CountDownLatch latch = new CountDownLatch(1);
+				watch = osClient.pods().withName(podName).redirectingOutput().usingListener(new ExecListener() {
+					@Override
+					public void onOpen(Response response) {
+					}
 
-				    @Override
-				    public void onFailure(Throwable t, Response response) {
-				      latch.countDown();
-				    }
+					@Override
+					public void onFailure(Throwable t, Response response) {
+						latch.countDown();
+					}
 
-				    @Override
-				    public void onClose(int code, String reason) {
-				      latch.countDown();
-				    }
-				  }).exec("date");
-				  pump = new InputStreamPumper(watch.getOutput(), new SystemOutCallback());
-				  executorService.submit(pump);
-				  Future<String> outPumpFuture = executorService.submit(pump, "Done");
-				  executorService.scheduleAtFixedRate(new FutureChecker("Pump " + (i + 1), outPumpFuture), 0, 2, TimeUnit.SECONDS);
+					@Override
+					public void onClose(int code, String reason) {
+						latch.countDown();
+					}
+				}).exec(command);
+				SystemOutCallback callback = new SystemOutCallback();
+				pump = new InputStreamPumper(watch.getOutput(), callback);
+				pumpErr = new InputStreamPumper(watch.getError(), callback);
+				executorService.submit(pump);
+				executorService.submit(pumpErr);
+				Future<String> outPumpFuture = executorService.submit(pump, "Done");
+				executorService.scheduleAtFixedRate(new FutureChecker("Command " + (i + 1), outPumpFuture), 0, 2, TimeUnit.SECONDS);
 
-				  latch.await(5, TimeUnit.SECONDS);
-				  //We need to wait or the pumper (ws -> System.out) will not be able to print the message.
-				  //Thread.sleep(1000);
-				  watch.close();
-				  pump.close();
+				latch.await(10, TimeUnit.SECONDS);
+				//We need to wait or the pumper (ws -> System.out) will not be able to print the message.
+				//Thread.sleep(1000);
+				commandOutput.add(callback.getOutput());
+				
+				watch.close();
+				pump.close();
+				pumpErr.close();
+				i++;
 
-				}
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
-	  
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 
-	    executorService.shutdown();
-	    System.out.println("Done.");
-		return null;
+
+		executorService.shutdown();
+		//System.out.println("Done.");
+		return commandOutput;
 	}
 
+
 	private static class SystemOutCallback implements Callback<byte[]> {
+		
+		StringBuilder builder = new StringBuilder();
+		
 		@Override
 		public void call(byte[] data) {
-			System.out.print(new String(data));
+			builder.append(new String(data));
+			builder.append('\n');
+		}
+		
+		public String getOutput() {
+			return builder.toString();
 		}
 	}
 
@@ -301,7 +332,8 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 		@Override
 		public void run() {
 			if(!future.isDone()) {
-				System.out.println("Future:[" + name + "] is not done yet");
+				//
+			System.out.println("Future:[" + name + "] is not done yet");
 			}
 		}
 	}
