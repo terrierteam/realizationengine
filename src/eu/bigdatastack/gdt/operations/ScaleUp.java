@@ -232,6 +232,7 @@ public class ScaleUp extends BigDataStackOperation {
 	
 	@Override
 	public void initalizeFromJson(JsonNode configJson) {
+		objectID = configJson.get("objectID").asText();
 		instance = configJson.get("instance").asInt();
 		if (configJson.has("increaseBy")) replicasToIncreaseBy = configJson.get("increaseBy").asInt();
 		

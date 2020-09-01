@@ -220,6 +220,7 @@ sequences:
           - "-l"
         - - "echo"
           - "hello"
+    mode: Continue
   - sequenceID: "scaleworker"
     name: "Scale Up Worker"
     appID: "$appID$"
@@ -229,6 +230,7 @@ sequences:
     parameters: {}
     operations:
      - className: "ScaleUp"
+       objectID: "spark-worker"
        instance: 1
        increaseBy: 1
     mode: Continue
