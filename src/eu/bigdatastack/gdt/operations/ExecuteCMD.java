@@ -117,6 +117,7 @@ public class ExecuteCMD extends BigDataStackOperation {
 		try {
 			for (BigDataStackPodStatus status : statuses) {
 				List<String> outputs = openshiftOperationClient.execCommands(status, commands);
+				System.out.println(outputs2PrintFormat(outputs));
 				if (outputs==null) {
 					eventUtil.registerEvent(
 							getAppID(),

@@ -237,9 +237,9 @@ sequences:
           - "--class"
           - "Main"
           - "--master"
-          - "spark://localhost:7077"
+          - "spark://0.0.0.0:7077"
           - "--deploy-mode"
-          - "client"
+          - "cluster"
           - "/tmp/BigDataStack-Spark-Example-1.0.jar"
     mode: Continue
   - sequenceID: "scaleworker"

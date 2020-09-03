@@ -389,7 +389,7 @@ public class BigDataStackEventIO implements Timed {
 			
 			statement.execute(baseStatement.toString());
 				
-
+			conn.commit();
 			conn.close();
 			totalTime+=System.currentTimeMillis()-startTime;
 			return true;
