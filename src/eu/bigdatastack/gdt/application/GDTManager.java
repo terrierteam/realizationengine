@@ -1356,6 +1356,31 @@ public class GDTManager implements Manager {
 			return false;
 		}
 	}
+	
+	
+	public boolean cleanupSequenceRunners(String owner, String namespace, String appID) {
+		try {
+
+			// First try and kill the sequence runner (this may not exist)
+			List<BigDataStackObjectDefinition> sequenceRunners = objectInstanceClient.getObjects("operationsequence", "gdt", namespace, appID);
+			for (BigDataStackObjectDefinition sequenceRunner : sequenceRunners) {
+				// weird sub-case where we want to check whether the object yaml has labels
+				JsonNode yamlSource = yamlMapper.readTree(sequenceRunner.getYamlSource());
+				JsonNode metadata = yamlSource.get("metadata");
+				JsonNode labels = metadata.get("labels");
+				if (!labels.has("appID") || !labels.get("appID").asText().equalsIgnoreCase(appID)) continue;
+
+				// if we get to here then we have found a sequence runner for the specified sequence and instance
+				boolean deleted =  openshiftOperationClient.deleteOperation(sequenceRunner); // try deleting it
+				if (!deleted) return false;
+
+			}
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 
 	/**
 	 * Aggregates status information for the Realization Core Components
@@ -1741,6 +1766,8 @@ public class GDTManager implements Manager {
 			podStatusClient.delete(owner, namespace, appID, null, -1);
 			appClient.delete(owner, namespace, appID);
 			eventClient.delete(owner, namespace, appID, null);
+			
+			cleanupSequenceRunners(owner, namespace, appID);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();

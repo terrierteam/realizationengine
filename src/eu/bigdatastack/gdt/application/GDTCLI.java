@@ -347,6 +347,10 @@ public class GDTCLI {
 				if (args[1].equalsIgnoreCase("app")) {
 					manager.deleteApp(args[2], args[3], args[4]);
 				}
+				
+				if (args[1].equalsIgnoreCase("sequenceRunners")) {
+					manager.cleanupSequenceRunners(args[2], args[3], args[4]);
+				}
 			}
 			break;
 		}
