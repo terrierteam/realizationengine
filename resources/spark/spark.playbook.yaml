@@ -596,4 +596,156 @@ sequences:
       - className: WaitFor # Wait until the deployment config is reporting available
         instanceRef: "kafkaInstance"
         waitForStatus: "Available"
-    mode: Continue  
+    mode: Continue
+  - sequenceID: "everything"
+    name: "Deploy Full Grocery Recommendation System"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Sequentially deploys the grocery recommendation system from first principles. This will first setup the feedback collector, then launch zookeeper and kafka. Following this, a spark cluster will be deployed, and the job jar will be submitted to the cluster."
+    parameters: {}
+    operations:
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "feedbackcollector"
+        defineInstanceRef: "feedbackcollectorInstance"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "feedbackcollectorInstance"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "feedbackcollectorInstance"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "feedbackcollectorInstance"
+        waitForStatus: "Available"
+      # Now create the service
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "srv-feedbackcollector"
+        defineInstanceRef: "newServiceFC"
+      - className: Apply # Create the service on the cluster
+        instanceRef: "newServiceFC"
+      # Now create the route
+      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+        parameter: "serviceFeedbackCollectorLookup"
+        criteria: "$namespace$:service:$appID$-srv-feedbackcollector-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "route-feedbackcollector"
+        defineInstanceRef: "newRouteFC"
+      - className: SetSequenceParameters # Fill in any missing placeholders (most notably 'serviceLookup' found above)
+        instanceRef: "newRouteFC"
+      - className: Apply # Create the route on the cluster
+        instanceRef: "newRouteFC"
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "zookeeper-server"
+        defineInstanceRef: "zookeeperInstance"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "zookeeperInstance"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "zookeeperInstance"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "zookeeperInstance"
+        waitForStatus: "Available"
+      # Now create the service
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "srv-zookeeper"
+        defineInstanceRef: "newServiceZK"
+      - className: Apply # Create the service on the cluster
+        instanceRef: "newServiceZK"
+      # Now create the service
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "srv-kafka"
+        defineInstanceRef: "newServiceKafka"
+      - className: Apply # Create the service on the cluster
+        instanceRef: "newServiceKafka"
+      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+        parameter: "kafkaLookup"
+        criteria: "$namespace$:service:$appID$-srv-kafka-.*"
+        multipleMatches: "SelectFirst"
+      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+        parameter: "zookeeperLookup"
+        criteria: "$namespace$:service:$appID$-srv-zookeeper-.*"
+        multipleMatches: "SelectFirst"
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "kafka-server"
+        defineInstanceRef: "kafkaInstance"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "kafkaInstance"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "kafkaInstance"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "kafkaInstance"
+        waitForStatus: "Available"
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "spark-master"
+        defineInstanceRef: "master"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "master"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "master"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "master"
+        waitForStatus: "Available"
+      # Now create the service
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "srv-spark-master"
+        defineInstanceRef: "newService"
+      - className: Apply # Create the service on the cluster
+        instanceRef: "newService"
+      # Now create the route
+      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+        parameter: "serviceLookup"
+        criteria: "$namespace$:service:$appID$-srv-spark-master-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "sparkui"
+        defineInstanceRef: "newRoute"
+      - className: SetSequenceParameters # Fill in any missing placeholders (most notably 'serviceLookup' found above)
+        instanceRef: "newRoute"
+      - className: Apply # Create the route on the cluster
+        instanceRef: "newRoute"
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "spark-worker"
+        defineInstanceRef: "worker"
+      - className: ParameterFromObjectLookup # lookup the name of the master's service
+        parameter: "sparkmasterservice"
+        criteria: "$namespace$:service:$appID$-srv-spark-master-.*"
+        multipleMatches: "SelectFirst"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "worker"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "worker"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "worker"
+        waitForStatus: "Available"
+      - className: "ExecuteCMD"
+        objectID: "spark-master"
+        instancelookupCriteria: "first"
+        commands:
+         - - "wget"
+           - "http://nfswebhost-richardmproject.ida.dcs.gla.ac.uk/bigdatastack/ATOSWL/als-spark-streaming-assembly-0.1.jar"
+           - "-O"
+           - "/tmp/als-spark-streaming-assembly-0.1.jar"
+      - className: "ExecuteCMD"
+        objectID: "spark-worker"
+        instancelookupCriteria: "all"
+        commands:
+         - - "wget"
+           - "http://nfswebhost-richardmproject.ida.dcs.gla.ac.uk/bigdatastack/ATOSWL/als-spark-streaming-assembly-0.1.jar"
+           - "-O"
+           - "/tmp/als-spark-streaming-assembly-0.1.jar"
+      - className: "ExecuteCMD"
+        objectID: "spark-master"
+        instancelookupCriteria: "first"
+        commands:
+         - - "bin/spark-submit"
+           - "--class"
+           - "Main"
+           - "--master"
+           - "spark://0.0.0.0:7077"
+           - "--deploy-mode"
+           - "cluster"
+           - "/tmp/als-spark-streaming-assembly-0.1.jar"
+     mode: Continue
