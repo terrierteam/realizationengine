@@ -96,6 +96,12 @@ public class WaitFor extends BigDataStackOperation{
 			EventUtil eventUtil) {
 		
 		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		
+		try {
 			
 			if (!parentSequenceRunner.getSequence().getParameters().containsKey(instanceRef)) {
 				eventUtil.registerEvent(
