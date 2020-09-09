@@ -1372,6 +1372,7 @@ public class GDTManager implements Manager {
 
 				// if we get to here then we have found a sequence runner for the specified sequence and instance
 				boolean deleted =  openshiftOperationClient.deleteOperation(sequenceRunner); // try deleting it
+				objectInstanceClient.delete(owner, namespace, appID, sequenceRunner.getObjectID(), -1);
 				if (!deleted) return false;
 
 			}

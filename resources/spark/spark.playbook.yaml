@@ -1,6 +1,10 @@
-appID: "spark"
-name: "Apache Spark"
-description: "Apache Spark is an open-source distributed general-purpose cluster-computing framework. Spark provides an interface for programming entire clusters with implicit data parallelism and fault tolerance."
+appID: "grss"
+name: "Grocery Recommender System (Spark)"
+description: >
+  This is a real-time grocery recommender system built using stream processing capability from Apache Spark's streaming package. It is comprised of three main functional blocks: 
+  1) the feedback collector that recieves interactions from external grocery storefronts (clicks on products);
+  2) the internal data stream transfer system that is comprised of Kafka with support from zookeeper;
+  3) the spark cluster that hosts supervised product recommendation system that is periodically updated.
 owner: "$owner$"
 namespace: "$namespace$"
 types:
@@ -11,6 +15,208 @@ types:
 
 
 objects:
+  # Deployment Config: feedbackcollector
+  - objectID: "feedbackcollector"
+    yamlSource:
+      kind: DeploymentConfig
+      apiVersion: apps.openshift.io/v1
+      metadata:
+        labels:
+          app: feedbackcollector
+      spec:
+        triggers:
+          - type: ConfigChange
+        replicas: 1
+        selector:
+          app: feedbackcollector
+        template:
+          metadata:
+            labels:
+              app: feedbackcollector
+              deploymentconfig: feedbackcollector
+          spec:
+            containers:
+              - name: feedbackcollector
+                image: >-
+                  $ocimagerepositoryhost$/$namespace$/feedbackcollector:latest
+                ports:
+                  - name: "8080"
+                    containerPort: 8080
+                    protocol: TCP
+                  - name: "8443"
+                    containerPort: 8443
+                    protocol: TCP
+                  - name: "8778"
+                    containerPort: 8778
+                    protocol: TCP
+                resources: {}
+                imagePullPolicy: Always
+            restartPolicy: Always
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+  
+  # Service: srv-feedbackcollector
+  - objectID: "srv-feedbackcollector"
+    yamlSource:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        labels:
+          app: feedbackcollector
+      spec:
+        ports:
+          - name: 8080-tcp
+            protocol: TCP
+            port: 8080
+            targetPort: 8080
+          - name: 8443-tcp
+            protocol: TCP
+            port: 8443
+            targetPort: 8443
+          - name: 8778-tcp
+            protocol: TCP
+            port: 8778
+            targetPort: 8778
+        selector:
+          app: feedbackcollector
+          deploymentconfig: feedbackcollector
+        type: ClusterIP
+        
+  # Route: route-feedbackcollector
+  - objectID: "route-feedbackcollector"
+    yamlSource:
+      kind: Route
+      apiVersion: route.openshift.io/v1
+      spec:
+        host: feedbackcollector-$namespace$.$hostExtension$
+        to:
+          kind: Service
+          name: $serviceFeedbackCollectorLookup$
+          weight: 100
+        port:
+          targetPort: 8080-tcp
+        wildcardPolicy: None
+  
+  # Deployment Config: zookeeper-server
+  - objectID: "zookeeper-server"
+    yamlSource:
+      kind: DeploymentConfig
+      apiVersion: apps.openshift.io/v1
+      metadata:
+        labels:
+          app: zookeeper-server
+      spec:
+        triggers:
+          - type: ConfigChange
+        replicas: 2
+        revisionHistoryLimit: 10
+        selector:
+          app: zookeeper-server
+        template:
+          metadata:
+            labels:
+              app: zookeeper-server
+          spec:
+            containers:
+              - name: zookeeper-server
+                image: >-
+                  bitnami/zookeeper:latest
+                ports:
+                  - name: "2181"
+                    containerPort: 2181
+                    protocol: TCP
+                env:
+                  - name: ALLOW_ANONYMOUS_LOGIN
+                    value: 'yes'
+                resources: {}
+                imagePullPolicy: Always
+            restartPolicy: Always
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+  
+  # Service: srv-zookeeper
+  - objectID: "srv-zookeeper"
+    yamlSource:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        labels:
+          app: zookeeper-server
+      spec:
+        ports:
+          - name: '2183'
+            protocol: TCP
+            port: 2183
+            targetPort: 2181
+        selector:
+          app: zookeeper-server
+        type: ClusterIP
+  
+  # Deployment Config: kafka-server
+  - objectID: "kafka-server"
+    yamlSource:
+      kind: DeploymentConfig
+      apiVersion: apps.openshift.io/v1
+      metadata:
+        labels:
+          app: kafka-server
+      spec:
+        triggers:
+          - type: ConfigChange
+        replicas: 1
+        revisionHistoryLimit: 10
+        selector:
+          app: kafka-server
+        template:
+          metadata:
+            labels:
+              app: kafka-server
+          spec:
+            containers:
+              - name: kafka-server
+                image: >-
+                  bitnami/kafka:latest
+                ports:
+                  - name: "9092"
+                    containerPort: 9092
+                    protocol: TCP
+                env:
+                  - name: ALLOW_PLAINTEXT_LISTENER
+                    value: 'yes'
+                  - name: KAFKA_BROKER_ID
+                    value: '2'
+                  - name: KAFKA_LISTENERS
+                    value: 'PLAINTEXT://:9092'
+                  - name: KAFKA_CFG_ADVERTISED_LISTENERS
+                    value: 'PLAINTEXT://$kafkaLookup$:9092'
+                  - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+                    value: '$zookeeperLookup$:2183'
+                  - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+                    value: '1'
+                resources: {}
+                imagePullPolicy: Always
+            restartPolicy: Always
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+            
+    # Service: srv-kafka
+  - objectID: "srv-kafka"
+    yamlSource:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        labels:
+          app: kafka-server
+      spec:
+        ports:
+          - name: '9092'
+            protocol: TCP
+            port: 9092
+            targetPort: 9092
+        selector:
+          app: kafka-server
+        type: ClusterIP
+  
   # Deployment Config: spark-master
   - objectID: "spark-master"
     yamlSource:
@@ -49,6 +255,22 @@ objects:
                   value: "$instance$"
                 - name: "SPARK_MODE"
                   value: "master"
+                - name: "LXDB_HOST"
+                  value: "service-lxs-store-eroski.lxs-store.svc.cluster.local"
+                - name: "LXDB_PORT"
+                  value: "1529"
+                - name: "LXDB_DBNAME"
+                  value: "BigDataStackDB"
+                - name: "LXDB_USERNAME"
+                  value: "EROSKI"
+                - name: "KAFKA_TOPIC"
+                  value: "test"
+                - name: "KAFKA_HOST"
+                  value: "kafka-server1"
+                - name: "KAFKA_HOST"
+                  value: "9092"
+                - name: "KAFKA_GROUPID"
+                  value: "my-group"
                resources: 
                  limits:
                    cpu: "1000m"
@@ -97,6 +319,22 @@ objects:
                   value: "worker"
                 - name: "SPARK_MASTER_URL"
                   value: "$sparkmasterservice$:7077"
+                - name: "LXDB_HOST"
+                  value: "service-lxs-store-eroski.lxs-store.svc.cluster.local"
+                - name: "LXDB_PORT"
+                  value: "1529"
+                - name: "LXDB_DBNAME"
+                  value: "BigDataStackDB"
+                - name: "LXDB_USERNAME"
+                  value: "EROSKI"
+                - name: "KAFKA_TOPIC"
+                  value: "test"
+                - name: "KAFKA_HOST"
+                  value: "kafka-server1"
+                - name: "KAFKA_HOST"
+                  value: "9092"
+                - name: "KAFKA_GROUPID"
+                  value: "my-group"
                resources: 
                  limits:
                    cpu: "1000m"
@@ -218,17 +456,17 @@ sequences:
        instancelookupCriteria: "first"
        commands:
         - - "wget"
-          - "http://www.dcs.gla.ac.uk/~richardm/Temp/BigDataStack-Spark-Example-1.0.jar"
+          - "http://nfswebhost-richardmproject.ida.dcs.gla.ac.uk/bigdatastack/ATOSWL/als-spark-streaming-assembly-0.1.jar"
           - "-O"
-          - "/tmp/BigDataStack-Spark-Example-1.0.jar"
+          - "/tmp/als-spark-streaming-assembly-0.1.jar"
      - className: "ExecuteCMD"
        objectID: "spark-worker"
        instancelookupCriteria: "all"
        commands:
         - - "wget"
-          - "http://www.dcs.gla.ac.uk/~richardm/Temp/BigDataStack-Spark-Example-1.0.jar"
+          - "http://nfswebhost-richardmproject.ida.dcs.gla.ac.uk/bigdatastack/ATOSWL/als-spark-streaming-assembly-0.1.jar"
           - "-O"
-          - "/tmp/BigDataStack-Spark-Example-1.0.jar"
+          - "/tmp/als-spark-streaming-assembly-0.1.jar"
      - className: "ExecuteCMD"
        objectID: "spark-master"
        instancelookupCriteria: "first"
@@ -240,7 +478,7 @@ sequences:
           - "spark://0.0.0.0:7077"
           - "--deploy-mode"
           - "cluster"
-          - "/tmp/BigDataStack-Spark-Example-1.0.jar"
+          - "/tmp/als-spark-streaming-assembly-0.1.jar"
     mode: Continue
   - sequenceID: "scaleworker"
     name: "Scale Up Worker"
@@ -270,3 +508,91 @@ sequences:
      - className: "Delete"
        instanceRef: "workerInstance"
     mode: Continue
+  - sequenceID: "feedbackcollector"
+    name: "Deploy Feedback Collector"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Deploys the feedback collector service, along with the associated service and external end-point so the UI can be accessed"
+    parameters: {}
+    operations:
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "feedbackcollector"
+        defineInstanceRef: "feedbackcollectorInstance"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "feedbackcollectorInstance"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "feedbackcollectorInstance"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "feedbackcollectorInstance"
+        waitForStatus: "Available"
+      # Now create the service
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "srv-feedbackcollector"
+        defineInstanceRef: "newServiceFC"
+      - className: Apply # Create the service on the cluster
+        instanceRef: "newServiceFC"
+      # Now create the route
+      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+        parameter: "serviceFeedbackCollectorLookup"
+        criteria: "$namespace$:service:$appID$-srv-feedbackcollector-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "route-feedbackcollector"
+        defineInstanceRef: "newRouteFC"
+      - className: SetSequenceParameters # Fill in any missing placeholders (most notably 'serviceLookup' found above)
+        instanceRef: "newRouteFC"
+      - className: Apply # Create the route on the cluster
+        instanceRef: "newRouteFC"
+  - sequenceID: "kafka"
+    name: "Deploy Apache Kafka Server"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Deploys the Kafka server that is used to tranfer data between the feedback collector and the Spark recommender. This also sets up a Zookeeper instance used by Kafka, along with the associated services."
+    parameters: {}
+    operations:
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "zookeeper-server"
+        defineInstanceRef: "zookeeperInstance"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "zookeeperInstance"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "zookeeperInstance"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "zookeeperInstance"
+        waitForStatus: "Available"
+      # Now create the service
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "srv-zookeeper"
+        defineInstanceRef: "newServiceZK"
+      - className: Apply # Create the service on the cluster
+        instanceRef: "newServiceZK"
+      # Now create the service
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "srv-kafka"
+        defineInstanceRef: "newServiceKafka"
+      - className: Apply # Create the service on the cluster
+        instanceRef: "newServiceKafka"
+      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+        parameter: "kafkaLookup"
+        criteria: "$namespace$:service:$appID$-srv-kafka-.*"
+        multipleMatches: "SelectFirst"
+      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+        parameter: "zookeeperLookup"
+        criteria: "$namespace$:service:$appID$-srv-zookeeper-.*"
+        multipleMatches: "SelectFirst"
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "kafka-server"
+        defineInstanceRef: "kafkaInstance"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "kafkaInstance"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "kafkaInstance"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "kafkaInstance"
+        waitForStatus: "Available"
+      
