@@ -545,6 +545,7 @@ sequences:
         instanceRef: "newRouteFC"
       - className: Apply # Create the route on the cluster
         instanceRef: "newRouteFC"
+    mode: Continue
   - sequenceID: "kafka"
     name: "Deploy Apache Kafka Server"
     appID: "$appID$"
@@ -595,4 +596,4 @@ sequences:
       - className: WaitFor # Wait until the deployment config is reporting available
         instanceRef: "kafkaInstance"
         waitForStatus: "Available"
-      
+    mode: Continue  
