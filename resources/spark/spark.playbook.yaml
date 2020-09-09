@@ -40,13 +40,13 @@ objects:
                 image: >-
                   $ocimagerepositoryhost$/$namespace$/feedbackcollector:latest
                 ports:
-                  - name: "8080"
+                  - name: "tcp-8080"
                     containerPort: 8080
                     protocol: TCP
-                  - name: "8443"
+                  - name: "tcp-8443"
                     containerPort: 8443
                     protocol: TCP
-                  - name: "8778"
+                  - name: "tcp-8778"
                     containerPort: 8778
                     protocol: TCP
                 resources: {}
@@ -122,7 +122,7 @@ objects:
                 image: >-
                   bitnami/zookeeper:latest
                 ports:
-                  - name: "2181"
+                  - name: "tcp-2181"
                     containerPort: 2181
                     protocol: TCP
                 env:
@@ -144,7 +144,7 @@ objects:
           app: zookeeper-server
       spec:
         ports:
-          - name: '2183'
+          - name: 'tcp-2183'
             protocol: TCP
             port: 2183
             targetPort: 2181
@@ -177,7 +177,7 @@ objects:
                 image: >-
                   bitnami/kafka:latest
                 ports:
-                  - name: "9092"
+                  - name: "tcp-9092"
                     containerPort: 9092
                     protocol: TCP
                 env:
@@ -209,7 +209,7 @@ objects:
           app: kafka-server
       spec:
         ports:
-          - name: '9092'
+          - name: 'tcp-9092'
             protocol: TCP
             port: 9092
             targetPort: 9092
