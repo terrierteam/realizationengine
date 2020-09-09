@@ -748,4 +748,4 @@ sequences:
            - "--deploy-mode"
            - "cluster"
            - "/tmp/als-spark-streaming-assembly-0.1.jar"
-     mode: Continue
+    mode: Continue
