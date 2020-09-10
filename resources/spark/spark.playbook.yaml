@@ -742,7 +742,7 @@ sequences:
         commands:
          - - "bin/spark-submit"
            - "--class"
-           - "Main"
+           - "org.bigdatastack.wl.streaming.MainProcess"
            - "--master"
            - "spark://0.0.0.0:7077"
            - "--deploy-mode"
