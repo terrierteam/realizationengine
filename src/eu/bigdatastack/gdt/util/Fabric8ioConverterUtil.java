@@ -40,9 +40,9 @@ public class Fabric8ioConverterUtil {
 		object.setUnderlyingClientObject(pod);
 		
 		Set<String> statuses = new HashSet<String>();
-		for (ContainerStatus containerStatus : pod.getStatus().getContainerStatuses()) {
+		/*for (ContainerStatus containerStatus : pod.getStatus().getContainerStatuses()) {
 			statuses.add(containerStatus.getName());
-		}
+		}*/
 		statuses.add(pod.getStatus().getPhase());
 		object.setStatuses(statuses);
 		

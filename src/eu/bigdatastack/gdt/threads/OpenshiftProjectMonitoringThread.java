@@ -201,7 +201,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		OpenshiftObject job = openshiftStatus.getJob(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 		if (job==null) {
 			// This should have been running but was not. It may have been manually deleted. Report and perform Update
-			if (!objectDef.getStatus().contains("Deleted")) {
+			if (!objectDef.getStatus().contains("Deleted") && !objectDef.getStatus().contains("Instantiated")) {
 				int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
 				BigDataStackEvent newEvent = new BigDataStackEvent(
 						app.getAppID(),
@@ -331,7 +331,7 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 		OpenshiftObject deploymentConfig = openshiftStatus.getDeploymentConfig(project.getName(), objectDef.getAppID()+"-"+objectDef.getObjectID()+"-"+objectDef.getInstance());
 		if (deploymentConfig==null) {
 			// This should have been running but was not. It may have been manually deleted. Report and perform Update
-			if (!objectDef.getStatus().contains("Deleted")) {
+			if (!objectDef.getStatus().contains("Deleted") && !objectDef.getStatus().contains("Instantiated")) {
 				int previousEvents = eventIO.getEventCount(app.getAppID(), owner);
 				BigDataStackEvent newEvent = new BigDataStackEvent(
 						app.getAppID(),

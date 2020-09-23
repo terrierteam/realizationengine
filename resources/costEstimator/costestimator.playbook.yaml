@@ -5,6 +5,10 @@ owner: "gdt"
 namespace: "$namespace$"
 types:
  - playbook
+ - inferMissingValues
+ - overrideValues
+ - setObjectMetadata
+
 
 objects:
   - appID: "$appID$"

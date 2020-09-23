@@ -1,5 +1,8 @@
 package eu.bigdatastack.gdt.operations;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
@@ -109,6 +112,9 @@ public class Instantiate extends BigDataStackOperation{
 			BigDataStackObjectDefinition instanceObject = templateObject.clone();
 			instanceObject.setNamespace(namespace);
 			instanceObject.setAppID(appID);
+			Set<String> statuses = new HashSet<String>();
+			statuses.add("Instantiated");
+			instanceObject.setStatus(statuses);
 
 			// Stage 3: Register object instance
 			BigDataStackObjectIO objectInstanceClient = new BigDataStackObjectIO(database, false);
