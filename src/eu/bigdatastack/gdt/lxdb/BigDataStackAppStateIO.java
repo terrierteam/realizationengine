@@ -73,38 +73,49 @@ public class BigDataStackAppStateIO implements Timed {
 		if (!init) { initTable(); init=true;}
 		long startTime = System.currentTimeMillis();
 		
+		
+		
+		
 		Connection conn = client.openConnection();
+
 		try {
-		String notInStatesAsJson = mapper.writeValueAsString(appState.getNotInStates());
-		String sequencesAsJson = mapper.writeValueAsString(appState.getSequences());
-		String conditionsAsJson = mapper.writeValueAsString(appState.getConditions());
-		
-		if (notInStatesAsJson.length()>=1000) return false;
-		if (sequencesAsJson.length()>=1000) return false;
-		if (conditionsAsJson.length()>=5000) return false;
-		
-		Statement statement = conn.createStatement();
-		
-			statement.executeUpdate("INSERT INTO " + tableName
-					+ " (appID, owner, namespace, appStateID, name, notInStates, sequences, conditions)"
-					+ " VALUES ( " + SQLUtils.prepareText(appState.getAppID(), 100) + ", "
-					+ SQLUtils.prepareText(appState.getOwner(), 140) + ", "
-					+ SQLUtils.prepareText(appState.getNamespace(), 140) + ", "
-					+ SQLUtils.prepareText(appState.getAppStateID(), 100) + ", "
-				    + SQLUtils.prepareText(appState.getName(), 1000) + ", "
-					+ notInStatesAsJson + ", "
-					+ sequencesAsJson + ", "
-					+ conditionsAsJson + " )");
+			
+			String notInStatesAsJson = mapper.writeValueAsString(appState.getNotInStates());
+			String sequencesAsJson = mapper.writeValueAsString(appState.getSequences());
+			String conditionsAsJson = mapper.writeValueAsString(appState.getConditions());
+			
+			if (notInStatesAsJson.length()>=1000) return false;
+			if (sequencesAsJson.length()>=1000) return false;
+			if (conditionsAsJson.length()>=5000) return false;
+			
+			PreparedStatement statement = conn.prepareStatement(
+					"INSERT INTO "+tableName+" (appID, owner, namespace, appStateID, name, notInStates, sequences, conditions)"+
+					" VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )");
+
+			
+				statement.setString(1,SQLUtils.prepareTextNoQuote(appState.getAppID(),100));
+				statement.setString(2,SQLUtils.prepareTextNoQuote(appState.getOwner(),140));
+				statement.setString(3,SQLUtils.prepareTextNoQuote(appState.getNamespace(),140));
+				statement.setString(4, SQLUtils.prepareTextNoQuote(appState.getAppStateID(),100));
+				statement.setString(5, SQLUtils.prepareTextNoQuote(appState.getName(),1000));
+				statement.setString(6, notInStatesAsJson);
+				statement.setString(7, sequencesAsJson);
+				statement.setString(8, conditionsAsJson);
+				statement.executeUpdate();
+			
+			
+				conn.commit();
 		} catch (Exception e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 			conn.close();
 			return false;
 		}
 
-		conn.commit();
+		
 		conn.close();
 		totalTime+=System.currentTimeMillis()-startTime;
 		return true;
+
 	}
 
 	/**
