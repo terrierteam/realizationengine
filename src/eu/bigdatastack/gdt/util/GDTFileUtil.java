@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import eu.bigdatastack.gdt.operations.BigDataStackOperation;
+import eu.bigdatastack.gdt.structures.data.BigDataStackAppState;
+import eu.bigdatastack.gdt.structures.data.BigDataStackAppStateCondition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplicationType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
@@ -223,6 +225,96 @@ public class GDTFileUtil {
 	}
 
 
+	/**
+	 * Reads in an application state from yaml. The provided application is used to fill in the missing information
+	 * about appID, namespace and owner.
+	 * @param yaml
+	 * @param app
+	 * @return
+	 */
+	public static BigDataStackAppState readApplicationStateFromString(String yaml, BigDataStackApplication app) {
+		boolean inferMissingValues = false;
+		boolean overrideValues = false;
+		if (app!=null) {
+			if (app.getTypes().contains(BigDataStackApplicationType.inferMissingValues)) inferMissingValues = true;
+			if (app.getTypes().contains(BigDataStackApplicationType.overrideValues)) overrideValues = true;
+		}
+		
+		try {
+			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+			JsonNode node = mapper.readTree(yaml);
+			
+			String appID = null;
+			if ((inferMissingValues && !node.has("appID")) || overrideValues) appID = app.getAppID();
+			else if (node.has("appID")) appID = node.get("appID").asText();
 
+			String namespace = null;
+			if ((inferMissingValues && !node.has("namespace")) || overrideValues) namespace = app.getNamespace();
+			else if (node.has("namespace")) namespace = node.get("namespace").asText();
+
+			String owner = null;
+			if ((inferMissingValues && !node.has("owner")) || overrideValues) owner = app.getOwner();
+			else if (node.has("owner")) owner = node.get("owner").asText();
+			
+			List<String> notInStates = new ArrayList<String>();
+			if (node.has("notInStates")) {
+				JsonNode notInStatesA = node.get("notInStates");
+				Iterator<JsonNode> notInStatesAI = notInStatesA.elements();
+				while (notInStatesAI.hasNext()) notInStates.add(notInStatesAI.next().asText());
+			}
+			
+			List<String> sequences = new ArrayList<String>();
+			if (node.has("sequences")) {
+				JsonNode sequencesA = node.get("sequences");
+				Iterator<JsonNode> sequencesAI = sequencesA.elements();
+				while (sequencesAI.hasNext()) sequences.add(sequencesAI.next().asText());
+			}
+			
+			List<BigDataStackAppStateCondition> conditions = new ArrayList<BigDataStackAppStateCondition>();
+			if (node.has("conditions")) {
+				JsonNode conditionsA = node.get("conditions");
+				Iterator<JsonNode> conditionsAI = conditionsA.elements();
+				while (conditionsAI.hasNext()) {
+					JsonNode conditionJSON = conditionsAI.next();
+					List<String> objectIDs = new ArrayList<String>();
+					if (conditionJSON.has("objectIDs")) {
+						JsonNode objectIDsA = conditionJSON.get("objectIDs");
+						Iterator<JsonNode> objectIDsAI = objectIDsA.elements();
+						while (objectIDsAI.hasNext()) objectIDs.add(objectIDsAI.next().asText());
+					}
+					
+					
+					List<String> notInState = new ArrayList<String>();
+					if (conditionJSON.has("notInState")) {
+						JsonNode notInStateA = conditionJSON.get("notInState");
+						Iterator<JsonNode> notInStateAIC = notInStateA.elements();
+						while (notInStateAIC.hasNext()) notInState.add(notInStateAIC.next().asText());
+					}
+					
+					String instances = null; if (conditionJSON.has("instances")) instances = conditionJSON.get("instances").asText();
+					String state = null; if (conditionJSON.has("state")) state = conditionJSON.get("state").asText();
+					String sequenceID = null; if (conditionJSON.has("sequenceID")) sequenceID = conditionJSON.get("sequenceID").asText();
+					
+					BigDataStackAppStateCondition condition = new BigDataStackAppStateCondition(objectIDs, instances, state, sequenceID, notInState);
+					
+					conditions.add(condition);
+				}
+					
+			}
+			
+			String appStateID = null; if (node.has("appStateID")) appStateID = node.get("appStateID").asText();
+			String name = null; if (node.has("name")) name = node.get("name").asText();
+			
+			BigDataStackAppState appState = new BigDataStackAppState(appID, owner, namespace, appStateID, name,
+					notInStates, sequences, conditions);
+			
+			return appState;
+		
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 }

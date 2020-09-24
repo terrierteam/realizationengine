@@ -1,0 +1,281 @@
+package eu.bigdatastack.gdt.lxdb;
+
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import eu.bigdatastack.gdt.structures.Timed;
+import eu.bigdatastack.gdt.structures.data.BigDataStackAppState;
+import eu.bigdatastack.gdt.structures.data.BigDataStackAppStateCondition;
+
+public class BigDataStackAppStateIO implements Timed {
+
+	protected final String tableName = "BigDataStackAppState";
+	protected ObjectMapper mapper = new ObjectMapper();
+
+	JDBCDB client;
+	long totalTime = 0;
+	boolean init = false;
+	public BigDataStackAppStateIO(JDBCDB client) throws SQLException {
+		this.client = client;
+
+		//initTable();
+	}
+
+	/**
+	 * Check whether the table exists in the DB already and if not creates it
+	 * 
+	 * @throws SQLException
+	 */
+	public void initTable() throws SQLException {
+		long startTime = System.currentTimeMillis();
+		Connection conn = client.openConnection();
+
+		DatabaseMetaData md = conn.getMetaData();
+		ResultSet rs = md.getTables(null, null, "%", null);
+
+		boolean tableExists = false;
+
+		while (rs.next()) {
+			if (rs.getString(3).equalsIgnoreCase(tableName)) {
+				tableExists = true;
+			}
+		}
+
+		if (!tableExists) {
+			Statement statement = conn.createStatement();
+			statement.executeUpdate("CREATE TABLE " + tableName + " ( " + "appID VARCHAR(100), "
+					+ "owner VARCHAR(140), " + "namespace VARCHAR(140), " + "appStateID VARCHAR(100), "
+					+ "name VARCHAR(1000), " + "notInStates VARCHAR(1000), " + "sequences VARCHAR(1000), " + "conditions VARCHAR(5000), "
+					+ "PRIMARY KEY (owner,appID,namespace,appStateID)" + ")");
+
+			conn.commit();
+		}
+		totalTime+=System.currentTimeMillis()-startTime;
+		conn.close();
+	}
+
+	/**
+	 * Add a new BigDataStack App State to the database.
+	 * 
+	 * @param appState
+	 * @return whether the insert was successful
+	 * @throws SQLException
+	 */
+	public boolean addAppState(BigDataStackAppState appState) throws SQLException {
+		if (!init) { initTable(); init=true;}
+		long startTime = System.currentTimeMillis();
+		
+		Connection conn = client.openConnection();
+		try {
+		String notInStatesAsJson = mapper.writeValueAsString(appState.getNotInStates());
+		String sequencesAsJson = mapper.writeValueAsString(appState.getSequences());
+		String conditionsAsJson = mapper.writeValueAsString(appState.getConditions());
+		
+		if (notInStatesAsJson.length()>=1000) return false;
+		if (sequencesAsJson.length()>=1000) return false;
+		if (conditionsAsJson.length()>=5000) return false;
+		
+		Statement statement = conn.createStatement();
+		
+			statement.executeUpdate("INSERT INTO " + tableName
+					+ " (appID, owner, namespace, appStateID, name, notInStates, sequences, conditions)"
+					+ " VALUES ( " + SQLUtils.prepareText(appState.getAppID(), 100) + ", "
+					+ SQLUtils.prepareText(appState.getOwner(), 140) + ", "
+					+ SQLUtils.prepareText(appState.getNamespace(), 140) + ", "
+					+ SQLUtils.prepareText(appState.getAppStateID(), 100) + ", "
+				    + SQLUtils.prepareText(appState.getName(), 1000) + ", "
+					+ notInStatesAsJson + ", "
+					+ sequencesAsJson + ", "
+					+ conditionsAsJson + " )");
+		} catch (Exception e) {
+			//e.printStackTrace();
+			conn.close();
+			return false;
+		}
+
+		conn.commit();
+		conn.close();
+		totalTime+=System.currentTimeMillis()-startTime;
+		return true;
+	}
+
+	/**
+	 * Returns a specified application states
+	 * @param owner
+	 * @param appID
+	 * @param objectID
+	 * @param instance
+	 * @param metricName
+	 * @param sloIndex
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackAppState> getAppStates(String owner, String appID, String namespace, String appStateID) throws SQLException {
+		if (!init) { initTable(); init=true;}
+		long startTime = System.currentTimeMillis();
+		Connection conn = client.openConnection();
+		
+		Statement statement = conn.createStatement();
+		
+		StringBuilder baseStatement = new StringBuilder();
+		baseStatement.append("SELECT * FROM "+tableName+" WHERE owner='"+owner+"'");
+		if (appID!=null) baseStatement.append(" AND appID='"+appID+"'");
+		if (namespace!=null) baseStatement.append(" AND namespace='"+namespace+"'");
+		if (appStateID!=null) baseStatement.append(" AND appStateID='"+appStateID+"'");
+		
+		statement.execute(baseStatement.toString());
+		ResultSet results = statement.getResultSet();
+		List<BigDataStackAppState> appStates = new ArrayList<BigDataStackAppState>();
+		
+		 try {
+			while (results.next()) {
+				 
+				List<String> notInStates = new ArrayList<String>();
+				
+				List<String> sequences = new ArrayList<String>();
+				
+				List<BigDataStackAppStateCondition> conditions = new ArrayList<BigDataStackAppStateCondition>();
+				
+				BigDataStackAppState appState = new BigDataStackAppState(
+						results.getString("appID"),
+						results.getString("owner"),
+						results.getString("namespace"),
+						results.getString("appStateID"),
+						results.getString("name"),
+						notInStates,
+						sequences,
+						conditions
+						);
+				appStates.add(appState);
+			 }
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		 
+		
+		
+		conn.close();
+		totalTime+=System.currentTimeMillis()-startTime;
+		return appStates;
+	}
+	
+	
+	
+	/**
+	 * Update the data for an existing BigDataStack SLO. 
+	 * @param status
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean updateAppState(BigDataStackAppState appState) throws SQLException {
+		if (!init) { initTable(); init=true;}
+		long startTime = System.currentTimeMillis();
+		Connection conn = client.openConnection();
+		
+		
+		
+		try {
+			String notInStatesAsJson = mapper.writeValueAsString(appState.getNotInStates());
+			String sequencesAsJson = mapper.writeValueAsString(appState.getSequences());
+			String conditionsAsJson = mapper.writeValueAsString(appState.getConditions());
+			
+			if (notInStatesAsJson.length()>=1000) return false;
+			if (sequencesAsJson.length()>=1000) return false;
+			if (conditionsAsJson.length()>=5000) return false;
+			
+			PreparedStatement statement = conn.prepareStatement("UPDATE "+tableName+" SET name=?, notInStates=?, sequences=?, conditions=?"+
+					" WHERE appID="+SQLUtils.prepareText(appState.getAppID(),100)+
+					" AND owner="+SQLUtils.prepareText(appState.getOwner(),140)+
+					" AND namespace="+SQLUtils.prepareText(appState.getNamespace(),140)+
+					" AND appStateID="+SQLUtils.prepareText(appState.getAppStateID(),100));
+			
+			statement.setNString(1, appState.getName());
+			statement.setNString(2, notInStatesAsJson);
+			statement.setNString(3, sequencesAsJson);
+			statement.setNString(4, conditionsAsJson);
+
+			statement.executeUpdate();
+			conn.commit();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+			return false;
+		}
+		
+		conn.close();
+		totalTime+=System.currentTimeMillis()-startTime;
+		return true;
+	}
+	
+	public boolean delete(String owner, String namespace, String appID, String appStateID) {
+
+		try {
+			if (!init) { initTable(); init=true;}
+			long startTime = System.currentTimeMillis();
+			Connection conn = client.openConnection();
+
+			Statement statement = conn.createStatement();
+
+			StringBuilder baseStatement = new StringBuilder();
+			baseStatement.append("DELETE FROM "+tableName+" WHERE owner='"+owner+"'");
+			if (namespace!=null) baseStatement.append(" AND namespace='"+namespace+"'");
+			if (appID!=null) baseStatement.append(" AND appID='"+appID+"'");
+			if (appStateID!=null) baseStatement.append(" AND appStateID='"+appStateID+"'");
+			
+
+			
+			statement.execute(baseStatement.toString());
+			conn.commit();
+
+			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	/**
+	 * Deletes the table in the database and re-creates it
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean clearTable() throws SQLException {
+		if (!init) { initTable(); init=true;}
+		long startTime = System.currentTimeMillis();
+		Connection conn = client.openConnection();
+		
+		try {
+			Statement statement = conn.createStatement();
+			statement.execute("DROP TABLE \""+tableName+"\"");
+
+			conn.commit();
+			conn.close();
+			
+			initTable();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			conn.close();
+			totalTime+=System.currentTimeMillis()-startTime;
+			return false;
+		}
+		totalTime+=System.currentTimeMillis()-startTime;
+		return true;
+	}
+	
+	@Override
+	public long timeSpent() {
+		return totalTime;
+	}
+}

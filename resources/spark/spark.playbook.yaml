@@ -749,3 +749,74 @@ sequences:
            - "cluster"
            - "/tmp/als-spark-streaming-assembly-0.1.jar"
     mode: Continue
+    
+states:
+  - appStateID: newinstall
+    name: "Fresh Installation, Not Started"
+    notInStates:
+      - anyOther
+    sequences:
+      - feedbackcollector
+      - everything
+  - appStateID: feedbackcollectorReady
+    name: "Feedback Collector Ready"
+    conditions:
+      - objectIDs: 
+          - feedbackcollector
+        instances: ">0"
+        state: "Available"
+      - objectIDs: 
+          - srv-feedbackcollector
+          - route-feedbackcollector
+        instances: ">0"
+    sequences:
+      - kafka
+  - appStateID: kafkaReady
+    name: "Kafka Ready"
+    conditions:
+      - objectIDs: 
+          - zookeeper-server
+          - kafka-server
+        instances: ">0"
+        state: "Available"
+      - objectIDs: 
+          - srv-zookeeper
+          - srv-kafka
+        instances: ">0"
+    sequences:
+      - master
+      - worker
+  - appStateID: sparkReady
+    name: "Spark Ready"
+    conditions:
+      - objectIDs: 
+          - master
+          - worker
+        instances: ">0"
+        state: "Available"
+      - objectIDs: 
+          - srv-spark-master
+          - sparkui
+        instances: ">0"
+    sequences:
+      - worker
+      - deleteworker
+  - appStateID: jarDeployable
+    name: "Recommendation Jar Deployable"
+    conditions:
+      - objectIDs: 
+          - master
+          - worker
+        instances: ">0"
+        state: "Available"
+      - objectIDs: 
+          - srv-spark-master
+        instances: ">0"
+      - sequenceID: deployjar
+        notInState:
+          - Instantiated
+          - InProgress
+          - Complete
+    sequences:
+      - deployjar
+ 

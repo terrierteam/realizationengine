@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import eu.bigdatastack.gdt.application.GDTManager;
+import eu.bigdatastack.gdt.structures.data.BigDataStackAppState;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
@@ -225,6 +226,18 @@ public class ManagerResource {
 	@Path("/list/{owner}/apps")
 	public List<BigDataStackApplication> listApplications(@PathParam("owner") String owner){
 		return querying.listApplications(owner);
+	}
+	
+	@GET
+	@Path("/list/{owner}/{appID}/states")
+	public List<BigDataStackAppState> listApplicationsStates(@PathParam("owner") String owner, @PathParam("appID") String appID){
+		return manager.getApplicationStates(owner, null, appID);
+	}
+	
+	@GET
+	@Path("/list/{owner}/{appID}/states/all")
+	public List<BigDataStackAppState> listApplicationsStatesAll(@PathParam("owner") String owner, @PathParam("appID") String appID){
+		return querying.listApplicationPossibleStates(owner, appID);
 	}
 	
 	@GET

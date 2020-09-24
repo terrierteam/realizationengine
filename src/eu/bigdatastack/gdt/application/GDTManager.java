@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
+import eu.bigdatastack.gdt.lxdb.BigDataStackAppStateIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackApplicationIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackCredentialsIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackEventIO;
@@ -44,6 +45,7 @@ import eu.bigdatastack.gdt.structures.config.DatabaseConf;
 import eu.bigdatastack.gdt.structures.config.GDTConfig;
 import eu.bigdatastack.gdt.structures.config.OpenshiftConfig;
 import eu.bigdatastack.gdt.structures.config.RabbitMQConf;
+import eu.bigdatastack.gdt.structures.data.BigDataStackAppState;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplicationType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackCredentials;
@@ -66,6 +68,7 @@ import eu.bigdatastack.gdt.structures.reports.RealizationReport;
 import eu.bigdatastack.gdt.structures.reports.RealizationStatus;
 import eu.bigdatastack.gdt.structures.reports.RouteList;
 import eu.bigdatastack.gdt.threads.OperationSequenceThread;
+import eu.bigdatastack.gdt.util.ApplicationStateUtil;
 import eu.bigdatastack.gdt.util.EventUtil;
 import eu.bigdatastack.gdt.util.GDTFileUtil;
 
@@ -100,6 +103,7 @@ public class GDTManager implements Manager {
 	public BigDataStackCredentialsIO credentialsClient;
 	public BigDataStackMetricValueIO metricValueClient;
 	public BigDataStackSLOIO sloClient;
+	public BigDataStackAppStateIO appStateClient;
 
 	BigDataStackCredentials databaseCredential;
 	BigDataStackCredentials openshiftCredential;
@@ -142,6 +146,7 @@ public class GDTManager implements Manager {
 		credentialsClient = new BigDataStackCredentialsIO(database);
 		metricValueClient = new BigDataStackMetricValueIO(database);
 		sloClient = new BigDataStackSLOIO(database);
+		appStateClient = new BigDataStackAppStateIO(database);
 
 
 		// Add database credentials
@@ -304,6 +309,68 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
+	
+	/**
+	 * Registers a new BigDataStack SLO with the database from a yaml format String
+	 * @param yaml
+	 * @return
+	 */
+	public BigDataStackAppState registerApplicationState(String yaml, BigDataStackApplication app) {
+		try {
+			BigDataStackAppState state = GDTFileUtil.readApplicationStateFromString(yaml, app);
+			return registerApplicationState(state, null, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	
+
+	/**
+	 * Registers a new BigDataStack Application from a BigDataStackApplication object
+	 * @param yaml
+	 * @return
+	 */
+	protected BigDataStackAppState registerApplicationState(BigDataStackAppState appState, String namespace, String owner) {
+		if (namespace!=null) appState.setNamespace(namespace);
+		if (owner!=null) appState.setOwner(owner);
+
+		try {
+			if (!appStateClient.addAppState(appState)) {
+				if (!appStateClient.updateAppState(appState)) {
+					eventUtil.registerEvent(
+							appState.getAppID(),
+							appState.getOwner(),
+							appState.getNamespace(),
+							BigDataStackEventType.ObjectRegistry,
+							BigDataStackEventSeverity.Error,
+							"New App State Failed to Register: '"+appState.getAppID()+"|"+appState.getAppStateID()+"'",
+							"Tried to create a new possible application state '"+appState.getAppID()+"|"+appState.getAppStateID()+"', but was rejected, likely because it already exists.",
+							appState.getAppStateID()
+							);
+					return null;
+				}
+			}
+
+			eventUtil.registerEvent(
+					appState.getAppID(),
+					appState.getOwner(),
+					appState.getNamespace(),
+					BigDataStackEventType.ObjectRegistry,
+					BigDataStackEventSeverity.Info,
+					"New App State Registered: '"+appState.getAppID()+"|"+appState.getAppStateID()+"'",
+					"Created a new possible application state '"+appState.getAppID()+"|"+appState.getAppStateID()+"'",
+					appState.getAppStateID()
+					);
+			return appState;	
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
 
 	/**
 	 * Registers a new BigDataStack Application from a BigDataStackApplication object
@@ -1649,6 +1716,18 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
+	
+	/**
+	 * Gets the status of a specified app
+	 * @param owner
+	 * @param namespace
+	 * @param appID
+	 * @return
+	 */
+	public List<BigDataStackAppState> getApplicationStates(String owner, String namespace, String appID) {
+		return ApplicationStateUtil.getActiveStates(objectInstanceClient, sequenceInstanceClient, appStateClient, owner, namespace, appID);
+	}
+		
 
 
 	public void printTimings() {
@@ -1730,6 +1809,19 @@ public class GDTManager implements Manager {
 					registerSLO(jsonAsYaml);
 				}
 			}
+			
+			if (node.has("states")) {
+				JsonNode states = node.get("states");
+				Iterator<JsonNode> statesI = states.iterator();
+				while (statesI.hasNext()) {
+					String jsonAsYaml = new YAMLMapper().writeValueAsString(statesI.next());
+					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
+					registerApplicationState(jsonAsYaml, app);
+				}
+			}
+			
+			
+			
 
 		} catch (Exception e) {
 			e.printStackTrace();

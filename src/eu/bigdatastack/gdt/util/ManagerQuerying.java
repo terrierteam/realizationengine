@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.bigdatastack.gdt.application.GDTManager;
+import eu.bigdatastack.gdt.structures.data.BigDataStackAppState;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEvent;
 import eu.bigdatastack.gdt.structures.data.BigDataStackEventSeverity;
@@ -72,6 +73,21 @@ public class ManagerQuerying {
 			return null;
 		}
 	}
+	
+	/**
+	 * Gets all states that are registered for an application
+	 * @param owner
+	 * @return
+	 */
+	public List<BigDataStackAppState> listApplicationPossibleStates(String owner, String appID){
+		try {
+			return manager.appStateClient.getAppStates(owner, appID, null, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
 	
 	/**
 	 * Gets all object instances for a specified owner, application and objectID
