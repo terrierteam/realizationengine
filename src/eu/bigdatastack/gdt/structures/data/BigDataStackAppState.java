@@ -15,13 +15,7 @@ public class BigDataStackAppState {
 	List<String> sequences;
 	List<BigDataStackAppStateCondition> conditions;
 	
-	public BigDataStackAppState() {
-		notInStates = new ArrayList<String>(0);
-		sequences = new ArrayList<String>(0);
-		conditions = new ArrayList<BigDataStackAppStateCondition>(0);
-	}
-	
-	
+	public BigDataStackAppState() {}
 
 	public BigDataStackAppState(String appID, String owner, String namespace, String appStateID, String name,
 			List<String> notInStates, List<String> sequences, List<BigDataStackAppStateCondition> conditions) {
