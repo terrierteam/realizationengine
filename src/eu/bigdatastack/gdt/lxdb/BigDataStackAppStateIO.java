@@ -7,10 +7,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import eu.bigdatastack.gdt.operations.BigDataStackOperation;
 import eu.bigdatastack.gdt.structures.Timed;
 import eu.bigdatastack.gdt.structures.data.BigDataStackAppState;
 import eu.bigdatastack.gdt.structures.data.BigDataStackAppStateCondition;
@@ -150,10 +153,30 @@ public class BigDataStackAppStateIO implements Timed {
 			while (results.next()) {
 				 
 				List<String> notInStates = new ArrayList<String>();
+				Iterator<JsonNode> notInStatesArray = mapper.readTree(results.getString("notInStates")).iterator();
+				while (notInStatesArray.hasNext()) {
+					JsonNode nis = notInStatesArray.next();
+					notInStates.add(nis.asText());
+				}
+				
 				
 				List<String> sequences = new ArrayList<String>();
+				Iterator<JsonNode> sequencesArray = mapper.readTree(results.getString("sequences")).iterator();
+				while (sequencesArray.hasNext()) {
+					JsonNode sa = sequencesArray.next();
+					sequences.add(sa.asText());
+				}
 				
 				List<BigDataStackAppStateCondition> conditions = new ArrayList<BigDataStackAppStateCondition>();
+				Iterator<JsonNode> conditionsArray = mapper.readTree(results.getString("conditions")).iterator();
+				while (conditionsArray.hasNext()) {
+					JsonNode condition = conditionsArray.next();
+					
+					BigDataStackAppStateCondition conditionO = mapper.readValue(condition.toPrettyString(), BigDataStackAppStateCondition.class);
+					
+					conditions.add(conditionO);
+				}
+				
 				
 				BigDataStackAppState appState = new BigDataStackAppState(
 						results.getString("appID"),
