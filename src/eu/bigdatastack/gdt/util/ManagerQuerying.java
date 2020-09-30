@@ -202,6 +202,31 @@ public class ManagerQuerying {
 	}
 	
 	/**
+	 * Gets all instances of a specified operation sequence
+	 * @param owner
+	 * @return
+	 */
+	public List<BigDataStackOperationSequence> listOperationSequenceInstancesByState(String owner, String appID, String sequenceState){
+		try {
+			List<BigDataStackOperationSequence> allAppSequences = manager.sequenceInstanceClient.getOperationSequences(owner, appID);
+			List<BigDataStackOperationSequence> matchedSequences  = new ArrayList<BigDataStackOperationSequence>();
+			
+			for (BigDataStackOperationSequence sequence : allAppSequences) {
+				if (sequenceState.equalsIgnoreCase("Running") && sequence.isInProgress()) matchedSequences.add(sequence);
+				else if (sequenceState.equalsIgnoreCase("Complete") && sequence.isComplete()) matchedSequences.add(sequence);
+				else if (sequenceState.equalsIgnoreCase("Pending") && sequence.isPending()) matchedSequences.add(sequence);
+				else if (sequenceState.equalsIgnoreCase("Failed") && sequence.hasFailed()) matchedSequences.add(sequence);
+				else matchedSequences.add(sequence);
+			}
+			
+			return matchedSequences;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
 	 * Gets a specified operation sequence instance
 	 * @param owner
 	 * @return

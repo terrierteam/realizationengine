@@ -228,6 +228,34 @@ public class BigDataStackOperationSequence {
 		
 	}
 	
+	/**
+	 * Checks if all operations are marked as not started
+	 * @return
+	 */
+	public boolean isPending() {
+
+		for (BigDataStackOperation operation : operations) {
+			if (operation.getState() != BigDataStackOperationState.NotStarted) return false;
+		}
+		
+		return true;
+		
+	}
+	
+	/**
+	 * Checks if all operations are marked as not started
+	 * @return
+	 */
+	public boolean hasFailed() {
+
+		for (BigDataStackOperation operation : operations) {
+			if (operation.getState() == BigDataStackOperationState.Failed) return true;
+		}
+		
+		return false;
+		
+	}
+	
 	public BigDataStackOperationSequence clone() {
 		return new BigDataStackOperationSequence(appID, owner, namepace, index, sequenceID, name,
 				description, parameters, operations, mode);

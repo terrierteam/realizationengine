@@ -296,6 +296,12 @@ public class ManagerResource {
 	}
 	
 	@GET
+	@Path("/list/{owner}/{appID}/sequences")
+	public List<BigDataStackOperationSequence> listOperationSequenceInstancesByState(@PathParam("owner")String owner, @PathParam("appID") String appID, @QueryParam("sequenceState") String sequenceState){
+		return querying.listOperationSequenceInstancesByState(owner, appID, sequenceState);
+	}
+	
+	@GET
 	@Path("/list/{owner}/{appID}/sequence/{sequenceID}")
 	public List<BigDataStackOperationSequence> listOperationSequenceInstances(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("sequenceID") String sequenceID){
 		return querying.listOperationSequenceInstances(owner, appID, sequenceID);
@@ -532,6 +538,7 @@ public class ManagerResource {
 	public List<BigDataStackEvent> listEvents(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("objectID") String objectID){
 		return querying.listEvents(owner, appID, objectID);
 	}
+	
 	
 	@GET
 	@Path("/query/{owner}/{appID}/{namespace}/metrics/{metricName}/{objectID}")
