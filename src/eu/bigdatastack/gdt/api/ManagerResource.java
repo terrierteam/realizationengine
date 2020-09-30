@@ -296,7 +296,7 @@ public class ManagerResource {
 	}
 	
 	@GET
-	@Path("/list/{owner}/{appID}/sequences")
+	@Path("/list/{owner}/{appID}/sequences/state")
 	public List<BigDataStackOperationSequence> listOperationSequenceInstancesByState(@PathParam("owner")String owner, @PathParam("appID") String appID, @QueryParam("sequenceState") String sequenceState){
 		return querying.listOperationSequenceInstancesByState(owner, appID, sequenceState);
 	}
