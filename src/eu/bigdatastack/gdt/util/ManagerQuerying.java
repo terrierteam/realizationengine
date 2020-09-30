@@ -221,7 +221,6 @@ public class ManagerQuerying {
 				else if (sequenceState.equalsIgnoreCase("Complete") && sequence.isComplete()) matchedSequences.add(sequence);
 				else if (sequenceState.equalsIgnoreCase("Pending") && sequence.isPending()) matchedSequences.add(sequence);
 				else if (sequenceState.equalsIgnoreCase("Failed") && sequence.hasFailed()) matchedSequences.add(sequence);
-				else matchedSequences.add(sequence);
 			}
 			
 			return matchedSequences;
