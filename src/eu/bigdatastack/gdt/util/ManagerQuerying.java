@@ -208,7 +208,7 @@ public class ManagerQuerying {
 	 */
 	public List<BigDataStackOperationSequence> listOperationSequenceInstancesByState(String owner, String appID, String sequenceState){
 		try {
-			List<BigDataStackOperationSequence> allAppSequences = manager.sequenceInstanceClient.getOperationSequences(owner, appID);
+			List<BigDataStackOperationSequence> allAppSequences = manager.sequenceInstanceClient.getOperationSequences(owner, appID, null);
 			List<BigDataStackOperationSequence> matchedSequences  = new ArrayList<BigDataStackOperationSequence>();
 			
 			
