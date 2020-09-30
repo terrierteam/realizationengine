@@ -211,7 +211,12 @@ public class ManagerQuerying {
 			List<BigDataStackOperationSequence> allAppSequences = manager.sequenceInstanceClient.getOperationSequences(owner, appID);
 			List<BigDataStackOperationSequence> matchedSequences  = new ArrayList<BigDataStackOperationSequence>();
 			
+			
+			
 			for (BigDataStackOperationSequence sequence : allAppSequences) {
+				
+				System.err.println(appID+" "+sequence.getSequenceID()+" "+sequenceState+":"+sequence.isPending()+"/"+sequence.isInProgress()+"/"+sequence.hasFailed()+"/"+sequence.isComplete());
+				
 				if (sequenceState.equalsIgnoreCase("Running") && sequence.isInProgress()) matchedSequences.add(sequence);
 				else if (sequenceState.equalsIgnoreCase("Complete") && sequence.isComplete()) matchedSequences.add(sequence);
 				else if (sequenceState.equalsIgnoreCase("Pending") && sequence.isPending()) matchedSequences.add(sequence);

@@ -221,7 +221,7 @@ public class BigDataStackOperationSequence {
 	public boolean isInProgress() {
 
 		for (BigDataStackOperation operation : operations) {
-			if (operation.getState() != BigDataStackOperationState.Completed && operation.getState() == BigDataStackOperationState.InProgress) return true;
+			if (operation.getState() == BigDataStackOperationState.InProgress) return true;
 		}
 		
 		return false;
