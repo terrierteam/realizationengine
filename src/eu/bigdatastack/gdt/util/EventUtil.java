@@ -37,7 +37,8 @@ public class EventUtil {
 					severity,
 					title,
 					description,
-					objectID
+					objectID,
+					instance
 					);
 			eventRegistered = eventIO.addEvent(newEvent);
 			if (!eventRegistered) {
