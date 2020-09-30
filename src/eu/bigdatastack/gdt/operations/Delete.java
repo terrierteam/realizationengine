@@ -97,7 +97,8 @@ public class Delete extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Delete Operation Failed: '"+instanceRef+"'",
 						"Attempted to find an instance with within-sequence reference '"+instanceRef+"', but the parent sequence did not have an appropriate instance reference (did you Instantiate first?)",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -117,7 +118,8 @@ public class Delete extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Delete Operation Failed: '"+sourceObjectID+"'",
 						"Attempted to get an instance '"+sourceObjectID+"("+instance+")', but was unable to find an associated object definition from available instances.",
-						sourceObjectID
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -133,7 +135,8 @@ public class Delete extends BigDataStackOperation{
 						BigDataStackEventSeverity.Info,
 						"Delete Operation Excecuted for: '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"', instance "+instanceObject.getInstance(),
 						"Executed an delete operation for '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"' instance "+instanceObject.getInstance(),
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 			} else {
 				eventUtil.registerEvent(
@@ -144,7 +147,8 @@ public class Delete extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Delete Operation Failed: '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"'",
 						"Attempted to delete an object '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"', failed when communicating with Openshift, the object may already exist and cannot be replaced, or the request was otherwise rejected",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}

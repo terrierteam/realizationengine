@@ -102,7 +102,8 @@ public class GDTMain {
 						BigDataStackEventSeverity.Error,
 						"Aborted executing operation sequence based on template : '"+sequenceID+"'",
 						"Was unable to retrieve the operation sequence instance for '"+sequenceID+"'",
-						sequenceID
+						sequenceID,
+						Integer.parseInt(sequenceInstance)
 						);
 				return;
 			}
@@ -118,7 +119,8 @@ public class GDTMain {
 						BigDataStackEventSeverity.Info,
 						"Completed operation sequence pod on the cluster based on template : '"+sequenceID+"'",
 						"Finished processing operation sequence '"+sequenceID+"' with index "+sequence.getIndex(),
-						sequenceID
+						sequenceID,
+						sequence.getIndex()
 						);
 				
 			} else {
@@ -130,7 +132,8 @@ public class GDTMain {
 						BigDataStackEventSeverity.Error,
 						"Failed operation sequence pod based on template : '"+sequenceID+"'",
 						"Attempted to run operation sequence '"+sequenceID+"' with index "+sequence.getIndex()+", but one or more operations failed",
-						sequenceID
+						sequenceID,
+						sequence.getIndex()
 						);
 			}
 			

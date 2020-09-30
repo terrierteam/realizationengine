@@ -286,7 +286,8 @@ public class GDTManager implements Manager {
 							BigDataStackEventSeverity.Error,
 							"New SLO Failed to Register: '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName(),
 							"Tried to create a new service level objective for '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName()+" but was rejected, likely because it already exists.",
-							slo.getObjectID()
+							slo.getObjectID(),
+							slo.getInstance()
 							);
 					return null;
 				}
@@ -300,7 +301,8 @@ public class GDTManager implements Manager {
 					BigDataStackEventSeverity.Info,
 					"New SLO Registered: '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName(),
 					"Created a new service level objective for '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName(),
-					slo.getAppID()
+					slo.getAppID(),
+					slo.getInstance()
 					);
 			return slo;	
 
@@ -347,7 +349,8 @@ public class GDTManager implements Manager {
 							BigDataStackEventSeverity.Error,
 							"New App State Failed to Register: '"+appState.getAppID()+"|"+appState.getAppStateID()+"'",
 							"Tried to create a new possible application state '"+appState.getAppID()+"|"+appState.getAppStateID()+"', but was rejected, likely because it already exists.",
-							appState.getAppStateID()
+							appState.getAppStateID(),
+							-1
 							);
 					return null;
 				}
@@ -361,7 +364,8 @@ public class GDTManager implements Manager {
 					BigDataStackEventSeverity.Info,
 					"New App State Registered: '"+appState.getAppID()+"|"+appState.getAppStateID()+"'",
 					"Created a new possible application state '"+appState.getAppID()+"|"+appState.getAppStateID()+"'",
-					appState.getAppStateID()
+					appState.getAppStateID(),
+					-1
 					);
 			return appState;	
 
@@ -392,7 +396,8 @@ public class GDTManager implements Manager {
 							BigDataStackEventSeverity.Error,
 							"New Application Failed to Register: '"+app.getAppID()+"'",
 							"Tried to create a new application '"+app.getAppID()+"', but failed, likely due to an existing app with the same ID already existing",
-							app.getAppID()
+							app.getAppID(),
+							-1
 							);
 					return null;
 				}
@@ -406,7 +411,8 @@ public class GDTManager implements Manager {
 					BigDataStackEventSeverity.Info,
 					"New Application Registered: '"+app.getAppID()+"'",
 					"A new application was created '"+app.getAppID()+"'",
-					app.getAppID()
+					app.getAppID(),
+					-1
 					);
 			return app;	
 
@@ -473,7 +479,8 @@ public class GDTManager implements Manager {
 							BigDataStackEventSeverity.Info,
 							"New Object Definition Template Failed to Register: '"+object.getObjectID()+"'",
 							"Tried to create a new object template '"+object.getObjectID()+"' but failed, likely due to a template with the same ID already existing",
-							object.getObjectID()
+							object.getObjectID(),
+							object.getInstance()
 							);
 					return null;
 				}
@@ -488,7 +495,8 @@ public class GDTManager implements Manager {
 					BigDataStackEventSeverity.Info,
 					"New Object Definition Template Registered: '"+object.getObjectID()+"'",
 					"A new object template was created '"+object.getObjectID()+"'",
-					object.getObjectID()
+					object.getObjectID(),
+					object.getInstance()
 					);
 			return object;
 		} catch (Exception e) {
@@ -517,7 +525,8 @@ public class GDTManager implements Manager {
 							BigDataStackEventSeverity.Info,
 							"New Object Definition Template Failed to Register: '"+object.getObjectID()+"'",
 							"Tried to create a new object template '"+object.getObjectID()+"' but failed, likely due to a template with the same ID already existing",
-							object.getObjectID()
+							object.getObjectID(),
+							object.getInstance()
 							);
 					return null;
 				}
@@ -532,7 +541,8 @@ public class GDTManager implements Manager {
 					BigDataStackEventSeverity.Info,
 					"New Object Definition Template Registered: '"+object.getObjectID()+"'",
 					"A new object template was created '"+object.getObjectID()+"'",
-					object.getObjectID()
+					object.getObjectID(),
+					object.getInstance()
 					);
 			return object;
 		} catch (Exception e) {
@@ -606,7 +616,8 @@ public class GDTManager implements Manager {
 							BigDataStackEventSeverity.Info,
 							"New Metric Failed to Register: '"+object.getName()+"'",
 							"Tried to create a newmetric '"+object.getName()+"' but failed, likely due to a metric with the same ID already existing",
-							object.getName()
+							object.getName(),
+							-1
 							);
 					return null;
 				}
@@ -620,7 +631,8 @@ public class GDTManager implements Manager {
 					BigDataStackEventSeverity.Info,
 					"New Metric Registered: '"+object.getName()+"'",
 					"A new metric was created '"+object.getName()+"'",
-					object.getName()
+					object.getName(),
+					-1
 					);
 			return object;
 		} catch (Exception e) {
@@ -679,7 +691,8 @@ public class GDTManager implements Manager {
 						BigDataStackEventSeverity.Error,
 						"Automatic Operation Sequence Template Creation Failed: '"+object.getObjectID()+"'",
 						"Attempted to construct an Operation Sequence Template automatically containing '"+object.getObjectID()+"', but the registry rejected it, there may already be a sequence with that ID.",
-						object.getObjectID()
+						object.getObjectID(),
+						object.getInstance()
 						);
 				return false;
 			} else {
@@ -691,7 +704,8 @@ public class GDTManager implements Manager {
 						BigDataStackEventSeverity.Info,
 						"Automatic Operation Sequence Template Creation Complete: '"+object.getObjectID()+"'",
 						"Constructed an Operation Sequence Template automatically containing '"+object.getObjectID()+"', this sequence can now be instantiated.",
-						object.getObjectID()
+						object.getObjectID(),
+						object.getInstance()
 						);
 			}
 		} catch (Exception e) {
@@ -759,7 +773,8 @@ public class GDTManager implements Manager {
 						BigDataStackEventSeverity.Error,
 						"Failed adding namespace : '"+namespace.getNamespace()+"'",
 						"Attempted to add a new namepace '"+namespace.getNamespace()+"', but the registry rejected it, there may already be a namespace with that name.",
-						namespace.getNamespace()
+						namespace.getNamespace(),
+						-1
 						);
 				return null;
 			} else {
@@ -771,7 +786,8 @@ public class GDTManager implements Manager {
 						BigDataStackEventSeverity.Info,
 						"Added new namespace : '"+namespace.getNamespace()+"'",
 						"Successfully added a new namepace '"+namespace.getNamespace()+"'",
-						namespace.getNamespace()
+						namespace.getNamespace(),
+						-1
 						);
 				return namespace;
 			}
@@ -827,7 +843,8 @@ public class GDTManager implements Manager {
 							BigDataStackEventSeverity.Error,
 							"Failed adding operation sequence template : '"+sequence.getSequenceID()+"'",
 							"Attempted to add a new operation sequence template '"+sequence.getSequenceID()+"', but the registry rejected it, there may already be a template with that ID.",
-							sequence.getSequenceID()
+							sequence.getSequenceID(),
+							sequence.getIndex()
 							);
 					return null;
 				}
@@ -842,7 +859,8 @@ public class GDTManager implements Manager {
 					BigDataStackEventSeverity.Info,
 					"Registered operation sequence template : '"+sequence.getSequenceID()+"'",
 					"Added a new operation sequence template '"+sequence.getSequenceID()+"' to the registry",
-					sequence.getSequenceID()
+					sequence.getSequenceID(),
+					sequence.getIndex()
 					);
 			return sequence;
 		} catch (Exception e) {
@@ -1078,7 +1096,8 @@ public class GDTManager implements Manager {
 						BigDataStackEventSeverity.Info,
 						"New Operation Sequence Created: '"+newSequenceInstance.getSequenceID()+"'",
 						"The user created a new operation sequence for app '"+newSequenceInstance.getAppID()+"', it has been registered and is being processed (SequenceID='"+newSequenceInstance.getSequenceID()+"', Index='"+newSequenceInstance.getIndex()+"')",
-						newSequenceInstance.getSequenceID()
+						newSequenceInstance.getSequenceID(),
+						newSequenceInstance.getIndex()
 						);
 
 				
@@ -1122,7 +1141,8 @@ public class GDTManager implements Manager {
 								BigDataStackEventSeverity.Error,
 								"Failed to register the operation sequence running for '"+newSequenceInstance.getSequenceID()+"', with the database",
 								"The last step of launcing an operation sequence is registering the runner object, but this failed for '"+newSequenceInstance.getSequenceID()+"', this means that the sequence runner will be un-tracked and hence subsequent deletion of the sequence will not kill the runner if it is still active",
-								newSequenceInstance.getSequenceID()
+								newSequenceInstance.getSequenceID(),
+								newSequenceInstance.getIndex()
 								);
 						return false;
 					}
@@ -1146,7 +1166,8 @@ public class GDTManager implements Manager {
 						BigDataStackEventSeverity.Error,
 						"Operation Sequence Creation Failed for: '"+newSequenceInstance.getSequenceID()+"'",
 						"Tried to create a new operation sequence for app '"+newSequenceInstance.getAppID()+"' but failed when adding to the Object Registry (SequenceID='"+newSequenceInstance.getSequenceID()+"', Index='"+newSequenceInstance.getIndex()+"')",
-						newSequenceInstance.getSequenceID()
+						newSequenceInstance.getSequenceID(),
+						newSequenceInstance.getIndex()
 						);
 				return false;
 			}
@@ -1217,7 +1238,8 @@ public class GDTManager implements Manager {
 					BigDataStackEventSeverity.Info,
 					"Object '"+objectID+"("+instance+")' Deleted",
 					"Deleted the cluster instance associated to '"+objectID+"("+instance+")', this will kill running pods, but the object will remain in the database.",
-					objectID
+					objectID,
+					object.getInstance()
 					);
 
 			object.getStatus().add("Deleted");
@@ -1256,7 +1278,8 @@ public class GDTManager implements Manager {
 						BigDataStackEventSeverity.Info,
 						"Object '"+objectID+"("+object.getInstance()+")' Deleted",
 						"Deleted the cluster instance associated to '"+objectID+"("+object.getInstance()+")', this will kill running pods, but the object will remain in the database.",
-						objectID
+						objectID,
+						object.getInstance()
 						);
 
 				object.getStatus().add("Deleted");
@@ -1285,7 +1308,8 @@ public class GDTManager implements Manager {
 							BigDataStackEventSeverity.Info,
 							"Stopped Operation Sequence Instance '"+sequenceID+"("+sequence.getIndex()+")'",
 							"Stopped operation sequence instance '"+sequenceID+"("+sequence.getIndex()+")' and all of its components on the cluster",
-							sequenceID
+							sequenceID,
+							sequence.getIndex()
 							);
 				} else {
 					eventUtil.registerEvent(
@@ -1296,7 +1320,8 @@ public class GDTManager implements Manager {
 							BigDataStackEventSeverity.Info,
 							"Failure detected during stop for operation sequence instance '"+sequenceID+"("+sequence.getIndex()+")'",
 							"Stopped operation sequence instance '"+sequenceID+"("+sequence.getIndex()+")' failed due to an internal error",
-							sequenceID
+							sequenceID,
+							sequence.getIndex()
 							);
 				}
 			}
@@ -1339,7 +1364,8 @@ public class GDTManager implements Manager {
 							BigDataStackEventSeverity.Info,
 							"Stop Operation Sequence: Runner for '"+sequenceID+"("+instance+")' Deleted",
 							"Deleted an operation sequence runner for '"+sequenceID+"("+instance+")', this will stop future operations from starting.",
-							sequenceID
+							sequenceID,
+							sequenceRunner.getInstance()
 							);
 
 					// update the object status
@@ -1360,7 +1386,8 @@ public class GDTManager implements Manager {
 						BigDataStackEventSeverity.Info,
 						"Stop Operation Sequence: No runner found '"+sequenceID+"("+instance+")', skipping",
 						"Searcher for a matching runner pod for '"+sequenceID+"("+instance+")', but found none.",
-						sequenceID
+						sequenceID,
+						-1
 						);
 			}
 
@@ -1389,7 +1416,8 @@ public class GDTManager implements Manager {
 								BigDataStackEventSeverity.Error,
 								"Tried to deleted object '"+sourceObjectID+"("+instanceNo+")', but failed",
 								"Tried to delete the object '"+sourceObjectID+"("+instanceNo+" on the cluster, but openshift rejected it",
-								sourceObjectID
+								sourceObjectID,
+								instanceNo
 								);
 
 					} else {
@@ -1407,7 +1435,8 @@ public class GDTManager implements Manager {
 								BigDataStackEventSeverity.Info,
 								"Deleted cluster object '"+sourceObjectID+"("+instanceNo+")'",
 								"Deleted the cluster object '"+sourceObjectID+"("+instanceNo+")",
-								sourceObjectID
+								sourceObjectID,
+								instanceNo
 								);
 					}
 				}

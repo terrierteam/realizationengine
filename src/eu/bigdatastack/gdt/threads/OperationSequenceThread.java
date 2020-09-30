@@ -148,7 +148,8 @@ public class OperationSequenceThread implements Runnable {
 							BigDataStackEventSeverity.Error,
 							"Operation Sequence Creation Failed for: '"+sequence.getSequenceID()+"'",
 							"Tried to create a new operation sequence for app '"+sequence.getAppID()+"' but failed when adding to the Object Registry (SequenceID='"+sequence.getSequenceID()+"', Index='"+sequence.getIndex()+"')",
-							sequence.getSequenceID()
+							sequence.getSequenceID(),
+							sequence.getIndex()
 							);
 					failed = true;
 					return;
@@ -162,7 +163,8 @@ public class OperationSequenceThread implements Runnable {
 						BigDataStackEventSeverity.Info,
 						"New Operation Sequence Created: '"+sequence.getSequenceID()+"'",
 						"The user created a new operation sequence for app '"+sequence.getAppID()+"', it has been registered and is being processed (SequenceID='"+sequence.getSequenceID()+"', Index='"+sequence.getIndex()+"')",
-						sequence.getSequenceID()
+						sequence.getSequenceID(),
+						sequence.getIndex()
 						);
 			}
 			
@@ -276,10 +278,11 @@ public class OperationSequenceThread implements Runnable {
 							sequence.getOwner(),
 							sequence.getNamespace(),
 							BigDataStackEventType.Stage,
-							BigDataStackEventSeverity.Alert,
+							BigDataStackEventSeverity.Error,
 							"Operation Sequence Failed for: '"+sequence.getSequenceID()+"' at operation targeting '"+operation.getObjectID()+"' of type "+operation.getClass().getName(),
 							"Operation targeting '"+operation.getObjectID()+"' failed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
-							sequence.getSequenceID()
+							sequence.getSequenceID(),
+							sequence.getIndex()
 							);
 					if (runnerObject!=null) {
 						Set<String> runnerStatus = new HashSet<String>();
@@ -302,7 +305,8 @@ public class OperationSequenceThread implements Runnable {
 						BigDataStackEventSeverity.Info,
 						"Operation targeting '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" Complete within sequence '"+sequence.getSequenceID()+"'",
 						"Operation targeting '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" completed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
-						sequence.getSequenceID()
+						sequence.getSequenceID(),
+						sequence.getIndex()
 						);
 				
 			} catch (Exception e) {
@@ -315,10 +319,11 @@ public class OperationSequenceThread implements Runnable {
 							sequence.getOwner(),
 							sequence.getNamespace(),
 							BigDataStackEventType.GlobalDecisionTracker,
-							BigDataStackEventSeverity.Alert,
+							BigDataStackEventSeverity.Error,
 							"Operation Sequence '"+sequence.getSequenceID()+"' Failed",
 							"Operation Sequence '"+sequence.getSequenceID()+"' failed during processing due to an internal exception '"+e.getMessage()+"'",
-							sequence.getSequenceID()
+							sequence.getSequenceID(),
+							sequence.getIndex()
 							);
 				} catch (SQLException e1) {
 					e1.printStackTrace();
@@ -353,10 +358,11 @@ public class OperationSequenceThread implements Runnable {
 						sequence.getOwner(),
 						sequence.getNamespace(),
 						BigDataStackEventType.GlobalDecisionTracker,
-						BigDataStackEventSeverity.Alert,
+						BigDataStackEventSeverity.Error,
 						"Operation Sequence '"+sequence.getSequenceID()+"' Failed",
 						"Operation Sequence '"+sequence.getSequenceID()+"' failed due to one of the contained operations failing",
-						sequence.getSequenceID()
+						sequence.getSequenceID(),
+						sequence.getIndex()
 						);
 			} catch (SQLException e1) {
 				e1.printStackTrace();
@@ -382,7 +388,8 @@ public class OperationSequenceThread implements Runnable {
 						BigDataStackEventSeverity.Alert,
 						"Operation Sequence '"+sequence.getSequenceID()+"' Completed Successfully",
 						"Operation Sequence '"+sequence.getSequenceID()+"' completed successfuly",
-						sequence.getSequenceID()
+						sequence.getSequenceID(),
+						sequence.getIndex()
 						);
 			} catch (SQLException e1) {
 				e1.printStackTrace();

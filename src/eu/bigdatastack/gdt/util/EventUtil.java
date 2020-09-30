@@ -20,7 +20,7 @@ public class EventUtil {
 	
 	public boolean registerEvent(String appID, String owner, String namespace,
 			BigDataStackEventType type, BigDataStackEventSeverity severity, String title, String description,
-			String objectID) throws SQLException {
+			String objectID, int instance) throws SQLException {
 		
 		int failures = 0;
 		boolean eventRegistered = false;

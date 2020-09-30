@@ -150,7 +150,8 @@ public class ParameterFromObjectLookup extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Parameter From Object Lookup Operation Failed using criteria '"+criteria+"'",
 						"Attempted to match an object in namespace '"+namespace+"' of kind '"+kind+"' with name '"+nameregex+"' but no matches were found.",
-						parentSequenceRunner.getSequence().getSequenceID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			} if (matchedResources.size()>1) {
@@ -172,7 +173,8 @@ public class ParameterFromObjectLookup extends BigDataStackOperation{
 							BigDataStackEventSeverity.Info,
 							"Parameter From Object Lookup Operation Completed: '"+parameter+"' -> '"+matchedResources.get(0).getName()+"'",
 							"Matched an object in namespace'"+namespace+"' of kind '"+kind+"' with name '"+nameregex+"' and used it to set parameter '"+parameter+"'",
-							parentSequenceRunner.getSequence().getSequenceID()
+							parentSequenceRunner.getSequence().getSequenceID(),
+							parentSequenceRunner.getSequence().getIndex()
 							);
 					return true;
 				} else {
@@ -184,7 +186,8 @@ public class ParameterFromObjectLookup extends BigDataStackOperation{
 							BigDataStackEventSeverity.Error,
 							"Parameter From Object Lookup Operation Failed using criteria '"+criteria+"'",
 							"Attempted to match an object in namespace '"+namespace+"' of kind '"+kind+"' with name '"+nameregex+"' but found multiple matches and multipleMatches was not allowed.",
-							parentSequenceRunner.getSequence().getSequenceID()
+							parentSequenceRunner.getSequence().getSequenceID(),
+							parentSequenceRunner.getSequence().getIndex()
 							);
 					return false;
 				}
@@ -198,7 +201,8 @@ public class ParameterFromObjectLookup extends BigDataStackOperation{
 						BigDataStackEventSeverity.Info,
 						"Parameter From Object Lookup Operation Completed: '"+parameter+"' -> '"+matchedResources.get(0).getName()+"'",
 						"Matched an object in namespace'"+namespace+"' of kind '"+kind+"' with name '"+nameregex+"' and used it to set parameter '"+parameter+"'",
-						parentSequenceRunner.getSequence().getSequenceID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return true;
 			}

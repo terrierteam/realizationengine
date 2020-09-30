@@ -127,7 +127,8 @@ public class ExecuteCMD extends BigDataStackOperation {
 							BigDataStackEventSeverity.Error,
 							"ExecuteCMD Operation Failed on: '"+getObjectID()+"("+status.getInstance()+")'",
 							"Attempted to execute a set of commands on '"+getObjectID()+"("+status.getInstance()+")', but failed. "+commands2PrintFormat(),
-							getObjectID()
+							parentSequenceRunner.getSequence().getSequenceID(),
+							parentSequenceRunner.getSequence().getIndex()
 							);
 				} else {
 					eventUtil.registerEvent(
@@ -138,7 +139,8 @@ public class ExecuteCMD extends BigDataStackOperation {
 							BigDataStackEventSeverity.Info,
 							"ExecuteCMD Operation Completed on: '"+getObjectID()+"("+status.getInstance()+")'",
 							"Executed the following commands on '"+getObjectID()+"("+status.getInstance()+")': "+commands2PrintFormat(),
-							getObjectID()
+							parentSequenceRunner.getSequence().getSequenceID(),
+							parentSequenceRunner.getSequence().getIndex()
 							);
 					eventUtil.registerEvent(
 							getAppID(),
@@ -148,7 +150,8 @@ public class ExecuteCMD extends BigDataStackOperation {
 							BigDataStackEventSeverity.Info,
 							"Pod '"+getObjectID()+"("+status.getInstance()+")' Output",
 							outputs2PrintFormat(outputs),
-							getObjectID()
+							parentSequenceRunner.getSequence().getSequenceID(),
+							parentSequenceRunner.getSequence().getIndex()
 							);
 				}
 			}

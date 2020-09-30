@@ -143,7 +143,8 @@ public class ScaleUp extends BigDataStackOperation {
 						BigDataStackEventSeverity.Error,
 						"ScaleUp Operation Failed on: '"+getObjectID()+"("+instance+")'",
 						"Attempted scaleing up of pod count on '"+getObjectID()+"("+instance+")': but failed as the object was not found",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -173,7 +174,8 @@ public class ScaleUp extends BigDataStackOperation {
 						BigDataStackEventSeverity.Info,
 						"ScaleUp Operation Updated Definition of: '"+getObjectID()+"("+instance+")'",
 						"Increased pod count on '"+getObjectID()+"("+instance+")'.",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				
 				boolean applySuccessful = openshiftOperationClient.applyOperation(object);
@@ -187,7 +189,8 @@ public class ScaleUp extends BigDataStackOperation {
 							BigDataStackEventSeverity.Info,
 							"ScaleUp Operation Completed on: '"+getObjectID()+"("+instance+")'",
 							"Scale-up operation applied to the cluster for '"+getObjectID()+"("+instance+")'.",
-							getObjectID()
+							parentSequenceRunner.getSequence().getSequenceID(),
+							parentSequenceRunner.getSequence().getIndex()
 							);
 					return true;
 				} else {
@@ -199,7 +202,8 @@ public class ScaleUp extends BigDataStackOperation {
 							BigDataStackEventSeverity.Error,
 							"ScaleUp Operation failed to apply to the cluster object '"+getObjectID()+"("+instance+")'",
 							"Failed to Increased pod count on '"+getObjectID()+"("+instance+")', because the cluster rejected it",
-							getObjectID()
+							parentSequenceRunner.getSequence().getSequenceID(),
+							parentSequenceRunner.getSequence().getIndex()
 							);
 					return false;
 				}
@@ -217,7 +221,8 @@ public class ScaleUp extends BigDataStackOperation {
 						BigDataStackEventSeverity.Error,
 						"ScaleUp Operation Failed on: '"+getObjectID()+"("+instance+")'",
 						"Attempted scaleing up of pod count on '"+getObjectID()+"("+instance+")': but failed as the object was not a Job or DeploymentConfig",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}

@@ -154,8 +154,9 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 							BigDataStackEventType.Openshift,
 							BigDataStackEventSeverity.Warning,
 							"Pod '"+podStatus.getPodID()+"' was checked but was not found on the cluster",
-							"Openshift project monitoring for '"+namespace+"' ran a scheduled chech on '"+podStatus.getPodID()+"' connected to object '"+object.getObjectID()+"("+object.getInstance()+")', but did not find it, it may have been deleted, marking as such",
-							object.getObjectID()
+							"Openshift project monitoring for '"+namespace+"' ran a scheduled check on '"+podStatus.getPodID()+"' connected to object '"+object.getObjectID()+"("+object.getInstance()+")', but did not find it, it may have been deleted, marking as such",
+							object.getObjectID(),
+							object.getInstance()
 							);
 
 					podStatus.setStatus("Deleted");
@@ -212,7 +213,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 						BigDataStackEventSeverity.Warning,
 						"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' was expected but not found",
 						"Openshift project monitoring for '"+namespace+"' checked Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+") on the cluster but did not find it, it may have been manually deleted. Marking as such. ",
-						objectDef.getObjectID()
+						objectDef.getObjectID(),
+						objectDef.getInstance()
 						);
 
 				eventIO.addEvent(newEvent);
@@ -253,7 +255,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					severity,
 					"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' Status Added: "+objectDef.getStatus()+" -> "+newStatus,
 					"Openshift project monitoring for '"+namespace+"' detected a status change in Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', which changed status from '"+objectDef.getStatus()+"' to '"+newStatus+"'",
-					objectDef.getObjectID()
+					objectDef.getObjectID(),
+					objectDef.getInstance()
 					);
 
 			eventIO.addEvent(newEvent);
@@ -277,7 +280,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					severity,
 					"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' Status Removed: "+removedStatus,
 					"Openshift project monitoring for '"+namespace+"' detected a status change in Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', which removed status '"+removedStatus+"'",
-					objectDef.getObjectID()
+					objectDef.getObjectID(),
+					objectDef.getInstance()
 					);
 
 			eventIO.addEvent(newEvent);
@@ -309,7 +313,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 						BigDataStackEventSeverity.Alert,
 						"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' Completed",
 						"Job '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' reached Completed status",
-						objectDef.getObjectID()
+						objectDef.getObjectID(),
+						objectDef.getInstance()
 						);
 
 				eventIO.addEvent(newEvent);
@@ -342,7 +347,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 						BigDataStackEventSeverity.Warning,
 						"Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' was expected but not found",
 						"Openshift project monitoring for '"+namespace+"' checked Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+") on the cluster but did not find it, it may have been manually deleted. Marking as such. ",
-						objectDef.getObjectID()
+						objectDef.getObjectID(),
+						objectDef.getInstance()
 						);
 
 				eventIO.addEvent(newEvent);
@@ -383,7 +389,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					severity,
 					"Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' Status Added: "+objectDef.getStatus()+" -> "+newStatus,
 					"Openshift project monitoring for '"+namespace+"' detected a status change in Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', which changed status from '"+objectDef.getStatus()+"' to '"+newStatus+"'",
-					objectDef.getObjectID()
+					objectDef.getObjectID(),
+					objectDef.getInstance()
 					);
 
 			eventIO.addEvent(newEvent);
@@ -407,7 +414,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					severity,
 					"Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")' Status Removed: "+objectDef.getStatus()+" -> "+removedStatus,
 					"Openshift project monitoring for '"+namespace+"' detected a status change in Deployment Config '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', which changed status from '"+objectDef.getStatus()+"' to '"+removedStatus+"'",
-					objectDef.getObjectID()
+					objectDef.getObjectID(),
+					objectDef.getInstance()
 					);
 
 			eventIO.addEvent(newEvent);
@@ -476,7 +484,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 					BigDataStackEventSeverity.Info,
 					"Pod Created: '"+podID+"'",
 					"Openshift project monitoring for '"+namespace+"' detected a new pod connected to object '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', which has status status '"+status+"'",
-					objectDef.getObjectID()
+					objectDef.getObjectID(),
+					objectDef.getInstance()
 					);
 
 			podStatusIO.addPodStatus(newStatus);
@@ -525,7 +534,8 @@ public class OpenshiftProjectMonitoringThread implements Runnable{
 						BigDataStackEventSeverity.Info,
 						"Pod '"+podID+"' Hosting Change: Host ['"+savedStatus.getHostIP()+"' -> '"+hostIP+"'], Pod IP ['"+savedStatus.getPodIP()+"' -> '"+podIP+"']",
 						"Openshift project monitoring for '"+namespace+"' detected a change in pod '"+podID+"' connected to object '"+objectDef.getObjectID()+"("+objectDef.getInstance()+")', ['"+savedStatus.getHostIP()+"' -> '"+hostIP+"'], Pod IP ['"+savedStatus.getPodIP()+"' -> '"+podIP+"']",
-						objectDef.getObjectID()
+						objectDef.getObjectID(),
+						objectDef.getInstance()
 						);
 
 				savedStatus.setStatus(status);

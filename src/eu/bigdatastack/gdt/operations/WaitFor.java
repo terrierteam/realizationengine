@@ -112,7 +112,8 @@ public class WaitFor extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Wait-For Operation Failed: '"+instanceRef+"'",
 						"Attempted to find an instance with within-sequence reference '"+instanceRef+"', but the parent sequence did not have an appropriate instance reference (did you Instantiate first?)",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -138,7 +139,8 @@ public class WaitFor extends BigDataStackOperation{
 							BigDataStackEventSeverity.Error,
 							"Wait-For Operation Failed: '"+sourceObjectID+"("+instance+")'",
 							"Attempted to get an instance '"+sourceObjectID+"("+instance+")', but was unable to find an associated object definition from available instances.",
-							sourceObjectID
+							parentSequenceRunner.getSequence().getSequenceID(),
+							parentSequenceRunner.getSequence().getIndex()
 							);
 					return false;
 				}
@@ -156,7 +158,8 @@ public class WaitFor extends BigDataStackOperation{
 								BigDataStackEventSeverity.Warning,
 								"Wait-For Operation Aborted for: '"+sourceObjectID+"("+instance+")'",
 								"The underlying object that we were waiting for '"+sourceObjectID+"("+instance+")' entered a failure state",
-								sourceObjectID
+								parentSequenceRunner.getSequence().getSequenceID(),
+								parentSequenceRunner.getSequence().getIndex()
 								);
 						
 						return false;

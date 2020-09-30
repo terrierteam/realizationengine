@@ -392,11 +392,11 @@ public class ManagerQuerying {
 	 * @param owner
 	 * @return
 	 */
-	public List<BigDataStackEvent> listEvents(String owner, String appID, String objectID){
+	public List<BigDataStackEvent> listEvents(String owner, String appID, String objectID, int instance){
 		List<BigDataStackEvent> events = new ArrayList<BigDataStackEvent>();
 		try {
 			for (BigDataStackEvent event : manager.eventClient.getEvents(appID, owner)) {
-				if (event.getObjectID().equalsIgnoreCase(objectID)) events.add(event);
+				if (event.getObjectID().equalsIgnoreCase(objectID) && event.getInstance()==instance) events.add(event);
 			}
 			return events;
 		} catch (Exception e) {

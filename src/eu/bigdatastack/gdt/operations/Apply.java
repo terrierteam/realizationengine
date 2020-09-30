@@ -81,7 +81,8 @@ public class Apply extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Apply Operation Failed: '"+instanceRef+"'",
 						"Attempted to find an instance with within-sequence reference '"+instanceRef+"', but the parent sequence did not have an appropriate instance reference (did you Instantiate first?)",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -101,7 +102,8 @@ public class Apply extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Apply Operation Failed: '"+sourceObjectID+"'",
 						"Attempted to get an instance '"+sourceObjectID+"("+instance+")', but was unable to find an associated object definition from available instances.",
-						sourceObjectID
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -119,7 +121,8 @@ public class Apply extends BigDataStackOperation{
 						BigDataStackEventSeverity.Info,
 						"Apply Operation Excecuted for: '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"', instance "+instanceObject.getInstance(),
 						"Executed an apply operation for '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"' instance "+instanceObject.getInstance(),
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 			} else {
 				eventUtil.registerEvent(
@@ -130,7 +133,8 @@ public class Apply extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Apply Operation Failed: '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"'",
 						"Attempted to apply an object '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"', failed when communicating with Openshift, the object may already exist and cannot be replaced, or the request was otherwise rejected",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}

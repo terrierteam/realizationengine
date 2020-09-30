@@ -23,6 +23,7 @@ public class BigDataStackEvent implements Comparable<BigDataStackEvent> {
 	private String title;
 	private String description;
 	private String objectID;
+	private int instance;
 	
 	public BigDataStackEvent() {}
 	
@@ -40,6 +41,7 @@ public class BigDataStackEvent implements Comparable<BigDataStackEvent> {
 		this.title = title;
 		this.description = description;
 		this.objectID = objectID;
+		this.instance = 0;
 	}
 	
 	public BigDataStackEvent(String appID, String owner, int eventNo, String namepace,
@@ -56,6 +58,41 @@ public class BigDataStackEvent implements Comparable<BigDataStackEvent> {
 		this.title = title;
 		this.description = description;
 		this.objectID = objectID;
+		this.instance = 0;
+	}
+	
+	public BigDataStackEvent(String appID, String owner, int eventNo, String namepace,
+			BigDataStackEventType type, BigDataStackEventSeverity severity, String title, String description,
+			String objectID, int instance) {
+		super();
+		this.appID = appID;
+		this.owner = owner;
+		this.eventNo = eventNo;
+		this.namepace = namepace;
+		this.eventTime = System.currentTimeMillis();
+		this.type = type;
+		this.severity = severity;
+		this.title = title;
+		this.description = description;
+		this.objectID = objectID;
+		this.instance = instance;
+	}
+
+	public BigDataStackEvent(String appID, String owner, int eventNo, String namepace, long eventTime,
+			BigDataStackEventType type, BigDataStackEventSeverity severity, String title, String description,
+			String objectID, int instance) {
+		super();
+		this.appID = appID;
+		this.owner = owner;
+		this.eventNo = eventNo;
+		this.namepace = namepace;
+		this.eventTime = eventTime;
+		this.type = type;
+		this.severity = severity;
+		this.title = title;
+		this.description = description;
+		this.objectID = objectID;
+		this.instance = instance;
 	}
 
 	public String getAppID() {
@@ -129,6 +166,14 @@ public class BigDataStackEvent implements Comparable<BigDataStackEvent> {
 
 	public void setObjectID(String objectID) {
 		this.objectID = objectID;
+	}
+
+	public int getInstance() {
+		return instance;
+	}
+
+	public void setInstance(int instance) {
+		this.instance = instance;
 	}
 
 	@Override

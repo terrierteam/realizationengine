@@ -102,7 +102,8 @@ public class NewMetricValues extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"New Metric Values Creation Operation Failed: '"+instanceRef+"'",
 						"Attempted to find an instance with within-sequence reference '"+instanceRef+"', but the parent sequence did not have an appropriate instance reference (did you Instantiate first?)",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -122,7 +123,8 @@ public class NewMetricValues extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"New Metric Values Creation Operation Failed: '"+sourceObjectID+"'",
 						"Attempted to get an instance '"+sourceObjectID+"("+instance+")', but was unable to find an associated object definition from available instances.",
-						sourceObjectID
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -144,7 +146,8 @@ public class NewMetricValues extends BigDataStackOperation{
 							BigDataStackEventSeverity.Info,
 							"New Metric Values Creation Operation tried to add : '"+metric+"' for '"+sourceObjectID+"' but already existed",
 							"Attempted to register metric '"+metric+"' value for '"+sourceObjectID+"("+instance+")', but request failed, likely because the metric already exists.",
-							sourceObjectID
+							parentSequenceRunner.getSequence().getSequenceID(),
+							parentSequenceRunner.getSequence().getIndex()
 							);
 				} else {
 					eventUtil.registerEvent(
@@ -155,7 +158,8 @@ public class NewMetricValues extends BigDataStackOperation{
 							BigDataStackEventSeverity.Info,
 							"New Metric Value Creation Operation added : '"+metric+"' for '"+sourceObjectID+"("+instance+")'",
 							"Registered metric '"+metric+"' value for '"+sourceObjectID+"("+instance+")'.",
-							sourceObjectID
+							parentSequenceRunner.getSequence().getSequenceID(),
+							parentSequenceRunner.getSequence().getIndex()
 							);
 				}
 				

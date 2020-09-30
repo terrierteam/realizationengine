@@ -58,7 +58,7 @@ public class BigDataStackEventIO implements Timed {
 			statement.executeUpdate("CREATE TABLE " + tableName + " ( " + "appID VARCHAR(100), "
 					+ "owner VARCHAR(140), " + "eventNo INT, " + "objectID VARCHAR(100), " + "namespace VARCHAR(140), "
 					+ "title VARCHAR(140), " + "description VARCHAR(1000), " + "eventTime BIGINT, "
-					+ "type VARCHAR(100), " + "severity VARCHAR(100), " + "PRIMARY KEY (appID,owner,eventNo)" + ")");
+					+ "type VARCHAR(100), " + "severity VARCHAR(100), " + "instance INT, " + "PRIMARY KEY (appID,owner,eventNo)" + ")");
 
 			conn.commit();
 		}
@@ -82,7 +82,7 @@ public class BigDataStackEventIO implements Timed {
 		Statement statement = conn.createStatement();
 		try {
 			statement.executeUpdate("INSERT INTO " + tableName
-					+ " (appID, owner, eventNo, objectID, namespace, title, description, eventTime, type, severity)"
+					+ " (appID, owner, eventNo, objectID, namespace, title, description, eventTime, type, severity, instance)"
 					+ " VALUES ( " + SQLUtils.prepareText(event.getAppID(), 100) + ", "
 					+ SQLUtils.prepareText(event.getOwner(), 140) + ", "
 					+ event.getEventNo() + ", "
@@ -92,7 +92,8 @@ public class BigDataStackEventIO implements Timed {
 					+ SQLUtils.prepareText(event.getDescription(), 1000) + ", "
 					+ event.getEventTime() + ", "
 					+ SQLUtils.prepareText(event.getType().name(), 100) + ", "
-					+ SQLUtils.prepareText(event.getSeverity().name(), 100) + " )");
+					+ SQLUtils.prepareText(event.getSeverity().name(), 100) + ", "
+					+ event.getInstance() + " )");
 		} catch (Exception e) {
 			//e.printStackTrace();
 			conn.close();
@@ -113,7 +114,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @return
 	 * @throws SQLException
 	 */
-	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, BigDataStackEventSeverity severity, String objectID, long startTime, long endTime) throws SQLException {
+	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, BigDataStackEventSeverity severity, String objectID, int instance,  long startTime, long endTime) throws SQLException {
 		if (!init) { initTable(); init=true;}
 		long ostartTime = System.currentTimeMillis();
 		Connection conn = client.openConnection();
@@ -126,6 +127,7 @@ public class BigDataStackEventIO implements Timed {
 		if (type!=null) baseStatement.append(" AND type='"+type.name()+"'");
 		if (severity!=null) baseStatement.append(" AND severity='"+severity.name()+"'");
 		if (objectID!=null) baseStatement.append(" AND objectID='"+objectID+"'");
+		if (instance>=0) baseStatement.append(" AND instance='"+instance+"'");
 
 		statement.execute(baseStatement.toString());
 		ResultSet results = statement.getResultSet();
@@ -145,7 +147,8 @@ public class BigDataStackEventIO implements Timed {
 						BigDataStackEventSeverity.valueOf(results.getString("severity")),
 						results.getString("title"),
 						results.getString("description"),
-						results.getString("objectID")
+						results.getString("objectID"),
+						results.getInt("instance")
 						);
 
 
@@ -218,7 +221,19 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner) throws SQLException {
-		return getEvents(appID,owner,null, null, null,-1,-1);
+		return getEvents(appID,owner,null, null, null, -1,-1,-1);
+	}
+	
+	/**
+	 * Returns all events in reverse chronological order for a particular application. 
+	 * @param appID
+	 * @param owner
+	 * @param type
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<BigDataStackEvent> getEvents(String appID, String owner, int instance) throws SQLException {
+		return getEvents(appID,owner,null, null, null, instance,-1,-1);
 	}
 
 	/**
@@ -230,7 +245,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type) throws SQLException {
-		return getEvents(appID,owner,type, null, null,-1,-1);
+		return getEvents(appID,owner,type, null, null, -1,-1,-1);
 	}
 
 	/**
@@ -242,7 +257,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventSeverity severity) throws SQLException {
-		return getEvents(appID,owner,null, severity, null,-1,-1);
+		return getEvents(appID,owner,null, severity, null, -1,-1,-1);
 	}
 
 	/**
@@ -255,7 +270,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, BigDataStackEventSeverity severity) throws SQLException {
-		return getEvents(appID,owner,type, severity, null,-1,-1);
+		return getEvents(appID,owner,type, severity, null, -1,-1,-1);
 	}
 
 	/**
@@ -268,7 +283,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, String objectID) throws SQLException {
-		return getEvents(appID,owner,type, null, objectID,-1,-1);
+		return getEvents(appID,owner,type, null, objectID, -1,-1,-1);
 	}
 
 	/**
@@ -281,7 +296,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventSeverity severity, String objectID) throws SQLException {
-		return getEvents(appID,owner,null, severity, objectID,-1,-1);
+		return getEvents(appID,owner,null, severity, objectID, -1,-1,-1);
 	}
 
 	/**
@@ -295,7 +310,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, BigDataStackEventSeverity severity, String objectID) throws SQLException {
-		return getEvents(appID,owner,type, severity, objectID,-1,-1);
+		return getEvents(appID,owner,type, severity, objectID, -1,-1,-1);
 	}
 
 	/**
@@ -309,7 +324,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, long startTime, long endTime) throws SQLException {
-		return getEvents(appID,owner,type, null, null,startTime,endTime);
+		return getEvents(appID,owner,type, null, null, -1,startTime,endTime);
 	}
 
 	/**
@@ -323,7 +338,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventSeverity severity, long startTime, long endTime) throws SQLException {
-		return getEvents(appID,owner,null, severity, null,startTime,endTime);
+		return getEvents(appID,owner,null, severity, null, -1,startTime,endTime);
 	}
 
 	/**
@@ -338,7 +353,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, BigDataStackEventSeverity severity, long startTime, long endTime) throws SQLException {
-		return getEvents(appID,owner,type, severity, null,startTime,endTime);
+		return getEvents(appID,owner,type, severity, null, -1,startTime,endTime);
 	}
 
 	/**
@@ -353,7 +368,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventType type, String objectID, long startTime, long endTime) throws SQLException {
-		return getEvents(appID,owner,type, null, objectID,startTime,endTime);
+		return getEvents(appID,owner,type, null, objectID, -1,startTime,endTime);
 	}
 
 	/**
@@ -368,7 +383,7 @@ public class BigDataStackEventIO implements Timed {
 	 * @throws SQLException
 	 */
 	public List<BigDataStackEvent> getEvents(String appID, String owner, BigDataStackEventSeverity severity, String objectID, long startTime, long endTime) throws SQLException {
-		return getEvents(appID,owner,null, severity, objectID,startTime,endTime);
+		return getEvents(appID,owner,null, severity, objectID, -1,startTime,endTime);
 	}
 	
 	public boolean delete(String owner, String namespace, String appID, String objectID) {

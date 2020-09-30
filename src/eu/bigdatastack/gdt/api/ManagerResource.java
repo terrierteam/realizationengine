@@ -535,8 +535,9 @@ public class ManagerResource {
 	
 	@GET
 	@Path("/list/{owner}/{appID}/events/{objectID}")
-	public List<BigDataStackEvent> listEvents(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("objectID") String objectID){
-		return querying.listEvents(owner, appID, objectID);
+	public List<BigDataStackEvent> listEvents(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("objectID") String objectID, @QueryParam("instance") String instance){
+		if (instance==null) return querying.listEvents(owner, appID, objectID, -1);
+		else return querying.listEvents(owner, appID, objectID, Integer.parseInt(instance));
 	}
 	
 	

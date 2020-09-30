@@ -103,7 +103,8 @@ public class Instantiate extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Object Instantiate Operation Failed: '"+getObjectID()+"'",
 						"Attempted to create a new instance of object '"+getObjectID()+"', but was unable to find an associated object definition from available instances.",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -150,7 +151,8 @@ public class Instantiate extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Object Instantiate Operation Failed: '"+getObjectID()+"'",
 						"Attempted to create a new instance of object '"+getObjectID()+"', but failed when attempting to register the new instance with the database.",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			} else {
@@ -166,7 +168,8 @@ public class Instantiate extends BigDataStackOperation{
 						BigDataStackEventSeverity.Info,
 						"Object Instantiate Operation Completed: '"+getObjectID()+"("+instanceObject.getInstance()+")'",
 						"Created a new instance of object '"+getObjectID()+"("+instanceObject.getInstance()+")'",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				
 			}

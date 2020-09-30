@@ -133,7 +133,8 @@ public class RecordMetricsUntil extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Record-Metrics-Until Operation Failed: '"+instanceRef+"'",
 						"Attempted to find an instance with within-sequence reference '"+instanceRef+"', but the parent sequence did not have an appropriate instance reference (did you Instantiate first?)",
-						getObjectID()
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -156,7 +157,8 @@ public class RecordMetricsUntil extends BigDataStackOperation{
 					BigDataStackEventSeverity.Info,
 					"Record-Metrics-Until Operation Started: '"+instanceRef+"'",
 					"Record-Metrics-Until Operation Started for within-sequence reference '"+instanceRef+"'",
-					getObjectID()
+					parentSequenceRunner.getSequence().getSequenceID(),
+					parentSequenceRunner.getSequence().getIndex()
 					);
 			
 			boolean inTargetState = false;
@@ -172,7 +174,8 @@ public class RecordMetricsUntil extends BigDataStackOperation{
 							BigDataStackEventSeverity.Error,
 							"Record-Metrics-Until Operation Failed: '"+sourceObjectID+"("+instance+")'",
 							"Attempted to get an instance '"+sourceObjectID+"("+instance+")', but was unable to find an associated object definition from available instances.",
-							sourceObjectID
+							parentSequenceRunner.getSequence().getSequenceID(),
+							parentSequenceRunner.getSequence().getIndex()
 							);
 					return false;
 				}
@@ -190,7 +193,8 @@ public class RecordMetricsUntil extends BigDataStackOperation{
 								BigDataStackEventSeverity.Warning,
 								"Record-Metrics-Until Operation Aborted for: '"+sourceObjectID+"("+instance+")'",
 								"The underlying object that we were waiting for '"+sourceObjectID+"("+instance+")' entered a failure state",
-								sourceObjectID
+								parentSequenceRunner.getSequence().getSequenceID(),
+								parentSequenceRunner.getSequence().getIndex()
 								);
 						
 						return false;

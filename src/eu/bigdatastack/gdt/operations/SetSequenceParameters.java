@@ -88,7 +88,8 @@ public class SetSequenceParameters extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Set Sequence Parameters Operation Failed: '"+getObjectID()+"'",
 						"Attempted to find an instance with within-sequence reference '"+getObjectID()+"', but the parent sequence did not have an appropriate instance reference (did you Instantiate first?)",
-						instanceRef
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -108,7 +109,8 @@ public class SetSequenceParameters extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Set Sequence Parameters Operation Failed: '"+sourceObjectID+"("+instance+")'",
 						"Attempted to set paramters for object instance '"+sourceObjectID+"("+instance+")', but was unable to find an associated object definition from available instances.",
-						sourceObjectID
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
@@ -130,7 +132,8 @@ public class SetSequenceParameters extends BigDataStackOperation{
 						BigDataStackEventSeverity.Info,
 						"Set Sequence Parameters Operation Completed: '"+sourceObjectID+"("+instance+")'",
 						"Set paramters for object instance '"+sourceObjectID+"("+instance+")' based on operation sequence '"+parentSequenceRunner.getSequence().getSequenceID()+"'",
-						sourceObjectID
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				Thread.sleep(2000); // add a short sleep here to make sure the update went through
 			} else {
@@ -142,7 +145,8 @@ public class SetSequenceParameters extends BigDataStackOperation{
 						BigDataStackEventSeverity.Error,
 						"Set Sequence Parameters Operation Failed: '"+sourceObjectID+"("+instance+")'",
 						"Attempted to set paramters for object instance '"+sourceObjectID+"("+instance+")', but was unable to write the instance back to the database.",
-						sourceObjectID
+						parentSequenceRunner.getSequence().getSequenceID(),
+						parentSequenceRunner.getSequence().getIndex()
 						);
 				return false;
 			}
