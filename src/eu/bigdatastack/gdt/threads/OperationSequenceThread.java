@@ -297,7 +297,7 @@ public class OperationSequenceThread implements Runnable {
 					return;
 				}
 				
-				eventUtil.registerEvent(
+				/*eventUtil.registerEvent(
 						sequence.getAppID(),
 						sequence.getOwner(),
 						sequence.getNamespace(),
@@ -307,7 +307,7 @@ public class OperationSequenceThread implements Runnable {
 						"Operation targeting '"+operation.getObjectID()+"' of type "+operation.getClass().getSimpleName()+" completed within sequence '"+sequence.getSequenceID()+"' with instance index '"+sequence.getIndex()+"'",
 						sequence.getSequenceID(),
 						sequence.getIndex()
-						);
+						);*/
 				
 			} catch (Exception e) {
 				e.printStackTrace();

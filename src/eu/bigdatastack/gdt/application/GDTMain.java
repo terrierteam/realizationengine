@@ -111,7 +111,7 @@ public class GDTMain {
 			Map<String,String> parameters = System.getenv();
 			
 			if (manager.executeSequenceFromTemplateSync(sequence, parameters)) {
-				manager.eventUtil.registerEvent(
+				/*manager.eventUtil.registerEvent(
 						appID,
 						owner,
 						namespace,
@@ -121,10 +121,10 @@ public class GDTMain {
 						"Finished processing operation sequence '"+sequenceID+"' with index "+sequence.getIndex(),
 						sequenceID,
 						sequence.getIndex()
-						);
+						);*/
 				
 			} else {
-				manager.eventUtil.registerEvent(
+				/*manager.eventUtil.registerEvent(
 						appID,
 						owner,
 						namespace,
@@ -134,7 +134,7 @@ public class GDTMain {
 						"Attempted to run operation sequence '"+sequenceID+"' with index "+sequence.getIndex()+", but one or more operations failed",
 						sequenceID,
 						sequence.getIndex()
-						);
+						);*/
 			}
 			
 			manager.printTimings();

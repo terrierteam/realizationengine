@@ -1,5 +1,5 @@
 appID: "gdtdefaultapp"
-name: "GDT Default App"
+name: "Realization Engine"
 description: "This is the default app that global decision tracker components are deployed under"
 owner: "gdt"
 namespace: "$namespace$"
