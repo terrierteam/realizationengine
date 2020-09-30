@@ -200,6 +200,26 @@ public class BigDataStackOperationSequence {
 		
 	}
 	
+	public int getCurrentOperationNo() {
+		
+		boolean hasStarted = false;
+		
+		int i =1;
+		for (BigDataStackOperation operation : operations) {
+			
+			if (operation.getState() != BigDataStackOperationState.NotStarted) hasStarted = true;
+			if (operation.getState() == BigDataStackOperationState.InProgress) return i;
+			
+			i++;
+		}
+		
+		if (!hasStarted) return 1;
+		
+		return operations.size();
+		
+		
+	}
+	
 	/**
 	 * Checks if all operations are marked as complete
 	 * @return
