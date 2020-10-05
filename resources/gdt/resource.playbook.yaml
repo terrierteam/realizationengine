@@ -10,7 +10,7 @@ types:
  - setObjectMetadata
 
 objects:
-    objectID: "resourcemonitor"
+  - objectID: "resourcemonitor"
     yamlSource: 
       apiVersion: apps.openshift.io/v1
       kind: DeploymentConfig
