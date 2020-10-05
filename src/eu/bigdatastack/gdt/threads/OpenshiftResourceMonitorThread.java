@@ -1,9 +1,11 @@
 package eu.bigdatastack.gdt.threads;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,9 +85,11 @@ public class OpenshiftResourceMonitorThread implements Runnable{
 		
 		Map<String,BufferedWriter> writers = new HashMap<String,BufferedWriter>();
 
+		File kfile = new File("kill");
 		
-		while (!kill) {
-
+		
+		while (!kill && !kfile.exists()) {
+			
 			Set<String> writeKeysThisIteration = new HashSet<String>();
 			
 			try {
@@ -150,7 +154,7 @@ public class OpenshiftResourceMonitorThread implements Runnable{
 							}
 							
 							
-							if (!metricValueIO.updateMetricValue(metricValue)) metricValueIO.addMetricValue(metricValue);
+							if (!metricValueIO.addMetricValue(metricValue)) metricValueIO.updateMetricValue(metricValue);
 
 						}
 						
