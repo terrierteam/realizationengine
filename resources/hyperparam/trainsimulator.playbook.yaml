@@ -1,6 +1,6 @@
 appID: "trainsimulator"
 name: "App for Simulating ML Model Training"
-description: "This application deploys containers that perform short pseudo training cycles and export the MAE metric"
+description: "This application deploys containers that perform short pseudo training cycles and export the F1 metric"
 owner: "$owner$"
 namespace: "$namespace$"
 types:

@@ -975,7 +975,19 @@ public class GDTManager implements Manager {
 
 			if (!apiOk) return false;
 
+			if (gdtConfig.getOpenshift().getOpenshiftPrometheus()!=null) {
+				// load the GDT Resource Monitor Instance
+				loadPlaybook(GDTFileUtil.file2String(new File("resources/gdt/resource.playbook.yaml"), "UTF-8"), owner, namespace);
 
+				parameters.put("prometheusHost", gdtConfig.getOpenshift().getOpenshiftPrometheus());
+				
+				existingSequenceTemplate = sequenceTemplateClient.getSequence("gdtdefaultapp", "seq-resourcemonitor");
+				boolean resourceOk = executeSequenceFromTemplateSync(existingSequenceTemplate, parameters);
+				
+				if (!resourceOk) return false;
+			}
+			
+			
 
 
 			return true;

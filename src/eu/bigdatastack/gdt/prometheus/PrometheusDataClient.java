@@ -24,7 +24,7 @@ public class PrometheusDataClient {
 		this.hostExtension = hostExtension;
 	}
 	
-	ObjectMapper mapper = new ObjectMapper();
+	public static ObjectMapper mapper = new ObjectMapper();
 	
 	
 	/**
@@ -193,6 +193,139 @@ public class PrometheusDataClient {
 			//System.err.println(queryBuilder.toString());
 			
 			URL url = new URL("http://prometheus-gdt-"+namespace+"."+hostExtension+"/api/v1/query?query="+queryBuilder.toString());
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setRequestMethod("GET");
+
+			BufferedReader in = new BufferedReader(
+					new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			while ((inputLine = in.readLine()) != null) {
+				content.append(inputLine);
+			}
+			in.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		if (content.length()==0) return null;
+		
+		try {
+			JsonNode node = mapper.readTree(content.toString());
+			
+			if (node.has("status") && !node.get("status").asText().equalsIgnoreCase("success")) return null;
+			
+			List<String> values = new ArrayList<String>();
+			List<Long> times = new ArrayList<Long>();
+			List<Map<String,String>> labelSets = new ArrayList<Map<String,String>>();
+			
+			JsonNode data = node.get("data");
+			if (data.has("resultType") && data.get("resultType").asText().equalsIgnoreCase("vector")) {
+				Iterator<JsonNode> resultIterator = data.get("result").iterator();
+				
+				while (resultIterator.hasNext()) {
+					JsonNode result = resultIterator.next();
+					
+					JsonNode metricData = result.get("metric");
+					Iterator<String> fieldNames = metricData.fieldNames();
+					Map<String,String> map = new HashMap<String,String>();
+					while (fieldNames.hasNext()) {
+						String fieldName = fieldNames.next();
+						String fieldvalue = metricData.get(fieldName).asText();
+						map.put(fieldName, fieldvalue);
+					}
+					
+					JsonNode value = result.get("value");
+					double time = value.get(0).asDouble();
+					String valueString = value.get(1).asText();
+					
+					values.add(valueString);
+					times.add(Double.valueOf(time).longValue()*1000);
+					labelSets.add(map);
+				}
+			}
+			
+			if (data.has("resultType") && data.get("resultType").asText().equalsIgnoreCase("matrix")) {
+				Iterator<JsonNode> resultIterator = data.get("result").iterator();
+				
+				
+				
+				while (resultIterator.hasNext()) {
+					JsonNode result = resultIterator.next();
+					JsonNode metricData = result.get("metric");
+					Iterator<String> fieldNames = metricData.fieldNames();
+					Map<String,String> map = new HashMap<String,String>();
+					while (fieldNames.hasNext()) {
+						String fieldName = fieldNames.next();
+						String fieldvalue = metricData.get(fieldName).asText();
+						map.put(fieldName, fieldvalue);
+					}
+					
+					String valueString = null;
+					double time = 0.0;
+					JsonNode valueList = result.get("values");
+					Iterator<JsonNode> valueIterator = valueList.iterator();
+					while (valueIterator.hasNext()) {
+						JsonNode value = valueIterator.next();
+						time = value.get(0).asDouble();
+						valueString = value.get(1).asText();
+					}
+					
+					values.add(valueString);
+					times.add(Double.valueOf(time).longValue()*1000);
+					labelSets.add(map);
+					
+				}
+			}
+			
+
+			BigDataStackMetricValue metricValue = new BigDataStackMetricValue();
+			metricValue.setOwner(owner);
+			metricValue.setNamespace(namespace);
+			metricValue.setObjectID(objectID);
+			metricValue.setAppID(appID);
+			metricValue.setLabels(labelSets);
+			metricValue.setValue(values);
+			metricValue.setLastUpdated(times);
+			metricValue.setMetricname(metricname);
+			
+			return metricValue;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
+	}
+	
+	/**
+	 * Static query method for use with any prometheus instance. Does not assume data parameterization like the instantiated methods of this class.
+	 * @param prometheusHost
+	 * @param metricname
+	 * @param matchCriteria
+	 * @param timeExpression
+	 * @param owner
+	 * @param namespace
+	 * @param appID
+	 * @param objectID
+	 * @return
+	 */
+	public static BigDataStackMetricValue basicQuery(String prometheusHost, String metricname, Map<String,String> matchCriteria, String timeExpression, String owner, String namespace, String appID, String objectID) {
+
+		StringBuffer content = new StringBuffer();
+		try {
+			
+			StringBuilder queryBuilder = new StringBuilder();
+			queryBuilder.append(metricname+"{");
+			boolean first = true;
+			for (String key : matchCriteria.keySet()) {
+				if (key!=null) { if (first) { first=false; } else { queryBuilder.append(","); };  queryBuilder.append(key+"%3D\""+matchCriteria.get(key)+"\""); };
+			}
+			if (timeExpression!=null) queryBuilder.append("}["+timeExpression+"]");
+			else  queryBuilder.append("}");
+			
+			//System.err.println(queryBuilder.toString());
+			
+			URL url = new URL(prometheusHost+"/api/v1/query?query="+queryBuilder.toString());
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
 			con.setRequestMethod("GET");
 

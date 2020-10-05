@@ -17,6 +17,7 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackEventType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.threads.CostExporter;
 import eu.bigdatastack.gdt.threads.OpenshiftProjectMonitoringThread;
+import eu.bigdatastack.gdt.threads.OpenshiftResourceMonitorThread;
 
 public class GDTMain {
 
@@ -178,6 +179,21 @@ public class GDTMain {
 				String[] commandArgs = {"server", "api.json"};
 				new GDTAPI(manager).run(commandArgs); // Create a new online api and run it
 			} catch (Exception e) {e.printStackTrace();}
+			
+		
+		} else if (args[0].equalsIgnoreCase("resourceMonitor")) {
+			
+			
+			JDBCDB database = new MySQLDB(dbhost, Integer.parseInt(dbport), dbname, dbusername, dbpassword);
+			
+			
+			RabbitMQClient rabbitMQClient = new RabbitMQClient(rmqhost, Integer.parseInt(rmqport), rmqusername, rmqpassword);
+			
+			String centralPrometheusHost = System.getenv("prometheusHost");
+			String writeDIR = System.getenv("writeDIR");
+			
+			OpenshiftResourceMonitorThread monitorThread = new OpenshiftResourceMonitorThread(rabbitMQClient, database, owner, namespace, centralPrometheusHost, writeDIR);
+			monitorThread.run();
 			
 			
 		// Launch as a processor for an Operation Sequence

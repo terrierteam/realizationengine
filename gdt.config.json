@@ -21,6 +21,7 @@
 		"password": "IDAAdmin2019",
 		"hostExtension": "ida.dcs.gla.ac.uk",
 		"imageRepositoryHost": "docker-registry.default.svc:5000",
-		"namespace": "richardmproject"
+		"namespace": "richardmproject",
+		"openshiftPrometheus": "http://prometheus-open-openshift-monitoring.ida.dcs.gla.ac.uk"
 	}
 }

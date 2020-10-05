@@ -10,6 +10,7 @@ public class OpenshiftConfig {
 	String hostExtension;
 	String imageRepositoryHost;
 	String namespace;
+	String openshiftPrometheus;
 	
 	public OpenshiftConfig() {}
 
@@ -24,6 +25,23 @@ public class OpenshiftConfig {
 		this.hostExtension = hostExtension;
 		this.imageRepositoryHost = imageRepositoryHost;
 		this.namespace = namespace;
+		this.openshiftPrometheus = null;
+	}
+	
+	
+
+	public OpenshiftConfig(String client, String host, int port, String username, String password, String hostExtension,
+			String imageRepositoryHost, String namespace, String openshiftPrometheus) {
+		super();
+		this.client = client;
+		this.host = host;
+		this.port = port;
+		this.username = username;
+		this.password = password;
+		this.hostExtension = hostExtension;
+		this.imageRepositoryHost = imageRepositoryHost;
+		this.namespace = namespace;
+		this.openshiftPrometheus = openshiftPrometheus;
 	}
 
 	public String getClient() {
@@ -88,6 +106,14 @@ public class OpenshiftConfig {
 
 	public void setNamespace(String namespace) {
 		this.namespace = namespace;
+	}
+
+	public String getOpenshiftPrometheus() {
+		return openshiftPrometheus;
+	}
+
+	public void setOpenshiftPrometheus(String openshiftPrometheus) {
+		this.openshiftPrometheus = openshiftPrometheus;
 	}
 
 	

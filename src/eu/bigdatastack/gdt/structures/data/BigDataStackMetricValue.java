@@ -40,7 +40,7 @@ public class BigDataStackMetricValue {
 		this.objectID = objectID;
 		this.metricname = metricname;
 		this.value = new ArrayList<String>();
-		this.lastUpdated = new ArrayList<Long>();;
+		this.lastUpdated = new ArrayList<Long>();
 		this.labels = new ArrayList<Map<String,String>>();
 	}
 
