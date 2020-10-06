@@ -3,10 +3,11 @@ package eu.bigdatastack.gdt.threads;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
-
+import java.util.Map;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackApplicationIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackEventIO;
+import eu.bigdatastack.gdt.lxdb.BigDataStackMetricValueIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackObjectIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackOperationSequenceIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackPodStatusIO;
@@ -16,6 +17,7 @@ import eu.bigdatastack.gdt.openshift.OpenshiftObject;
 import eu.bigdatastack.gdt.openshift.OpenshiftStatusClient;
 import eu.bigdatastack.gdt.rabbitmq.RabbitMQClient;
 import eu.bigdatastack.gdt.structures.data.BigDataStackApplication;
+import eu.bigdatastack.gdt.structures.data.BigDataStackMetricValue;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
@@ -45,6 +47,9 @@ public class CostExporter implements Runnable{
 	BigDataStackApplicationIO applicationIO;
 	BigDataStackObjectIO objectIO;
 	BigDataStackEventIO eventIO;
+	BigDataStackMetricValueIO metricValueIO;
+	
+	String[] metrics = {"pod_name:container_cpu_usage:sum", "pod_name:container_memory_usage_bytes:sum"}; // these are the default resource usage metrics in the state db
 
 	public CostExporter(OpenshiftStatusClient openshiftStatus, RabbitMQClient rabbitMQClient, JDBCDB database, String owner, String namespace) {
 		this.openshiftStatus = openshiftStatus;
@@ -64,6 +69,7 @@ public class CostExporter implements Runnable{
 			podStatusIO = new BigDataStackPodStatusIO(database);
 			eventIO = new BigDataStackEventIO(database);
 			objectIO = new BigDataStackObjectIO(database, false); // monitor actual instances, not templates
+			metricValueIO = new BigDataStackMetricValueIO(database);
 
 
 		} catch (SQLException e) {
@@ -104,26 +110,86 @@ public class CostExporter implements Runnable{
 							int podTotalCPURequest = 0;
 							int podTotalMemRequest = 0;
 							boolean changePerformed = false;
+							
+							List<BigDataStackMetricValue> cpuMetricValue = metricValueIO.getMetricValues(app.getAppID(), owner, namespace, objectDef.getObjectID(), metrics[0]);
+							List<BigDataStackMetricValue> memMetricValue = metricValueIO.getMetricValues(app.getAppID(), owner, namespace, objectDef.getObjectID(), metrics[1]);
+							
 							for (BigDataStackPodStatus status : statuses) {
 								
 								if (status.getStatus().equalsIgnoreCase("Running") || status.getStatus().equalsIgnoreCase("Progressing")) {
 									
-									OpenshiftObject pod = openshiftStatus.getPod(status.getNamespace(), status.getPodID());
-									if (pod == null) {
-										System.err.println("    Failed to get pod: "+status.getPodID()+" in "+status.getNamespace());
-										continue;
+									// First try and see if we have live data on resource usage in the state database
+									
+									boolean sucessfullyGotCPU = false;
+									boolean sucessfullyGotMem = false;
+									if (cpuMetricValue.size()>0) {
+										for (BigDataStackMetricValue cpuMetric : cpuMetricValue) {
+											// one metric can contain multiple instances, find a match to this pod we are currently on
+											for (int i =0; i<cpuMetric.getValue().size(); i++) {
+												Map<String,String> labels = cpuMetric.getLabels().get(i);
+												String podID = labels.get("pod_name");
+												if (podID!=null) {
+													if (status.getPodID().equalsIgnoreCase(podID)) {
+														
+														// check the data is recent
+														if ((System.currentTimeMillis()-cpuMetric.getLastUpdated().get(i))<120000) {
+															sucessfullyGotCPU = true;
+															int cpuMilicores = (int)(Double.parseDouble(cpuMetric.getValue().get(i))*1000);
+															podTotalCPURequest = podTotalCPURequest + cpuMilicores;
+														}
+														
+													}
+												}
+											}
+										}
 									}
 									
-									// Sum requests across containers
-									
-									
-									for (OpenshiftContainer container : pod.ifPodGetContainers()) {
-										//System.err.println(status.getPodID()+" "+ container.getRequestCPU()+" "+container.getRequestMemory());
-										podTotalCPURequest = podTotalCPURequest + cpuToMilicores(container.getRequestCPU());
-										podTotalMemRequest = podTotalMemRequest + memToMegabytes(container.getRequestMemory());
+									if (memMetricValue.size()>0) {
+										for (BigDataStackMetricValue memMetric : memMetricValue) {
+											// one metric can contain multiple instances, find a match to this pod we are currently on
+											for (int i =0; i<memMetric.getValue().size(); i++) {
+												Map<String,String> labels = memMetric.getLabels().get(i);
+												String podID = labels.get("pod_name");
+												if (podID!=null) {
+													if (status.getPodID().equalsIgnoreCase(podID)) {
+														
+														// check the data is recent
+														if ((System.currentTimeMillis()-memMetric.getLastUpdated().get(i))<120000) {
+															sucessfullyGotMem = true;
+															long memMegaBytes = (int)(Long.parseLong(memMetric.getValue().get(i)));
+															memMegaBytes = memMegaBytes/1024; //KB
+															memMegaBytes = memMegaBytes/1024; //MB
+															podTotalMemRequest = podTotalMemRequest + (int)memMegaBytes;
+														}
+														
+													}
+												}
+											}
+										}
 									}
 									
-									//System.err.println(status.getPodID()+" "+ podTotalCPURequest+" "+podTotalMemRequest);
+									if (!sucessfullyGotCPU || !sucessfullyGotMem) {
+										// we need to fall back to the resource request information
+										
+										OpenshiftObject pod = openshiftStatus.getPod(status.getNamespace(), status.getPodID());
+										if (pod == null) {
+											System.err.println("    Failed to get pod: "+status.getPodID()+" in "+status.getNamespace());
+											continue;
+										}
+										
+										// Sum requests across containers
+										
+										
+										for (OpenshiftContainer container : pod.ifPodGetContainers()) {
+											//System.err.println(status.getPodID()+" "+ container.getRequestCPU()+" "+container.getRequestMemory());
+											if (!sucessfullyGotCPU) podTotalCPURequest = podTotalCPURequest + cpuToMilicores(container.getRequestCPU());
+											if (!sucessfullyGotMem) podTotalMemRequest = podTotalMemRequest + memToMegabytes(container.getRequestMemory());
+										}
+										
+										//System.err.println(status.getPodID()+" "+ podTotalCPURequest+" "+podTotalMemRequest);
+									}
+									
+									
 									
 									
 									
