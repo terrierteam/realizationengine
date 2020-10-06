@@ -47,8 +47,16 @@ objects:
                 - '-jar'
                 - 'target/trecis-system-1.0-SNAPSHOT.jar'
               env:
-                - name: 'TRECIS_MODE'
-                  value: $trecis-mode$
+                - name: "owner"
+                  value: "$owner$"
+                - name: "appID"
+                  value: "$appID$"
+                - name: "instance"
+                  value: "$instance$"
+                - name: "objectID"
+                  value: "$objectID$"
+                - name: 'TRECIS_CLASSFILE'
+                  value: $trecis-classfile$
                 - name: 'TRECIS_OUTDIR'
                   value: $trecis-outdir$
                 - name: 'TRECIS_BATCHSIZE'
@@ -72,10 +80,10 @@ sequences:
     description: "Launches a training job for a TREC-IS tweet classification model. "
     parameters:
       request-cpu: "500m"
-      request-mem: "1000Gi"
+      request-mem: "1Gi"
       limit-cpu: "500m"
-      limit-mem: "1000Gi"
-      trecis-mode: "prepareModels"
+      limit-mem: "1Gi"
+      trecis-classfile: "ContinuingNews.arff"
       trecis-outdir: "resources/models/smolearning-$random$"
       trecis-batchsize: "50"
       trecis-epsilon: "1.0E-11"
