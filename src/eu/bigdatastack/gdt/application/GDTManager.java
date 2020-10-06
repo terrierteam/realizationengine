@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -1924,6 +1925,11 @@ public class GDTManager implements Manager {
 		yaml = yaml.replaceAll("\\$APPID\\$", appID);
 		yaml = yaml.replaceAll("\\$OWNER\\$", owner);
 		yaml = yaml.replaceAll("\\$NAMESPACE\\$", namespace);
+		
+		Random r = new Random();
+		long randomLong = r.nextLong();
+		yaml = yaml.replaceAll("\\$random\\$", String.valueOf(randomLong));
+		yaml = yaml.replaceAll("\\$RANDOM\\$", String.valueOf(randomLong));
 
 		return yaml;
 	}

@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.zip.GZIPInputStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -176,6 +177,11 @@ public class GDTFileUtil {
 			yaml = yaml.replaceAll("\\$owner\\$", owner);
 			yaml = yaml.replaceAll("\\$namespace\\$", namespace);
 			yaml = yaml.replaceAll("\\$sequenceID\\$", sequenceID);
+			
+			Random r = new Random();
+			long randomLong = r.nextLong();
+			yaml = yaml.replaceAll("\\$random\\$", String.valueOf(randomLong));
+			yaml = yaml.replaceAll("\\$RANDOM\\$", String.valueOf(randomLong));
 
 			node = mapper.readTree(yaml);
 
