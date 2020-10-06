@@ -65,6 +65,10 @@ objects:
                   value: $trecis-epsilon$
                 - name: 'TRECIS_C'
                   value: $trecis-c$
+              ports:
+              - name: promexporter
+                containerPort: 9678
+                protocol: TCP
             volumes:
             - name: nfs-access
               persistentVolumeClaim:
