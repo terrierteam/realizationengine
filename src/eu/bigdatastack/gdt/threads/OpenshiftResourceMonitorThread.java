@@ -148,7 +148,7 @@ public class OpenshiftResourceMonitorThread implements Runnable{
 								String writeKey = owner+"-"+namespace+"-"+app.getAppID()+"-"+objectDef.getObjectID()+"-"+metricName;
 								writeKeysThisIteration.add(writeKey);
 								
-								if (!writers.containsKey(writeKey)) writers.put(writeKey, new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(writeDIR+"/"+writeKey+".json.gz", true)))));
+								if (!writers.containsKey(writeKey)) writers.put(writeKey, new BufferedWriter(new OutputStreamWriter((new FileOutputStream(writeDIR+"/"+writeKey+".json", true)))));
 								writers.get(writeKey).append(mapper.writeValueAsString(metricValue));
 								writers.get(writeKey).newLine();
 							}

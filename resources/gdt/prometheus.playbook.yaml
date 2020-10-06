@@ -80,8 +80,8 @@ objects:
               image: "openshift/prometheus:v2.3.2"
               resources:
                 requests:
-                  cpu: "1000m"
-                  memory: "2048Mi"
+                  cpu: "100m"
+                  memory: "1024Mi"
                 limits:
                   cpu: "1000m"
                   memory: "2048Mi"
