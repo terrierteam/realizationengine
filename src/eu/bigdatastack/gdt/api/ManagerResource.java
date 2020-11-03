@@ -61,14 +61,14 @@ public class ManagerResource {
 	
 	@POST
 	@Path("/registeryaml/playbook/{owner}/{namespace}")
-	public void registerPlaybook(@PathParam("owner") String owner, @PathParam("namespace") String namespace, String yaml) {
-		manager.loadPlaybook(yaml, owner, namespace);
+	public List<String> registerPlaybook(@PathParam("owner") String owner, @PathParam("namespace") String namespace, String yaml) {
+		return manager.loadPlaybook(yaml, owner, namespace);
 	}
 	
 	@POST
 	@Path("/registeryaml/playbook")
-	public void registerPlaybook(String yaml) {
-		manager.loadPlaybook(yaml, null, null);
+	public List<String> registerPlaybook(String yaml) {
+		return manager.loadPlaybook(yaml, null, null);
 	}
 	
 	@POST
@@ -114,23 +114,25 @@ public class ManagerResource {
 	
 	@POST
 	@Path("/registerjson/playbook/{owner}/{namespace}")
-	public void registerPlaybookJson(@PathParam("owner") String owner, @PathParam("namespace") String namespace, String json) {
+	public List<String> registerPlaybookJson(@PathParam("owner") String owner, @PathParam("namespace") String namespace, String json) {
 		try {
 			JsonNode node = jsonMapper.readTree(json);
-			manager.loadPlaybook(yamlMapper.writeValueAsString(node), owner, namespace);
+			return manager.loadPlaybook(yamlMapper.writeValueAsString(node), owner, namespace);
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		}
 	}
 	
 	@POST
 	@Path("/registerjson/playbook")
-	public void registerPlaybookJson(String json) {
+	public List<String> registerPlaybookJson(String json) {
 		try {
 			JsonNode node = jsonMapper.readTree(json);
-			manager.loadPlaybook(yamlMapper.writeValueAsString(node), null, null);
+			return manager.loadPlaybook(yamlMapper.writeValueAsString(node), null, null);
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		}
 	}
 	

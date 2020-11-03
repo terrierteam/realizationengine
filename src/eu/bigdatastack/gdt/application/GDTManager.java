@@ -83,6 +83,7 @@ public class GDTManager implements Manager {
 	GDTConfig gdtConfig; 
 
 	ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+	ObjectMapper jsonMapper = new ObjectMapper();
 
 	JDBCDB database;
 	public OpenshiftOperationClient openshiftOperationClient;
@@ -1831,8 +1832,10 @@ public class GDTManager implements Manager {
 	}
 
 	
-	public void loadPlaybook(String yaml, String owner, String namespace) {
+	public List<String> loadPlaybook(String yaml, String owner, String namespace) {
 
+		List<String> changes = new ArrayList<String>();
+		
 		try {
 			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 			JsonNode node = mapper.readTree(yaml);
@@ -1854,7 +1857,7 @@ public class GDTManager implements Manager {
 					namespace,
 					types);
 
-			registerApplication(new YAMLMapper().writeValueAsString(app));
+			changes.add(jsonMapper.writeValueAsString(registerApplication(new YAMLMapper().writeValueAsString(app))));
 
 			if (node.has("metrics")) {
 				JsonNode metrics = node.get("metrics");
@@ -1862,7 +1865,7 @@ public class GDTManager implements Manager {
 				while (metricI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(metricI.next());
 					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
-					registerMetric(jsonAsYaml, owner);
+					changes.add(jsonMapper.writeValueAsString(registerMetric(jsonAsYaml, owner)));
 				}
 			}
 
@@ -1872,7 +1875,7 @@ public class GDTManager implements Manager {
 				while (objectsI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(objectsI.next());
 					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
-					registerObject(jsonAsYaml, app);
+					changes.add(jsonMapper.writeValueAsString(registerObject(jsonAsYaml, app)));
 				}
 			}
 
@@ -1883,7 +1886,7 @@ public class GDTManager implements Manager {
 				while (sequencesI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(sequencesI.next());
 					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
-					registerOperationSequence(jsonAsYaml, namespace, owner);
+					changes.add(jsonMapper.writeValueAsString(registerOperationSequence(jsonAsYaml, namespace, owner)));
 				}
 			}
 
@@ -1893,7 +1896,7 @@ public class GDTManager implements Manager {
 				while (sequencesI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(sequencesI.next());
 					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
-					registerSLO(jsonAsYaml, namespace, owner, app.getAppID());
+					changes.add(jsonMapper.writeValueAsString(registerSLO(jsonAsYaml, namespace, owner, app.getAppID())));
 				}
 			}
 			
@@ -1903,7 +1906,7 @@ public class GDTManager implements Manager {
 				while (statesI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(statesI.next());
 					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
-					registerApplicationState(jsonAsYaml, app);
+					changes.add(jsonMapper.writeValueAsString(registerApplicationState(jsonAsYaml, app)));
 				}
 			}
 			
@@ -1912,8 +1915,11 @@ public class GDTManager implements Manager {
 
 		} catch (Exception e) {
 			e.printStackTrace();
+			
 		}
 
+		return changes;
+		
 	}
 	
 	/**
