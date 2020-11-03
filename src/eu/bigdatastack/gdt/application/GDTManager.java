@@ -245,7 +245,7 @@ public class GDTManager implements Manager {
 	public BigDataStackSLO registerSLO(String yaml) {
 		try {
 			BigDataStackSLO app = yamlMapper.readValue(yaml, BigDataStackSLO.class);
-			return registerSLO(app, null, null);
+			return registerSLO(app, null, null, null);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -257,10 +257,10 @@ public class GDTManager implements Manager {
 	 * @param yaml
 	 * @return
 	 */
-	public BigDataStackSLO registerSLO(String yaml, String namespace, String owner) {
+	public BigDataStackSLO registerSLO(String yaml, String namespace, String owner, String appID) {
 		try {
 			BigDataStackSLO app = yamlMapper.readValue(yaml, BigDataStackSLO.class);
-			return registerSLO(app, namespace, owner);
+			return registerSLO(app, namespace, owner, appID);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -272,9 +272,10 @@ public class GDTManager implements Manager {
 	 * @param yaml
 	 * @return
 	 */
-	protected BigDataStackSLO registerSLO(BigDataStackSLO slo, String namespace, String owner) {
+	protected BigDataStackSLO registerSLO(BigDataStackSLO slo, String namespace, String owner, String appID) {
 		if (namespace!=null) slo.setNamespace(namespace);
 		if (owner!=null) slo.setOwner(owner);
+		if (appID!=null) slo.setAppID(appID);
 
 		try {
 			if (!sloClient.addSLO(slo)) {
@@ -1892,7 +1893,7 @@ public class GDTManager implements Manager {
 				while (sequencesI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(sequencesI.next());
 					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
-					registerSLO(jsonAsYaml, namespace, owner);
+					registerSLO(jsonAsYaml, namespace, owner, app.getAppID());
 				}
 			}
 			
