@@ -604,6 +604,50 @@ public class GDTManager implements Manager {
 	 * @param yaml
 	 * @return
 	 */
+	public BigDataStackMetric registerMetric(String yaml, String owner) {
+		try {
+			BigDataStackMetric object = yamlMapper.readValue(yaml, BigDataStackMetric.class);
+			object.setOwner(owner);
+			if (!metricClient.addMetric(object)) {
+				if (!metricClient.updateMetric(object)) {
+					eventUtil.registerEvent(
+							"Metric",
+							object.getOwner(),
+							"None",
+							BigDataStackEventType.ObjectRegistry,
+							BigDataStackEventSeverity.Info,
+							"New Metric Failed to Register: '"+object.getName()+"'",
+							"Tried to create a newmetric '"+object.getName()+"' but failed, likely due to a metric with the same ID already existing",
+							object.getName(),
+							-1
+							);
+					return null;
+				}
+			}
+
+			eventUtil.registerEvent(
+					"Metric",
+					object.getOwner(),
+					"None",
+					BigDataStackEventType.ObjectRegistry,
+					BigDataStackEventSeverity.Info,
+					"New Metric Registered: '"+object.getName()+"'",
+					"A new metric was created '"+object.getName()+"'",
+					object.getName(),
+					-1
+					);
+			return object;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * Registers a new BigDataStack Metric with the database from a yaml format String
+	 * @param yaml
+	 * @return
+	 */
 	public BigDataStackMetric registerMetric(String yaml) {
 		try {
 			BigDataStackMetric object = yamlMapper.readValue(yaml, BigDataStackMetric.class);
@@ -641,7 +685,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-
+	
 
 	/**
 	 * Registers a new BigDataStack Metric with the database from a yaml format File
@@ -1817,7 +1861,7 @@ public class GDTManager implements Manager {
 				while (metricI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(metricI.next());
 					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
-					registerMetric(jsonAsYaml);
+					registerMetric(jsonAsYaml, owner);
 				}
 			}
 
@@ -1838,7 +1882,7 @@ public class GDTManager implements Manager {
 				while (sequencesI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(sequencesI.next());
 					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
-					registerOperationSequence(jsonAsYaml);
+					registerOperationSequence(jsonAsYaml, namespace, owner);
 				}
 			}
 
@@ -1848,7 +1892,7 @@ public class GDTManager implements Manager {
 				while (sequencesI.hasNext()) {
 					String jsonAsYaml = new YAMLMapper().writeValueAsString(sequencesI.next());
 					jsonAsYaml = replaceDefaultParameters(jsonAsYaml, app.getAppID(), owner, namespace, gdtConfig.getOpenshift().getHostExtension(), gdtConfig.getOpenshift().getImageRepositoryHost());
-					registerSLO(jsonAsYaml);
+					registerSLO(jsonAsYaml, namespace, owner);
 				}
 			}
 			

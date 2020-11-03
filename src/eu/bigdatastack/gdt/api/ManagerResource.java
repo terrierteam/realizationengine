@@ -553,6 +553,18 @@ public class ManagerResource {
 		return manager.prometheusDataClient.basicQuery(owner, namespace, appID, objectID, instanceID, metricName);
 	}
 	
+	@POST
+	@Path("/event/{owner}/{appID}/{objectID}")
+	public boolean registerNewEvent(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("objectID") String objectID, BigDataStackEvent event) {
+		try {
+			return manager.eventClient.addEvent(event);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	
 	//----------------------------------------------------------
 	// Operations
 	//----------------------------------------------------------
