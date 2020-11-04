@@ -127,6 +127,23 @@ sequences:
         multipleMatches: "SelectFirst"
       - className: Delete # delete target object
         instanceRef: "recInstance"
+ -  sequenceID: "testdoregister"
+    name: "Test Dynamic Orchestrator Registration"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: >
+      Selects the first instance of recommendations-calculation and tries to register it with the dynamic orchestrator. 
+    parameters: {}
+    mode: Continue
+    operations:
+      # Steps for creating the deployment config
+      - className: InstanceRefFromObjectLookup # get an object instance as reference
+        criteria: "$namespace$:deploymentconfig:$appID$-recommendations-calculation-.*"
+        defineInstanceRef: "recInstance"
+        multipleMatches: "SelectFirst"
+      - className: RegisterWithDynamicOrchestrator
+        instanceRef: "recInstance"
         
 states:
   - appStateID: NoInstances
@@ -145,3 +162,4 @@ states:
     sequences:
      - "addrecommender"
      - "removerecommender"
+     - "testdoregister"

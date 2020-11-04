@@ -170,7 +170,7 @@ public class GDTManager implements Manager {
 			System.err.println("Openshift client '"+openshiftConf.getClient()+"' is not supported for operations");
 			return;
 		}
-		
+
 
 		//if (occlient.equalsIgnoreCase("openshift3")) openshiftStatus = new OpenshiftStatusClientv3(openshiftConf.getHost(), openshiftConf.getPort(), openshiftConf.getUsername(), openshiftConf.getPassword());
 
@@ -279,21 +279,56 @@ public class GDTManager implements Manager {
 		if (appID!=null) slo.setAppID(appID);
 
 		try {
-			if (!sloClient.addSLO(slo)) {
-				if (!sloClient.updateSLO(slo)) {
-					eventUtil.registerEvent(
-							slo.getAppID(),
-							slo.getOwner(),
-							slo.getNamespace(),
-							BigDataStackEventType.ObjectRegistry,
-							BigDataStackEventSeverity.Error,
-							"New SLO Failed to Register: '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName(),
-							"Tried to create a new service level objective for '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName()+" but was rejected, likely because it already exists.",
-							slo.getObjectID(),
-							slo.getInstance()
-							);
-					return null;
+
+			// determine whether an identical SLO exists
+			List<BigDataStackSLO> candidateSLOs = sloClient.getSLOs(owner, appID, slo.getObjectID(), namespace, slo.getInstance(), slo.getMetricName(), -1);
+			BigDataStackSLO exactMatch = null;
+			for (BigDataStackSLO candidateSLO : candidateSLOs) {
+				if (candidateSLO.isRequirement()==slo.isRequirement()
+						&& candidateSLO.getBreachSeverity()==slo.getBreachSeverity()
+						&& candidateSLO.getType().equalsIgnoreCase(slo.getType())
+						&& candidateSLO.getValue()==slo.getValue()) {
+					exactMatch = candidateSLO;
+					break;
 				}
+			}
+
+			if (exactMatch!=null) return exactMatch;
+
+			// assume a new SLO
+			int sloIndex = candidateSLOs.size();
+
+			int failures = 0;
+			boolean eventRegistered = false;
+
+			while (!eventRegistered) {
+				slo.setSloIndex(sloIndex);
+				boolean ok = sloClient.addSLO(slo);
+				if (!ok) {
+					failures++;
+					if (failures>=5) {
+						eventUtil.registerEvent(
+								slo.getAppID(),
+								slo.getOwner(),
+								slo.getNamespace(),
+								BigDataStackEventType.ObjectRegistry,
+								BigDataStackEventSeverity.Error,
+								"New SLO Failed to Register: '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName(),
+								"Tried to create a new service level objective for '"+slo.getAppID()+"|"+slo.getObjectID()+"("+slo.getInstance()+")' targeting "+slo.getMetricName()+" but was rejected, likely because it already exists.",
+								slo.getObjectID(),
+								slo.getInstance()
+								);
+						return null;
+					} else {
+						
+						candidateSLOs = sloClient.getSLOs(owner, appID, slo.getObjectID(), namespace, slo.getInstance(), slo.getMetricName(), -1);
+						sloIndex = candidateSLOs.size();
+						continue;
+					}
+				}
+
+
+				return null;
 			}
 
 			eventUtil.registerEvent(
@@ -314,7 +349,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Registers a new BigDataStack SLO with the database from a yaml format String
 	 * @param yaml
@@ -330,7 +365,7 @@ public class GDTManager implements Manager {
 		}
 	}
 
-	
+
 
 	/**
 	 * Registers a new BigDataStack Application from a BigDataStackApplication object
@@ -377,7 +412,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
+
 
 	/**
 	 * Registers a new BigDataStack Application from a BigDataStackApplication object
@@ -507,7 +542,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Registers a new BigDataStack Object Definition with the database from a yaml format String
 	 * @param yaml
@@ -687,7 +722,7 @@ public class GDTManager implements Manager {
 			return null;
 		}
 	}
-	
+
 
 	/**
 	 * Registers a new BigDataStack Metric with the database from a yaml format File
@@ -990,7 +1025,7 @@ public class GDTManager implements Manager {
 			parameters.put("ocport", String.valueOf(gdtConfig.getOpenshift().getPort()));
 			parameters.put("ochostextension", gdtConfig.getOpenshift().getHostExtension());
 			parameters.put("ocimagerepositoryhost", gdtConfig.getOpenshift().getImageRepositoryHost());
-			
+
 			// openshift credentials
 			parameters.put("ocusername", openshiftCredential.getUsername());
 			parameters.put("ocpassword", openshiftCredential.getPassword());
@@ -1027,14 +1062,14 @@ public class GDTManager implements Manager {
 				loadPlaybook(GDTFileUtil.file2String(new File("resources/gdt/resource.playbook.yaml"), "UTF-8"), owner, namespace);
 
 				parameters.put("prometheusHost", gdtConfig.getOpenshift().getOpenshiftPrometheus());
-				
+
 				existingSequenceTemplate = sequenceTemplateClient.getSequence("gdtdefaultapp", "seq-resourcemonitor");
 				boolean resourceOk = executeSequenceFromTemplateSync(existingSequenceTemplate, parameters);
-				
+
 				if (!resourceOk) return false;
 			}
-			
-			
+
+
 
 
 			return true;
@@ -1159,7 +1194,7 @@ public class GDTManager implements Manager {
 						newSequenceInstance.getIndex()
 						);
 
-				
+
 				BigDataStackObjectDefinition operationsequenceDef = GDTFileUtil.readObjectFromString(GDTFileUtil.file2String(new File("resources/gdt/operationsequence.pod.yaml"), "UTF-8"),null);
 				operationsequenceDef.setNamespace(sequenceTemplate.getNamespace());
 				operationsequenceDef.setAppID(sequenceTemplate.getAppID());
@@ -1511,8 +1546,8 @@ public class GDTManager implements Manager {
 			return false;
 		}
 	}
-	
-	
+
+
 	public boolean cleanupSequenceRunners(String owner, String namespace, String appID) {
 		try {
 
@@ -1548,9 +1583,9 @@ public class GDTManager implements Manager {
 		try {
 			// Stage 1: Get Realization engine status
 			RealizationStatus realizationStatuses = new RealizationStatus();
-			
+
 			List<BigDataStackObjectDefinition> deploymentconfigs = objectInstanceClient.getObjectList(owner, namespace, "gdtdefaultapp", BigDataStackObjectType.DeploymentConfig);
-			
+
 			for (BigDataStackObjectDefinition dc :  deploymentconfigs) {
 				Set<String> reportedStatuses = dc.getStatus();
 				if (reportedStatuses.contains("Available")) {
@@ -1560,20 +1595,20 @@ public class GDTManager implements Manager {
 					if (dc.getObjectID().equalsIgnoreCase("prometheus")) realizationStatuses.getPrometheusInstance2Status().put(String.valueOf(dc.getInstance()), reportedStatuses);
 				}
 			}
-			
+
 			// if we got this far then the db is ok
 			Set<String> dbStatus = new HashSet<String>();
 			dbStatus.add("Available");
 			realizationStatuses.getDbInstance2Status().put("unmanaged", dbStatus);
-			
+
 			return realizationStatuses;
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Generates a per-hour sum of the different event severity types 
 	 * @param owner
@@ -1583,77 +1618,77 @@ public class GDTManager implements Manager {
 	public EventTimeSeries generateEventTimeSeries(String owner, String namespace) {
 		try {
 			List<BigDataStackApplication> apps = appClient.getApplications(owner);
-			
-			
+
+
 			List<BigDataStackEvent> allEvents = new ArrayList<BigDataStackEvent>();
-			
+
 			for (BigDataStackApplication app : apps) {
 				if (app.getNamespace().equalsIgnoreCase(namespace)) {
 					List<BigDataStackEvent> events = eventClient.getEvents(app.getAppID(), owner);
 					allEvents.addAll(events);
 				}
 			}
-			
+
 			Collections.sort(allEvents);
 			System.err.println("generateEventTimeSeries: Matched "+allEvents.size()+" events");
-			
+
 			List<Integer> infoCountPerHour = new ArrayList<Integer>();
 			List<Integer> warnCountPerHour = new ArrayList<Integer>();
 			List<Integer> errCountPerHour = new ArrayList<Integer>();
 			List<Integer> alertCountPerHour = new ArrayList<Integer>();
-			
+
 			long startOfFirstHour = -1;
 			long startOfHour = -1;
 			int countInfoCurrentHour = 0;
 			int countWarnCurrentHour = 0;
 			int countErrCurrentHour = 0;
 			int countAlertCurrentHour = 0;
-			
+
 			long oneHour = 1000*60*60;
-			
+
 			for (BigDataStackEvent event : allEvents) {
 				if (startOfHour==-1) {
 					startOfHour=event.getEventTime();
 					startOfFirstHour = event.getEventTime();
 				}
-				
+
 				while (event.getEventTime()>(startOfHour+oneHour)) {
 					// new hour
 					infoCountPerHour.add(countInfoCurrentHour);
 					warnCountPerHour.add(countWarnCurrentHour);
 					errCountPerHour.add(countErrCurrentHour);
 					alertCountPerHour.add(countAlertCurrentHour);
-					
+
 					countInfoCurrentHour = 0;
 					countWarnCurrentHour = 0;
 					countErrCurrentHour = 0;
 					countAlertCurrentHour = 0;
-					
+
 					startOfHour = (startOfHour+oneHour);
 				}
-				
+
 				if (event.getSeverity() == BigDataStackEventSeverity.Info) countInfoCurrentHour++;
 				if (event.getSeverity() == BigDataStackEventSeverity.Warning) countWarnCurrentHour++;
 				if (event.getSeverity() == BigDataStackEventSeverity.Error) countErrCurrentHour++;
 				if (event.getSeverity() == BigDataStackEventSeverity.Alert) countAlertCurrentHour++;
-				
+
 			}
 			infoCountPerHour.add(countInfoCurrentHour);
 			warnCountPerHour.add(countWarnCurrentHour);
 			errCountPerHour.add(countErrCurrentHour);
 			alertCountPerHour.add(countAlertCurrentHour);
-			
+
 			return new EventTimeSeries(infoCountPerHour, warnCountPerHour, errCountPerHour, alertCountPerHour, startOfFirstHour, startOfHour);
-			
-			
-			
-			
+
+
+
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Generates a time series vector that contains the average values of all datapoints for a single pod during each hour. If multiple pods are 
 	 * matched then pod averages are summed per hour. This can only retrieve data from up to a week in the past. 
@@ -1665,7 +1700,7 @@ public class GDTManager implements Manager {
 	public PerHourTimeSeries generatePerHourTimeSeries(String owner, String namespace, String metric) {
 		return prometheusDataClient.perHourAvg(owner, namespace, null, null, null, metric, "6h");
 	}
-	
+
 	/**
 	 * Returns the number of sequences, deploymentconfigs, jobs, pods and services currently running
 	 * @param owner
@@ -1675,20 +1710,20 @@ public class GDTManager implements Manager {
 	public ExecutingStatus generateExecutingStatus(String owner, String namespace) {
 		try {
 			List<BigDataStackApplication> apps = appClient.getApplications(owner);
-			
-			
+
+
 			// Check Sequences
 			int activeSequences = 0;
 			for (BigDataStackApplication app : apps) {
 				if (app.getNamespace().equalsIgnoreCase(namespace)) {
-					
+
 					List<BigDataStackOperationSequence> sequences = sequenceInstanceClient.getOperationSequences(owner, app.getAppID(), null);
 					for (BigDataStackOperationSequence sequence : sequences) {
 						if (sequence.isInProgress()) activeSequences++;
 					}	
 				}
 			}
-			
+
 			// Check Deployment Configs, Jobs, Pods and Services
 			int deploymentsActive = 0;
 			int jobsActive = 0;
@@ -1696,39 +1731,39 @@ public class GDTManager implements Manager {
 			int servicesActive = 0;
 			List<BigDataStackObjectDefinition> objectsForNamespace = objectInstanceClient.getObjectList(owner, namespace, null, null);
 			for (BigDataStackObjectDefinition object : objectsForNamespace) {
-				
+
 				System.err.println(object.getObjectID()+" "+object.getInstance()+" "+object.getType().name()+" "+Arrays.toString(object.getStatus().toArray()));
-				
+
 				if (object.getStatus().contains("Available") || object.getStatus().contains("Running") || object.getStatus().contains("In Progress")) {
 					if (object.getType() == BigDataStackObjectType.DeploymentConfig) deploymentsActive++;
 					if (object.getType() == BigDataStackObjectType.Job) jobsActive++;
 					//if (object.getType() == BigDataStackObjectType.Pod) podsActive++;
-					
+
 					if (object.getType() == BigDataStackObjectType.DeploymentConfig || object.getType() == BigDataStackObjectType.Job) {
 						List<BigDataStackPodStatus> podStatuses = podStatusClient.getPodStatuses(null, object.getOwner(), object.getObjectID(), null, -1);
 						for (BigDataStackPodStatus podStatus : podStatuses) {
 							if (podStatus.getStatus().equalsIgnoreCase("Running")) podsActive++;
-							
+
 						}
 					}
-					
+
 				}
-				
+
 				if (object.getType() == BigDataStackObjectType.Service && !object.getStatus().contains("Deleted") && !object.getStatus().contains("Killed")) servicesActive++;
 
 			}
 			ExecutingStatus exeStatus = new ExecutingStatus(activeSequences, deploymentsActive, jobsActive, podsActive, servicesActive);
 			return exeStatus;
-			
-			
+
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
-		
-		
+
+
 	}
-	
+
 	/**
 	 * Returns a list of routes for each app in a namespace for an owner
 	 * @param owner
@@ -1736,18 +1771,18 @@ public class GDTManager implements Manager {
 	 * @return
 	 */
 	public RouteList generateRouteList(String owner, String namespace) {
-		
+
 		Map<String,Map<String,String>> app2URLs = new HashMap<String,Map<String,String>>();
-		
+
 		try {
 			List<BigDataStackApplication> apps = appClient.getApplications(owner);
-			
+
 			for (BigDataStackApplication app : apps) {
-				
+
 				Map<String,String> urls2Descs = new HashMap<String,String>();
 				List<BigDataStackObjectDefinition> objectsForNamespace = objectInstanceClient.getObjectList(owner, namespace, app.getAppID(), BigDataStackObjectType.Route);
 				for (BigDataStackObjectDefinition route : objectsForNamespace) {
-					
+
 					JsonNode routeAsJson = yamlMapper.readTree(route.getYamlSource());
 					if (routeAsJson.has("spec")) {
 						JsonNode spec = routeAsJson.get("spec");
@@ -1757,54 +1792,54 @@ public class GDTManager implements Manager {
 								JsonNode to = spec.get("to");
 								urls2Descs.put(spec.get("host").asText(), "External http endpoint, directing traffic to "+to.get("name")+" (type="+to.get("kind")+")");
 							}
-							
+
 						}
 					}
-					
+
 				}
 				app2URLs.put(app.getAppID()+": "+app.getName(), urls2Descs);
-				
-				
+
+
 			}
 			RouteList rl = new RouteList(app2URLs);
-			
+
 			return rl;
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
-	
-	
+
+
 	public RealizationReport generateStatusReport(String owner, String namespace) {
-		
+
 		try {
 			// Stage 1: Get Realization engine status
 			RealizationStatus realizationStatuses = generateRealizationStatus(owner, namespace);
-			
+
 			// Stage 2: Get Event Time Series Data
 			EventTimeSeries eventTimeSeries = generateEventTimeSeries(owner, namespace);
-			
+
 			// Stage 3: Get Pod Costs
 			PerHourTimeSeries costTimeSeries = generatePerHourTimeSeries(owner, namespace, "costPerHour");
-			
+
 			// Stage 4: Get Number of Objects running
 			ExecutingStatus exeStatus = generateExecutingStatus(owner, namespace);
-			
+
 			// Stage 5: Get Routes
 			RouteList routeList = generateRouteList(owner, namespace);
-			
+
 			RealizationReport report = new RealizationReport(realizationStatuses,eventTimeSeries,costTimeSeries,exeStatus,routeList);
-			
+
 			return report;
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Gets the status of a specified app
 	 * @param owner
@@ -1815,7 +1850,7 @@ public class GDTManager implements Manager {
 	public List<BigDataStackAppState> getApplicationStates(String owner, String namespace, String appID) {
 		return ApplicationStateUtil.getActiveStates(objectInstanceClient, sequenceInstanceClient, appStateClient, owner, namespace, appID);
 	}
-		
+
 
 
 	public void printTimings() {
@@ -1831,11 +1866,11 @@ public class GDTManager implements Manager {
 		System.out.println("> credentialsClient: "+(credentialsClient.timeSpent()/1000)+"s");
 	}
 
-	
+
 	public List<String> loadPlaybook(String yaml, String owner, String namespace) {
 
 		List<String> changes = new ArrayList<String>();
-		
+
 		try {
 			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 			JsonNode node = mapper.readTree(yaml);
@@ -1899,7 +1934,7 @@ public class GDTManager implements Manager {
 					changes.add(jsonMapper.writeValueAsString(registerSLO(jsonAsYaml, namespace, owner, app.getAppID())));
 				}
 			}
-			
+
 			if (node.has("states")) {
 				JsonNode states = node.get("states");
 				Iterator<JsonNode> statesI = states.iterator();
@@ -1909,19 +1944,19 @@ public class GDTManager implements Manager {
 					changes.add(jsonMapper.writeValueAsString(registerApplicationState(jsonAsYaml, app)));
 				}
 			}
-			
-			
-			
+
+
+
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			
+
 		}
 
 		return changes;
-		
+
 	}
-	
+
 	/**
 	 * Perform a full shutdown of a user application and delete all underlying object trackers
 	 * @param owner
@@ -1929,19 +1964,19 @@ public class GDTManager implements Manager {
 	 * @param appID
 	 */
 	public boolean deleteApp(String owner, String namespace, String appID) {
-		
+
 		try {
 			// Stage 1: Get App
 			BigDataStackApplication app = appClient.getApp(appID, owner, namespace);
 			if (app==null) return false;
-			
-			
+
+
 			// Stage 2: Delete objects on the cluster
 			List<BigDataStackObjectDefinition> objects = objectInstanceClient.getObjects(null, owner, namespace, appID);
 			for (BigDataStackObjectDefinition object : objects) {
 				openshiftOperationClient.deleteOperation(object);
 			}
-			
+
 			// Stage 3: Delete realization engine objects
 			sloClient.delete(owner, namespace, appID, null, -1);
 			metricValueClient.delete(owner, namespace, appID, null, null);
@@ -1952,15 +1987,15 @@ public class GDTManager implements Manager {
 			podStatusClient.delete(owner, namespace, appID, null, -1);
 			appClient.delete(owner, namespace, appID);
 			eventClient.delete(owner, namespace, appID, null);
-			
+
 			cleanupSequenceRunners(owner, namespace, appID);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
-		
-		
+
+
 	}
 
 	protected static String replaceDefaultParameters(String yaml, String appID, String owner, String namespace, String hostExtension, String imageRepositoryHost) {
@@ -1976,7 +2011,7 @@ public class GDTManager implements Manager {
 		yaml = yaml.replaceAll("\\$APPID\\$", appID);
 		yaml = yaml.replaceAll("\\$OWNER\\$", owner);
 		yaml = yaml.replaceAll("\\$NAMESPACE\\$", namespace);
-		
+
 		Random r = new Random();
 		long randomLong = r.nextLong();
 		yaml = yaml.replaceAll("\\$random\\$", String.valueOf(randomLong));

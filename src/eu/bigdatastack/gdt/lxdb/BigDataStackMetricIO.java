@@ -123,7 +123,7 @@ public class BigDataStackMetricIO implements Timed {
 		if (metricName!=null) queryBuilder.append(" AND metricName='"+metricName+"'");
 		
 		Statement statement = conn.createStatement();
-		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE name='"+metricName+"' AND owner='"+owner+"'");
+		statement.execute(queryBuilder.toString());
 		ResultSet results = statement.getResultSet();
 		
 		BigDataStackMetric metric = null;
@@ -173,7 +173,7 @@ public class BigDataStackMetricIO implements Timed {
 		if (metricName!=null) queryBuilder.append(" AND metricName='"+metricName+"'");
 		
 		Statement statement = conn.createStatement();
-		statement.execute("SELECT DISTINCT * FROM "+tableName+" WHERE name='"+metricName+"' AND owner='"+owner+"'");
+		statement.execute(queryBuilder.toString());
 		ResultSet results = statement.getResultSet();
 		
 		List<BigDataStackMetric> metrics = new ArrayList<BigDataStackMetric>();
