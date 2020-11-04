@@ -177,8 +177,8 @@ public class InstanceRefFromObjectLookup extends BigDataStackOperation{
 							getNamespace(),
 							BigDataStackEventType.Stage,
 							BigDataStackEventSeverity.Info,
-							"InstanceRef From Object Lookup Operation Completed: '"+parameter+"' -> '"+matchedResources.get(0).getName()+"'",
-							"Matched an object in namespace'"+namespace+"' of kind '"+kind+"' with name '"+nameregex+"' and used it to set parameter '"+parameter+"'",
+							"InstanceRef From Object Lookup Operation Completed: '"+parameter+"' -> '"+reference+"'",
+							"Matched an object in namespace'"+namespace+"' of kind '"+kind+"' with name '"+nameregex+"' and used it to set parameter '"+parameter+"' to '"+reference+"'",
 							parentSequenceRunner.getSequence().getSequenceID(),
 							parentSequenceRunner.getSequence().getIndex()
 							);
