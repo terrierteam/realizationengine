@@ -136,9 +136,9 @@ public class ApplicationStateUtil {
 			String comparatorSymbol = condition.getInstances().substring(0, 2);
 			double value = Double.parseDouble(condition.getInstances().substring(2, condition.getInstances().length()));
 			
-			if (comparatorSymbol=="==") return numInTargetState==value;
-			else if (comparatorSymbol==">=") return numInTargetState>value;
-			else if (comparatorSymbol=="<=") return numInTargetState<value;
+			if (comparatorSymbol.equalsIgnoreCase("==")) return numInTargetState==value;
+			else if (comparatorSymbol.equalsIgnoreCase(">=")) return numInTargetState>value;
+			else if (comparatorSymbol.equalsIgnoreCase("<=")) return numInTargetState<value;
 			else {
 				System.err.println("ERR: Unknown comparitor symbol");
 				return false;
