@@ -146,7 +146,7 @@ public class Delete extends BigDataStackOperation{
 						BigDataStackEventType.Stage,
 						BigDataStackEventSeverity.Error,
 						"Delete Operation Failed: '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"'",
-						"Attempted to delete an object '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"', failed when communicating with Openshift, the object may already exist and cannot be replaced, or the request was otherwise rejected",
+						"Attempted to delete an object '"+sourceObjectID+"("+instance+")' ref '"+getObjectID()+"', failed when communicating with Openshift, part of the delete process may have failed.",
 						parentSequenceRunner.getSequence().getSequenceID(),
 						parentSequenceRunner.getSequence().getIndex()
 						);
