@@ -48,9 +48,7 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 	
 	private String objectID;
 	private int instance;
-	private int replicasToIncreaseBy = 1;
-	
-	private String instanceRef = null;
+	private String instanceRef;
 	
 	private boolean notConfigured = true;
 	
@@ -152,17 +150,65 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 		this.instance = instance;
 	}
 
-	public int getReplicasToIncreaseBy() {
-		return replicasToIncreaseBy;
+	public String getInstanceRef() {
+		return instanceRef;
 	}
 
-	public void setReplicasToIncreaseBy(int replicasToIncreaseBy) {
-		this.replicasToIncreaseBy = replicasToIncreaseBy;
+	public void setInstanceRef(String instanceRef) {
+		this.instanceRef = instanceRef;
+	}
+
+	public boolean isNotConfigured() {
+		return notConfigured;
+	}
+
+	public void setNotConfigured(boolean notConfigured) {
+		this.notConfigured = notConfigured;
+	}
+
+	public ObjectMapper getYamlMapper() {
+		return yamlMapper;
+	}
+
+	public void setYamlMapper(ObjectMapper yamlMapper) {
+		this.yamlMapper = yamlMapper;
+	}
+
+	public ObjectMapper getJsonMapper() {
+		return jsonMapper;
+	}
+
+	public void setJsonMapper(ObjectMapper jsonMapper) {
+		this.jsonMapper = jsonMapper;
+	}
+
+	public static String getDynamicOrchestratorObjectID() {
+		return dynamicOrchestratorObjectID;
+	}
+
+	public static void setDynamicOrchestratorObjectID(String dynamicOrchestratorObjectID) {
+		RegisterWithDynamicOrchestrator.dynamicOrchestratorObjectID = dynamicOrchestratorObjectID;
+	}
+
+	public static String getDynamicOrchestratorAppID() {
+		return dynamicOrchestratorAppID;
+	}
+
+	public static void setDynamicOrchestratorAppID(String dynamicOrchestratorAppID) {
+		RegisterWithDynamicOrchestrator.dynamicOrchestratorAppID = dynamicOrchestratorAppID;
+	}
+
+	public static int getDynamicOrchestratorPort() {
+		return dynamicOrchestratorPort;
+	}
+
+	public static void setDynamicOrchestratorPort(int dynamicOrchestratorPort) {
+		RegisterWithDynamicOrchestrator.dynamicOrchestratorPort = dynamicOrchestratorPort;
 	}
 
 	@Override
 	public String describeOperation() {
-		return "Increases the replication factor of "+objectID+"("+instance+") by "+replicasToIncreaseBy;
+		return "Registers "+objectID+"("+instance+") for mangament by the dynamic orchestrator";
 	}
 
 	@Override
