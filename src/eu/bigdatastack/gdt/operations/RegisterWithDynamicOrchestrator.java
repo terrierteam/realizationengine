@@ -258,8 +258,8 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 						getNamespace(),
 						BigDataStackEventType.Stage,
 						BigDataStackEventSeverity.Error,
-						"RegisterWithDynamicOrchestrator Operation Failed: Object '"+getObjectID()+"("+instance+")' could not be found in the state database",
-						"Attempted registration of '"+getObjectID()+"("+instance+")' with the dyanamic orchestrator: but failed as the object was not found",
+						"RegisterWithDynamicOrchestrator Operation Failed: Object '"+object.getObjectID()+"("+object.getInstance()+")' could not be found in the state database",
+						"Attempted registration of '"+object.getObjectID()+"("+object.getInstance()+")' with the dyanamic orchestrator: but failed as the object was not found",
 						parentSequenceRunner.getSequence().getSequenceID(),
 						parentSequenceRunner.getSequence().getIndex()
 						);
@@ -285,7 +285,7 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 						BigDataStackEventType.Stage,
 						BigDataStackEventSeverity.Error,
 						"RegisterWithDynamicOrchestrator Operation Failed: Could not find a running Dyanmic Orchestrator instance in the state database",
-						"Attempted registration of '"+getObjectID()+"("+instance+")' with the dyanamic orchestrator, but could not find an instance of the dyanmic orchestrator.",
+						"Attempted registration of '"+object.getObjectID()+"("+object.getInstance()+")' with the dyanamic orchestrator, but could not find an instance of the dyanmic orchestrator.",
 						parentSequenceRunner.getSequence().getSequenceID(),
 						parentSequenceRunner.getSequence().getIndex()
 						);
@@ -329,7 +329,7 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 				
 				// Stage 5: Get Connection End-point to send the data to
 				BigDataStackPodStatusIO podClient = new BigDataStackPodStatusIO(database);
-				List<BigDataStackPodStatus> pods = podClient.getPodStatuses(appID, owner, object.getObjectID(), namepace, object.getInstance());
+				List<BigDataStackPodStatus> pods = podClient.getPodStatuses(appID, owner, instanceToUseForOrchestration.getObjectID(), namepace, instanceToUseForOrchestration.getInstance());
 				
 				BigDataStackPodStatus podToSendTo = null;
 				for (BigDataStackPodStatus pod : pods) {
@@ -347,7 +347,7 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 							BigDataStackEventType.Stage,
 							BigDataStackEventSeverity.Error,
 							"RegisterWithDynamicOrchestrator Operation Failed: Could not find a running underlying pod for the Dyanmic Orchestrator to send to",
-							"Attempted registration of '"+getObjectID()+"("+instance+")' with the dyanamic orchestrator, but could not find a running pod for the dynamic orchestrator to send to.",
+							"Attempted registration of '"+object.getObjectID()+"("+object.getInstance()+")' with the dyanamic orchestrator, but could not find a running pod for the dynamic orchestrator to send to.",
 							parentSequenceRunner.getSequence().getSequenceID(),
 							parentSequenceRunner.getSequence().getIndex()
 							);
@@ -385,8 +385,8 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 							getNamespace(),
 							BigDataStackEventType.Stage,
 							BigDataStackEventSeverity.Info,
-							"Registered: '"+getObjectID()+"("+instance+")' with the dyanmic orchestrator",
-							"Successfully registered '"+getObjectID()+"("+instance+")' with the dyanamic orchestrator",
+							"Registered: '"+object.getObjectID()+"("+object.getInstance()+")' with the dyanmic orchestrator",
+							"Successfully registered '"+object.getObjectID()+"("+object.getInstance()+")' with the dyanamic orchestrator",
 							parentSequenceRunner.getSequence().getSequenceID(),
 							parentSequenceRunner.getSequence().getIndex()
 							);
@@ -399,7 +399,7 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 							BigDataStackEventType.Stage,
 							BigDataStackEventSeverity.Error,
 							"RegisterWithDynamicOrchestrator Operation Failed: Could not send request, recieved response code '"+response+"'",
-							"Attempted registration of '"+getObjectID()+"("+instance+")' with the dyanamic orchestrator, but the send targeting '"+targetURL+"' failed with code '"+response+"'",
+							"Attempted registration of '"+object.getObjectID()+"("+object.getInstance()+")' with the dyanamic orchestrator, but the send targeting '"+targetURL+"' failed with code '"+response+"'",
 							parentSequenceRunner.getSequence().getSequenceID(),
 							parentSequenceRunner.getSequence().getIndex()
 							);
@@ -416,8 +416,8 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 						getNamespace(),
 						BigDataStackEventType.Stage,
 						BigDataStackEventSeverity.Warning,
-						"RegisterWithDynamicOrchestrator Operation Skipped for: '"+getObjectID()+"("+instance+")' due to non-compatable objetc type '"+object.getType().name()+"'",
-						"Attempted registration of '"+getObjectID()+"("+instance+")' with the dyanamic orchestrator: but failed as the object was not a Job or DeploymentConfig",
+						"RegisterWithDynamicOrchestrator Operation Skipped for: '"+object.getObjectID()+"("+object.getInstance()+")' due to non-compatable objetc type '"+object.getType().name()+"'",
+						"Attempted registration of '"+object.getObjectID()+"("+object.getInstance()+")' with the dyanamic orchestrator: but failed as the object was not a Job or DeploymentConfig",
 						parentSequenceRunner.getSequence().getSequenceID(),
 						parentSequenceRunner.getSequence().getIndex()
 						);
