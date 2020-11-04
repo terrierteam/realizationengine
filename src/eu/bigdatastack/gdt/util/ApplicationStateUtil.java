@@ -85,16 +85,24 @@ public class ApplicationStateUtil {
 			
 			
 			// Step 3: Check Negative States
+			
 			for (BigDataStackAppState possibleState : positiveMatchStates) {
-				
 				List<String> notInStates = possibleState.getNotInStates();
+				
 				boolean inNegativeState = false;
 				for (BigDataStackAppState checkState : positiveMatchStates) {
 					if (notInStates.contains(checkState.getAppStateID())) inNegativeState=true;
 				}
 				
-				if (!inNegativeState && positiveMatchStates.size()==1) {
+				if (!inNegativeState) {
 					activeStates.add(possibleState);
+				}
+			}
+			
+			if (activeStates.size()==0) {
+				for (BigDataStackAppState possibleState : positiveMatchStates) {
+					List<String> notInStates = possibleState.getNotInStates();
+					if (notInStates.contains("anyOther")) activeStates.add(possibleState);
 				}
 			}
 			
