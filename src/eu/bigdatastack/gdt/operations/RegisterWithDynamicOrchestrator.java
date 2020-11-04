@@ -172,7 +172,7 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 			EventUtil eventUtil) {
 		
 		
-		if (instanceRef!=null || objectID!=null && instance>0) notConfigured = false;
+		if (instanceRef!=null || (objectID!=null && instance>0)) notConfigured = false;
 		
 		try {
 			
