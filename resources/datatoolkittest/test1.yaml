@@ -16,11 +16,6 @@ objects:
       apiVersion: "apps.openshift.io/v1"
       kind: "DeploymentConfig"
       metadata:
-        labels:
-          - "Recommender"
-          - "User Facing"
-          - "Supports Replication"
-          - "CPU Intensive"
         name: "$appID$-$objectID$-$instance$"
         namespace: "$namespace$"
       spec:
@@ -34,11 +29,18 @@ objects:
           spec:
             containers:
               - name: "recommender"
-                image: "recommender-image"
+                image: >-
+                  $ocimagerepositoryhost$/$namespace$/feedbackcollector:latest
                 ports:
-                  - name: "recommendations-calculation"
+                  - name: "tcp8080"
                     containerPort: 8080
-                    protocol: "TCP"
+                    protocol: TCP
+                  - name: "tcp8443"
+                    containerPort: 8443
+                    protocol: TCP
+                  - name: "tcp8778"
+                    containerPort: 8778
+                    protocol: TCP
                 env:
                   - name: "owner"
                     value: "$owner$"
@@ -59,7 +61,7 @@ objects:
                     memory: "2048Mi"
                 securityContext: {}
                 imagePullPolicy: "Always"
-                restartPolicy: "Always"
+            restartPolicy: "Always"
 
 metrics:
   - name: "costPerHour"
@@ -85,7 +87,7 @@ slos:
     requirement: "False"
 
 sequences:
- -  sequenceID: "addRecommender"
+ -  sequenceID: "addrecommender"
     name: "Deploys a recommender instance"
     appID: "$appID$"
     owner: "$owner$"
@@ -108,7 +110,7 @@ sequences:
         waitForStatus: "Available" 
       - className: RegisterWithDynamicOrchestrator
         instanceRef: "recInstance"
- -  sequenceID: "removeRecommender"
+ -  sequenceID: "removerecommender"
     name: "Deletes a recommender instance"
     appID: "$appID$"
     owner: "$owner$"
@@ -130,16 +132,16 @@ states:
   - appStateID: NoInstances
     name: "No instances running"
     notInStates:
-      - anyOther
+      - OneOrMoreInstances
     sequences:
-     - "addRecommender"
+     - "addrecommender"
   - appStateID: OneOrMoreInstances
     name: "At least one instance is running"
     conditions:
       - objectIDs: 
           - recommendations-calculation
-        instances: ">0"
+        instances: ">=1"
         state: "Available"
     sequences:
-     - "addRecommender"
-     - "removeRecommender"
+     - "addrecommender"
+     - "removerecommender"

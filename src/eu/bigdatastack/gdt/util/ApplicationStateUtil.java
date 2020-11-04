@@ -100,7 +100,7 @@ public class ApplicationStateUtil {
 			}
 			
 			if (activeStates.size()==0) {
-				for (BigDataStackAppState possibleState : positiveMatchStates) {
+				for (BigDataStackAppState possibleState : allStates) {
 					List<String> notInStates = possibleState.getNotInStates();
 					if (notInStates.contains("anyOther")) activeStates.add(possibleState);
 				}
@@ -133,14 +133,16 @@ public class ApplicationStateUtil {
 		// Perform instance count check
 		if (condition.getInstances()!=null) {
 			
-			String comparatorSymbol = condition.getInstances().substring(0, 1);
-			double value = Double.parseDouble(condition.getInstances().substring(1, condition.getInstances().length()));
+			String comparatorSymbol = condition.getInstances().substring(0, 2);
+			double value = Double.parseDouble(condition.getInstances().substring(2, condition.getInstances().length()));
 			
-			if (comparatorSymbol=="=" || comparatorSymbol=="==") return numInTargetState==value;
-			if (comparatorSymbol==">") return numInTargetState>value;
-			if (comparatorSymbol=="<") return numInTargetState<value;
-			if (comparatorSymbol==">=") return numInTargetState>=value;
-			if (comparatorSymbol=="<=") return numInTargetState<=value;
+			if (comparatorSymbol=="==") return numInTargetState==value;
+			else if (comparatorSymbol==">=") return numInTargetState>value;
+			else if (comparatorSymbol=="<=") return numInTargetState<value;
+			else {
+				System.err.println("ERR: Unknown comparitor symbol");
+				return false;
+			}
 		}
 		
 		

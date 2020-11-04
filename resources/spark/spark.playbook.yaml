@@ -720,6 +720,10 @@ sequences:
       - className: WaitFor # Wait until the deployment config is reporting available
         instanceRef: "worker"
         waitForStatus: "Available"
+        
+      - className: IndexLogs # Generate an Index for the named component
+        instanceRef: "recommendationServiceInstance"
+        persistIndex: "true"
       - className: "ExecuteCMD"
         objectID: "spark-master"
         instancelookupCriteria: "first"
@@ -763,12 +767,12 @@ states:
     conditions:
       - objectIDs: 
           - feedbackcollector
-        instances: ">0"
+        instances: ">=1"
         state: "Available"
       - objectIDs: 
           - srv-feedbackcollector
           - route-feedbackcollector
-        instances: ">0"
+        instances: ">=1"
     sequences:
       - kafka
   - appStateID: kafkaReady
@@ -777,12 +781,12 @@ states:
       - objectIDs: 
           - zookeeper-server
           - kafka-server
-        instances: ">0"
+        instances: ">=1"
         state: "Available"
       - objectIDs: 
           - srv-zookeeper
           - srv-kafka
-        instances: ">0"
+        instances: ">=1"
     sequences:
       - master
       - worker
@@ -792,12 +796,12 @@ states:
       - objectIDs: 
           - master
           - worker
-        instances: ">0"
+        instances: ">=1"
         state: "Available"
       - objectIDs: 
           - srv-spark-master
           - sparkui
-        instances: ">0"
+        instances: ">=1"
     sequences:
       - worker
       - deleteworker
@@ -807,11 +811,11 @@ states:
       - objectIDs: 
           - master
           - worker
-        instances: ">0"
+        instances: ">=1"
         state: "Available"
       - objectIDs: 
           - srv-spark-master
-        instances: ">0"
+        instances: ">=1"
       - sequenceID: deployjar
         notInState:
           - Instantiated
