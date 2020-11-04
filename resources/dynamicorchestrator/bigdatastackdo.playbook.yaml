@@ -1,0 +1,301 @@
+appID: "dynamicorchestrator"
+name: "BigDataStack Dynamic Orchestrator"
+description: >
+  A service for automatically managing user applications on the cluster based on specified Quality of Service objectives. Relies the following other BigDataStack
+  components to function, TripleMonitoringEngine,  QualityOfServiceEvaluator and the RealizationEngine.
+owner: "$owner$"
+namespace: "$namespace$"
+types:
+ - playbook
+ - inferMissingValues
+ - overrideValues
+ - setObjectMetadata
+ 
+ 
+objects:
+  # Dynamic Orchestrator Main Service
+  - objectID: "bigdatastackdo"
+    yamlSource:
+      apiVersion: "apps.openshift.io/v1"
+      kind: "DeploymentConfig"
+      metadata:
+        labels:
+          deploymentconfig: bigdatastackdo
+      spec:
+        replicas: 1
+        strategy:
+          resources: {}
+        template:
+          metadata:
+            labels:
+              jobconfig: "$appID$-$objectID$-$instance$"
+          spec:
+            containers:
+              - name: do-pod
+                image: '$ocimagerepositoryhost$/$namespace$/do-nec-is:latest'
+                command:
+                  - 'python'
+                args:
+                  - '-u'
+                  - 'src/runner.py'
+                ports:
+                  - name: 'tcp5672'
+                    containerPort: 5672
+                    protocol: TCP
+                  - name: 'tcp15672'
+                    containerPort: 15672
+                    protocol: TCP
+                env:
+                  - name: USEIP
+                    value: 'yes'
+                  - name: "owner"
+                    value: "$owner$"
+                  - name: "namespace"
+                    value: "$namespace$"
+                  - name: "appID"
+                    value: "$appID$"
+                  - name: "objectID"
+                    value: "$objectID$"
+                  - name: "instance"
+                    value: "$instance$"
+                volumeMounts:
+                  - name: pv-storage-do
+                    mountPath: /do/
+                resources:
+                  limits:
+                    cpu: "0.5"
+                    memory: "1024Mi"
+                  requests:
+                    cpu: "0.05"
+                    memory: "500Mi"
+                securityContext: {}
+                imagePullPolicy: "Always"
+                restartPolicy: "Always"
+            volumes:
+              - name: pv-storage-do
+                persistentVolumeClaim:
+                  claimName: do-volume
+                  
+  # Dynamic Orchestrator Proxy
+  - objectID: "bigdatastackdoproxy"
+    yamlSource:
+      apiVersion: "apps.openshift.io/v1"
+      kind: "DeploymentConfig"
+      metadata:
+        labels:
+          deploymentconfig: bigdatastackdoproxy
+      spec:
+        replicas: 1
+        strategy:
+          resources: {}
+        template:
+          metadata:
+            labels:
+              jobconfig: "$appID$-$objectID$-$instance$"
+          spec:
+            containers:
+              - name: do-rest-proxy-pod
+                image: '$ocimagerepositoryhost$/$namespace$/is-do-rest-proxy:latest'
+                command:
+                  - 'python'
+                args:
+                  - '-u'
+                  - 'src/endpoints.py'
+                ports:
+                  - name: 'tcp5672'
+                    containerPort: 5672
+                    protocol: TCP
+                  - name: 'tcp15672'
+                    containerPort: 15672
+                    protocol: TCP
+                  - name: 'api'
+                    containerPort: 5000
+                    protocol: TCP
+                env:
+                  - name: USEIP
+                    value: 'yes'
+                  - name: "owner"
+                    value: "$owner$"
+                  - name: "namespace"
+                    value: "$namespace$"
+                  - name: "appID"
+                    value: "$appID$"
+                  - name: "objectID"
+                    value: "$objectID$"
+                  - name: "instance"
+                    value: "$instance$"
+                volumeMounts:
+                  - name: do-rest-proxy-volume
+                    mountPath: /do-rest-proxy/
+                resources:
+                  limits:
+                    cpu: "0.5"
+                    memory: "1024Mi"
+                  requests:
+                    cpu: "0.05"
+                    memory: "100Mi"
+                securityContext: {}
+                imagePullPolicy: "Always"
+                restartPolicy: "Always"
+            volumes:
+              - name: do-rest-proxy-volume
+                persistentVolumeClaim:
+                  claimName: do-rest-proxy-volume
+
+  # Service: DO
+  - objectID: "srv-bigdatastackdo"
+    yamlSource:
+      kind: Service
+      apiVersion: v1
+      spec:
+        ports:
+          - name: 'tcp15672'
+            protocol: TCP
+            port: 15672
+            targetPort: 15672
+        selector:
+          deploymentconfig: bigdatastackdo
+        type: ClusterIP
+
+  
+  # Service: Proxy
+  - objectID: "srv-bigdatastackdoproxy"
+    yamlSource:
+      kind: Service
+      apiVersion: v1
+      spec:
+        ports:
+          - name: 'api'
+            protocol: TCP
+            port: 80
+            targetPort: 5000
+        selector:
+          deploymentconfig: bigdatastackdoproxy
+        type: ClusterIP
+
+  # Route: DO
+  - objectID: "route-bigdatastackdo"
+    yamlSource:
+      kind: Route
+      apiVersion: route.openshift.io/v1
+      spec:
+        host: bigdatastackdo-$namespace$.$hostExtension$
+        to:
+          kind: Service
+          name: $doServiceLookup$
+          weight: 100
+        port:
+          targetPort: tcp15672
+        wildcardPolicy: None
+        
+  # Route: Proxy
+  - objectID: "route-bigdatastackdoproxy"
+    yamlSource:
+      kind: Route
+      apiVersion: route.openshift.io/v1
+      spec:
+        host: bigdatastackdoproxy-$namespace$.$hostExtension$
+        to:
+          kind: Service
+          name: $proxyServiceLookup$
+          weight: 100
+        port:
+          targetPort: api
+        wildcardPolicy: None
+
+sequences:
+  - sequenceID: "launch"
+    name: "Deploy Dynamic Orchestrator Instance"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: >
+      Deploys an instance of the Dyanmic Orchestrator service, along with the associated services and external end-points. 
+      IMPORTANT: This currently assumes the images have been built and the volume claims hva been created.
+    parameters: {}
+    mode: Continue
+    operations:
+      # Create DO
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "bigdatastackdo"
+        defineInstanceRef: "bigdatastackdoInstance"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "bigdatastackdoInstance"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "bigdatastackdoInstance"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "bigdatastackdoInstance"
+        waitForStatus: "Available"
+      # Now create the service
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "srv-bigdatastackdo"
+        defineInstanceRef: "newServiceDO"
+      - className: Apply # Create the service on the cluster
+        instanceRef: "newServiceDO"
+      # Now create the route
+      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+        parameter: "doServiceLookup"
+        criteria: "$namespace$:service:$appID$-srv-bigdatastackdo-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "route-bigdatastackdo"
+        defineInstanceRef: "newRouteDO"
+      - className: SetSequenceParameters # Fill in any missing placeholders (most notably 'serviceLookup' found above)
+        instanceRef: "newRouteDO"
+      - className: Apply # Create the route on the cluster
+        instanceRef: "newRouteDO"
+      # Create Proxy
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "bigdatastackdoproxy"
+        defineInstanceRef: "bigdatastackdoproxyInstance"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "bigdatastackdoproxyInstance"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "bigdatastackdoproxyInstance"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "bigdatastackdoproxyInstance"
+        waitForStatus: "Available"
+      # Now create the service
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "srv-bigdatastackdoproxy"
+        defineInstanceRef: "newServiceProxy"
+      - className: Apply # Create the service on the cluster
+        instanceRef: "newServiceProxy"
+      # Now create the route
+      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+        parameter: "proxyServiceLookup"
+        criteria: "$namespace$:service:$appID$-srv-bigdatastackdoproxy-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "route-bigdatastackdoproxy"
+        defineInstanceRef: "newRouteProxy"
+      - className: SetSequenceParameters # Fill in any missing placeholders (most notably 'serviceLookup' found above)
+        instanceRef: "newRouteProxy"
+      - className: Apply # Create the route on the cluster
+        instanceRef: "newRouteProxy"
+        
+states:
+  - appStateID: NotRunning
+    name: "Dynamic Orchestrator is not available (e.g. it has not been started yet)"
+    notInStates:
+      - anyOther
+    sequences:
+     - "launch"
+  - appStateID: Deploying
+    name: "Dynamic Orchestrator is in the process of being deployed"
+    conditions:
+      - objectIDs: 
+          - bigdatastackdo
+        instances: ">0"
+        state: "Pending"
+    sequences: []
+  - appStateID: Available
+    name: "Dynamic Orchestrator is available"
+    conditions:
+      - objectIDs: 
+          - bigdatastackdo
+        instances: ">0"
+        state: "Available"
+    sequences: []

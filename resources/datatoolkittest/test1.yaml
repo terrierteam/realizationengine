@@ -1,0 +1,145 @@
+appID: "atoswl"
+name: "Grocery Recommender Platform"
+description: "A grocery recommendation application"
+owner: "$owner$"
+namespace: "$namespace$"
+types:
+ - playbook
+ - inferMissingValues
+ - overrideValues
+ - setObjectMetadata
+ 
+ 
+objects:
+  - objectID: "recommendations-calculation"
+    yamlSource:
+      apiVersion: "apps.openshift.io/v1"
+      kind: "DeploymentConfig"
+      metadata:
+        labels:
+          - "Recommender"
+          - "User Facing"
+          - "Supports Replication"
+          - "CPU Intensive"
+        name: "$appID$-$objectID$-$instance$"
+        namespace: "$namespace$"
+      spec:
+        replicas: 1
+        strategy:
+          resources: {}
+        template:
+          metadata:
+            labels:
+              jobconfig: "$appID$-$objectID$-$instance$"
+          spec:
+            containers:
+              - name: "recommender"
+                image: "recommender-image"
+                ports:
+                  - name: "recommendations-calculation"
+                    containerPort: 8080
+                    protocol: "TCP"
+                env:
+                  - name: "owner"
+                    value: "$owner$"
+                  - name: "namespace"
+                    value: "$namespace$"
+                  - name: "appID"
+                    value: "$appID$"
+                  - name: "objectID"
+                    value: "$objectID$"
+                  - name: "instance"
+                    value: "$instance$"
+                resources:
+                  limits:
+                    cpu: "0.1m"
+                    memory: "2048Mi"
+                  requests:
+                    cpu: "0.1m"
+                    memory: "2048Mi"
+                securityContext: {}
+                imagePullPolicy: "Always"
+                restartPolicy: "Always"
+
+metrics:
+  - name: "costPerHour"
+    metricClassname: "Double"
+    summary: "The cost of running this component per hour in US dollars."
+    maximumValue: 1000000
+    minimumValue: 1000
+    higherIsBetter: "True"
+    displayUnit: "$/hour"
+
+slos:
+  - metricName: "costPerHour"
+    objectID: "recommendations-calculation"
+    type: "maximum"
+    value: 190
+    breachSeverity: "Alert"
+    requirement: "True"
+  - metricName: "costPerHour"
+    objectID: "recommendations-calculation"
+    type: "maximum"
+    value: 200
+    breachSeverity: "Alert"
+    requirement: "False"
+
+sequences:
+ -  sequenceID: "addRecommender"
+    name: "Deploys a recommender instance"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: >
+      Deploys an instance of recommendations-calculation. 
+    parameters: {}
+    mode: Continue
+    operations:
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "recommendations-calculation"
+        defineInstanceRef: "recInstance"
+      - className: SetSequenceParameters # Fill in any missing placeholders
+        instanceRef: "recInstance"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "recInstance"
+      - className: WaitFor # Wait until the deployment config is reporting available
+        instanceRef: "recInstance"
+        waitForStatus: "Available" 
+      - className: RegisterWithDynamicOrchestrator
+        instanceRef: "recInstance"
+ -  sequenceID: "removeRecommender"
+    name: "Deletes a recommender instance"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: >
+      Deletes an instance of recommendations-calculation. 
+    parameters: {}
+    mode: Continue
+    operations:
+      # Steps for creating the deployment config
+      - className: InstanceRefFromObjectLookup # get an object instance as reference
+        criteria: "$namespace$:deploymentconfig:$appID$-recommendations-calculation-.*"
+        defineInstanceRef: "recInstance"
+        multipleMatches: "SelectFirst"
+      - className: Delete # delete target object
+        instanceRef: "recInstance"
+        
+states:
+  - appStateID: NoInstances
+    name: "No instances running"
+    notInStates:
+      - anyOther
+    sequences:
+     - "addRecommender"
+  - appStateID: OneOrMoreInstances
+    name: "At least one instance is running"
+    conditions:
+      - objectIDs: 
+          - recommendations-calculation
+        instances: ">0"
+        state: "Available"
+    sequences:
+     - "addRecommender"
+     - "removeRecommender"

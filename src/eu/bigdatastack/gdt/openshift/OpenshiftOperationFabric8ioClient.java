@@ -138,6 +138,14 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
 			osClient.load(stream).createOrReplace();
 			stream.close();}
+			case Volume:
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
+			case VolumeClaim:
+			{ByteArrayInputStream stream = new ByteArrayInputStream(object.getYamlSource().getBytes());
+			osClient.load(stream).createOrReplace();
+			stream.close();}
 			return true;
 			case Playbook:
 				return false;
