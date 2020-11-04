@@ -266,6 +266,9 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 				return false;
 			}
 			
+			objectID = object.getObjectID();
+			instance = object.getInstance();
+			
 			
 			// Stage 2: Check that there exists an instance of the dynamic orchestrator
 			List<BigDataStackObjectDefinition> dynamicOrchestratorInstances = objectInstanceClient.getObjects(dynamicOrchestratorObjectID, owner, null, dynamicOrchestratorAppID);
@@ -329,7 +332,7 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 				
 				// Stage 5: Get Connection End-point to send the data to
 				BigDataStackPodStatusIO podClient = new BigDataStackPodStatusIO(database);
-				List<BigDataStackPodStatus> pods = podClient.getPodStatuses(appID, owner, instanceToUseForOrchestration.getObjectID(), namepace, instanceToUseForOrchestration.getInstance());
+				List<BigDataStackPodStatus> pods = podClient.getPodStatuses(instanceToUseForOrchestration.getAppID(), owner, instanceToUseForOrchestration.getObjectID(), namepace, instanceToUseForOrchestration.getInstance());
 				
 				BigDataStackPodStatus podToSendTo = null;
 				for (BigDataStackPodStatus pod : pods) {
