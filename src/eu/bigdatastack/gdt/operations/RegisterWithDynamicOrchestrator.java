@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import eu.bigdatastack.gdt.lxdb.BigDataStackAppStateIO;
 import eu.bigdatastack.gdt.lxdb.BigDataStackApplicationIO;
@@ -52,8 +51,6 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 	
 	private boolean notConfigured = true;
 	
-	ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
-	ObjectMapper jsonMapper = new ObjectMapper();
 	
 	private static String dynamicOrchestratorObjectID = "bigdatastackdoproxy";
 	private static String dynamicOrchestratorAppID = "dynamicorchestrator";
@@ -166,22 +163,6 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 		this.notConfigured = notConfigured;
 	}
 
-	public ObjectMapper getYamlMapper() {
-		return yamlMapper;
-	}
-
-	public void setYamlMapper(ObjectMapper yamlMapper) {
-		this.yamlMapper = yamlMapper;
-	}
-
-	public ObjectMapper getJsonMapper() {
-		return jsonMapper;
-	}
-
-	public void setJsonMapper(ObjectMapper jsonMapper) {
-		this.jsonMapper = jsonMapper;
-	}
-
 	public static String getDynamicOrchestratorObjectID() {
 		return dynamicOrchestratorObjectID;
 	}
@@ -217,6 +198,7 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 			PrometheusDataClient prometheusDataClient, OperationSequenceThread parentSequenceRunner,
 			EventUtil eventUtil) {
 		
+		ObjectMapper jsonMapper = new ObjectMapper();
 		
 		if (instanceRef!=null || (objectID!=null && instance>0)) notConfigured = false;
 		
