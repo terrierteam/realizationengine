@@ -164,7 +164,13 @@ public class InstanceRefFromObjectLookup extends BigDataStackOperation{
 					parentSequenceRunner.getSequence().getParameters().put(parameter, mapper.writeValueAsString(matches));
 					return true;
 				} else if (selectFirst) {
-					parentSequenceRunner.getSequence().getParameters().put(parameter, matchedResources.get(0).getName());
+					String appID = matchedResources.get(0).getName().split("-")[0];
+					String instance = matchedResources.get(0).getName().split("-")[matchedResources.get(0).getName().split("-").length-1];
+					String objectID = matchedResources.get(0).getName().substring(appID.length(), matchedResources.get(0).getName().length());
+					objectID = objectID.substring(1, objectID.length()-(instance.length()+1));
+					String reference = objectID+":"+instance;
+					
+					parentSequenceRunner.getSequence().getParameters().put(parameter, reference);
 					eventUtil.registerEvent(
 							getAppID(),
 							getOwner(),
@@ -230,5 +236,6 @@ public class InstanceRefFromObjectLookup extends BigDataStackOperation{
 	public String getObjectID() {
 		return "ParentSequence";
 	}
+	
 
 }
