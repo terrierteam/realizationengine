@@ -366,7 +366,9 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 					HttpURLConnection http = (HttpURLConnection)con;
 					http.setRequestMethod("POST"); // PUT is another valid option
 					http.setDoOutput(true);
-					byte[] out = jsonMapper.writeValueAsString(summary).getBytes(StandardCharsets.UTF_8);
+					String body = jsonMapper.writeValueAsString(summary);
+					System.out.println(body);
+					byte[] out = body.getBytes(StandardCharsets.UTF_8);
 					int length = out.length;
 
 					http.setFixedLengthStreamingMode(length);
