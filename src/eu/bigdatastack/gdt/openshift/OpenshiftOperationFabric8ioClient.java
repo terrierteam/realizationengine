@@ -171,9 +171,11 @@ public class OpenshiftOperationFabric8ioClient implements OpenshiftOperationClie
 				OpenshiftObject openshiftObject = statusClient.getDeploymentConfig(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				osClient.deploymentConfigs().delete((DeploymentConfig)openshiftObject.getUnderlyingClientObject());
 
+				Thread.sleep(3000);
+				
 				// deleting a deployment config does not delete the underlying replication controller, so delete that too
-				OpenshiftObject controller = statusClient.getReplicationController(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance()+"-1");
-				osClient.replicationControllers().delete((ReplicationController)controller.getUnderlyingClientObject());
+				/*OpenshiftObject controller = statusClient.getReplicationController(object.getNamespace(), object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
+				osClient.replicationControllers().delete((ReplicationController)controller.getUnderlyingClientObject());*/
 
 				List<OpenshiftObject> pods1 = statusClient.getPods(object.getNamespace(), true, true, "deploymentconfig="+object.getAppID()+"-"+object.getObjectID()+"-"+object.getInstance());
 				for (OpenshiftObject pod : pods1) {
