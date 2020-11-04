@@ -311,7 +311,7 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 				summary.setSequences(sequences);
 
 				BigDataStackSLOIO sloClient = new BigDataStackSLOIO(database);
-				List<BigDataStackSLO> slos = sloClient.getSLOs(owner, appID, object.getObjectID(), object.getNamespace(), object.getInstance(), null, -1);
+				List<BigDataStackSLO> slos = sloClient.getSLOs(owner, appID, object.getObjectID(), object.getNamespace(), -1, null, -1);
 				summary.setSlos(slos);
 				
 				BigDataStackMetricIO metricClient = new BigDataStackMetricIO(database);
