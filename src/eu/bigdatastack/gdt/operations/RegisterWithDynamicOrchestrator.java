@@ -5,6 +5,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -300,7 +301,9 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 				
 				// Stage 4: Build Response
 				BigDataStackObjectInstanceSummary summary = new BigDataStackObjectInstanceSummary();
-				summary.setObject(object);
+				List<BigDataStackObjectDefinition> objects = new ArrayList<BigDataStackObjectDefinition>(1);
+				objects.add(object);
+				summary.setObjects(objects);
 				
 				BigDataStackApplicationIO applicationClient = new BigDataStackApplicationIO(database);
 				BigDataStackApplication application = applicationClient.getApp(appID, owner, namepace);
@@ -358,7 +361,7 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 				
 				// Stage 6: Send the Registration request
 				int response = 404;
-				String targetURL = "http://"+podToSendTo.getPodIP()+":"+dynamicOrchestratorPort;
+				String targetURL = "http://"+podToSendTo.getPodIP()+":"+dynamicOrchestratorPort+"/api/v1/monitoring_requests";
 				
 				try {
 					URL url = new URL(targetURL);

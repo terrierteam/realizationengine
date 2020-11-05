@@ -10,7 +10,7 @@ import java.util.List;
 public class BigDataStackObjectInstanceSummary {
 
 	BigDataStackApplication application;
-	BigDataStackObjectDefinition object;
+	List<BigDataStackObjectDefinition> objects;
 	List<BigDataStackOperationSequence> sequences;
 	List<BigDataStackSLO> slos;
 	List<BigDataStackMetric> metrics;
@@ -19,14 +19,14 @@ public class BigDataStackObjectInstanceSummary {
 	List<BigDataStackEvent> pastEvents;
 	
 	public BigDataStackObjectInstanceSummary() {}
-	
-	public BigDataStackObjectInstanceSummary(BigDataStackApplication application, BigDataStackObjectDefinition object,
-			List<BigDataStackOperationSequence> sequences, List<BigDataStackSLO> slos, List<BigDataStackMetric> metrics,
-			List<BigDataStackAppState> possibleStates, List<BigDataStackAppState> currentStates,
-			List<BigDataStackEvent> pastEvents) {
+
+	public BigDataStackObjectInstanceSummary(BigDataStackApplication application,
+			List<BigDataStackObjectDefinition> objects, List<BigDataStackOperationSequence> sequences,
+			List<BigDataStackSLO> slos, List<BigDataStackMetric> metrics, List<BigDataStackAppState> possibleStates,
+			List<BigDataStackAppState> currentStates, List<BigDataStackEvent> pastEvents) {
 		super();
 		this.application = application;
-		this.object = object;
+		this.objects = objects;
 		this.sequences = sequences;
 		this.slos = slos;
 		this.metrics = metrics;
@@ -43,12 +43,12 @@ public class BigDataStackObjectInstanceSummary {
 		this.application = application;
 	}
 
-	public BigDataStackObjectDefinition getObject() {
-		return object;
+	public List<BigDataStackObjectDefinition> getObjects() {
+		return objects;
 	}
 
-	public void setObject(BigDataStackObjectDefinition object) {
-		this.object = object;
+	public void setObjects(List<BigDataStackObjectDefinition> objects) {
+		this.objects = objects;
 	}
 
 	public List<BigDataStackOperationSequence> getSequences() {
@@ -98,6 +98,8 @@ public class BigDataStackObjectInstanceSummary {
 	public void setPastEvents(List<BigDataStackEvent> pastEvents) {
 		this.pastEvents = pastEvents;
 	}
+	
+	
 	
 	
 }
