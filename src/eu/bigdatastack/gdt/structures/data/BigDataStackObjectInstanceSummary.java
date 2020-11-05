@@ -9,7 +9,12 @@ import java.util.List;
  */
 public class BigDataStackObjectInstanceSummary {
 
-	BigDataStackApplication application;
+	private String appID;
+	private String name;
+	private String description;
+	private String owner;
+	private String namespace;
+	private List<BigDataStackApplicationType> types;
 	List<BigDataStackObjectDefinition> objects;
 	List<BigDataStackOperationSequence> sequences;
 	List<BigDataStackSLO> slos;
@@ -20,12 +25,18 @@ public class BigDataStackObjectInstanceSummary {
 	
 	public BigDataStackObjectInstanceSummary() {}
 
-	public BigDataStackObjectInstanceSummary(BigDataStackApplication application,
-			List<BigDataStackObjectDefinition> objects, List<BigDataStackOperationSequence> sequences,
-			List<BigDataStackSLO> slos, List<BigDataStackMetric> metrics, List<BigDataStackAppState> possibleStates,
-			List<BigDataStackAppState> currentStates, List<BigDataStackEvent> pastEvents) {
+	public BigDataStackObjectInstanceSummary(String appID, String name, String description, String owner,
+			String namespace, List<BigDataStackApplicationType> types, List<BigDataStackObjectDefinition> objects,
+			List<BigDataStackOperationSequence> sequences, List<BigDataStackSLO> slos, List<BigDataStackMetric> metrics,
+			List<BigDataStackAppState> possibleStates, List<BigDataStackAppState> currentStates,
+			List<BigDataStackEvent> pastEvents) {
 		super();
-		this.application = application;
+		this.appID = appID;
+		this.name = name;
+		this.description = description;
+		this.owner = owner;
+		this.namespace = namespace;
+		this.types = types;
 		this.objects = objects;
 		this.sequences = sequences;
 		this.slos = slos;
@@ -35,12 +46,52 @@ public class BigDataStackObjectInstanceSummary {
 		this.pastEvents = pastEvents;
 	}
 
-	public BigDataStackApplication getApplication() {
-		return application;
+	public String getAppID() {
+		return appID;
 	}
 
-	public void setApplication(BigDataStackApplication application) {
-		this.application = application;
+	public void setAppID(String appID) {
+		this.appID = appID;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getOwner() {
+		return owner;
+	}
+
+	public void setOwner(String owner) {
+		this.owner = owner;
+	}
+
+	public String getNamespace() {
+		return namespace;
+	}
+
+	public void setNamespace(String namespace) {
+		this.namespace = namespace;
+	}
+
+	public List<BigDataStackApplicationType> getTypes() {
+		return types;
+	}
+
+	public void setTypes(List<BigDataStackApplicationType> types) {
+		this.types = types;
 	}
 
 	public List<BigDataStackObjectDefinition> getObjects() {
@@ -98,6 +149,9 @@ public class BigDataStackObjectInstanceSummary {
 	public void setPastEvents(List<BigDataStackEvent> pastEvents) {
 		this.pastEvents = pastEvents;
 	}
+
+
+	
 	
 	
 	

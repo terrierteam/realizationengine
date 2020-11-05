@@ -307,7 +307,11 @@ public class RegisterWithDynamicOrchestrator extends BigDataStackOperation {
 				
 				BigDataStackApplicationIO applicationClient = new BigDataStackApplicationIO(database);
 				BigDataStackApplication application = applicationClient.getApp(appID, owner, namepace);
-				summary.setApplication(application);
+				summary.setOwner(application.getOwner());
+				summary.setName(application.getName());
+				summary.setDescription(application.getDescription());
+				summary.setNamespace(application.getNamespace());
+				summary.setTypes(application.getTypes());
 				
 				BigDataStackOperationSequenceIO sequenceClient = new BigDataStackOperationSequenceIO(database, true);
 				List<BigDataStackOperationSequence> sequences = sequenceClient.getOperationSequences(owner, appID, null);
