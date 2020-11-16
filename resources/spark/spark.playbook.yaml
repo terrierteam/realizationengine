@@ -15,6 +15,69 @@ types:
 
 
 objects:
+  # Deployment Config: pushgateway
+  - objectID: "pushgateway"
+    yamlSource:
+      kind: DeploymentConfig
+      apiVersion: apps.openshift.io/v1
+      metadata:
+        labels:
+          app: pushgateway
+      spec:
+        triggers:
+          - type: ConfigChange
+        replicas: 1
+        selector:
+          app: pushgateway
+        template:
+          metadata:
+            labels:
+              app: pushgateway
+              deploymentconfig: pushgateway
+          spec:
+            containers:
+              - name: pushgateway
+                image: >-
+                  prom/pushgateway
+                ports:
+                  - name: "promexporter"
+                    containerPort: 9091
+                    protocol: TCP
+                  - name: "api"
+                    containerPort: 8081
+                    protocol: TCP
+                env:
+                  - name: appID
+                    value: $appID$
+                  - name: objectID
+                    value: $objectID$
+                  - name: instance
+                    value: $instance$
+                resources: {}
+                imagePullPolicy: Always
+            restartPolicy: Always
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+            
+  # Service: srv-feedbackcollector
+  - objectID: "srv-pushgateway"
+    yamlSource:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        labels:
+          app: pushgateway
+      spec:
+        ports:
+          - name: 8081-tcp
+            protocol: TCP
+            port: 8081
+            targetPort: 8081
+        selector:
+          app: pushgateway
+          deploymentconfig: pushgateway
+        type: ClusterIP
+        
   # Deployment Config: feedbackcollector
   - objectID: "feedbackcollector"
     yamlSource:
@@ -49,6 +112,15 @@ objects:
                   - name: "tcp-8778"
                     containerPort: 8778
                     protocol: TCP
+                env:
+                  - name: LOGSTASHURL
+                    value: "$pushgateway$:8081"
+                  - name: appID
+                    value: $appID$
+                  - name: objectID
+                    value: $objectID$
+                  - name: instance
+                    value: $instance$
                 resources: {}
                 imagePullPolicy: Always
             restartPolicy: Always
@@ -128,6 +200,12 @@ objects:
                 env:
                   - name: ALLOW_ANONYMOUS_LOGIN
                     value: 'yes'
+                  - name: appID
+                    value: $appID$
+                  - name: objectID
+                    value: $objectID$
+                  - name: instance
+                    value: $instance$
                 resources: {}
                 imagePullPolicy: Always
             restartPolicy: Always
@@ -181,6 +259,12 @@ objects:
                     containerPort: 9092
                     protocol: TCP
                 env:
+                  - name: appID
+                    value: $appID$
+                  - name: objectID
+                    value: $objectID$
+                  - name: instance
+                    value: $instance$
                   - name: ALLOW_PLAINTEXT_LISTENER
                     value: 'yes'
                   - name: KAFKA_BROKER_ID
@@ -605,6 +689,22 @@ sequences:
     description: "Sequentially deploys the grocery recommendation system from first principles. This will first setup the feedback collector, then launch zookeeper and kafka. Following this, a spark cluster will be deployed, and the job jar will be submitted to the cluster."
     parameters: {}
     operations:
+      # Steps for creating the deployment config
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "pushgateway"
+        defineInstanceRef: "pushgatewayInstance"
+      - className: Apply # Create deployment config on the cluster
+        instanceRef: "pushgatewayInstance"
+      # Now create the service
+      - className: Instantiate # Spawn a new copy from the template
+        objectID: "srv-pushgateway"
+        defineInstanceRef: "pushgatewaySRV"
+      - className: Apply # Create the service on the cluster
+        instanceRef: "pushgatewaySRV"
+      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+        parameter: "pushgateway"
+        criteria: "$namespace$:service:$appID$-srv-pushgateway-.*"
+        multipleMatches: "SelectFirst"
       # Steps for creating the deployment config
       - className: Instantiate # Spawn a new copy from the template
         objectID: "feedbackcollector"
