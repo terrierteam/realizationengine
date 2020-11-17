@@ -545,15 +545,20 @@ public class ManagerResource {
 	
 	@GET
 	@Path("/query/{owner}/{appID}/{namespace}/metrics/{metricName}/{objectID}")
-	public BigDataStackMetricValue queryMetricValues(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("namespace") String namespace, @PathParam("metricName") String metricName, @PathParam("objectID") String objectID){
-		return manager.prometheusDataClient.basicQuery(owner, namespace, appID, objectID, null, metricName);
+	public BigDataStackMetricValue queryMetricValues(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("namespace") String namespace, @PathParam("metricName") String metricName, @PathParam("objectID") String objectID, @QueryParam("time") String time){
+		
+		if (time==null) return manager.prometheusDataClient.basicQuery(owner, namespace, appID, objectID, null, metricName);
+		else return manager.prometheusDataClient.basicQuery(owner, namespace, appID, objectID, null, metricName, time);
 	}
 	
 	@GET
 	@Path("/query/{owner}/{appID}/{namespace}/metrics/{metricName}/{objectID}/{instanceID}")
-	public BigDataStackMetricValue queryMetricValues(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("namespace") String namespace, @PathParam("metricName") String metricName, @PathParam("objectID") String objectID, @PathParam("instanceID") String instanceID){
-		return manager.prometheusDataClient.basicQuery(owner, namespace, appID, objectID, instanceID, metricName);
+	public BigDataStackMetricValue queryMetricValues(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("namespace") String namespace, @PathParam("metricName") String metricName, @PathParam("objectID") String objectID, @PathParam("instanceID") String instanceID, @QueryParam("time") String time){
+		
+		if (time==null) return manager.prometheusDataClient.basicQuery(owner, namespace, appID, objectID, instanceID, metricName);
+		else return manager.prometheusDataClient.basicQuery(owner, namespace, appID, objectID, instanceID, metricName, time);
 	}
+	
 	
 	@POST
 	@Path("/event/{owner}/{appID}/{objectID}")
