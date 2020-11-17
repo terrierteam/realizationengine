@@ -158,7 +158,7 @@ public class UnitTest2 {
 		assertNotNull(seq);
 		
 		// Run test sequence
-		assertTrue(manager.executeSequenceFromTemplate(seq));
+		assertNotNull(manager.executeSequenceFromTemplate(seq));
 		
 		// Shut down monitoring
 		//assertTrue(manager.stopMonitoringNamespace(namespace, "richardm"));

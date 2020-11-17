@@ -1115,7 +1115,7 @@ public class GDTManager implements Manager {
 	 * @param parameters
 	 * @return
 	 */
-	public boolean executeSequenceFromTemplate(BigDataStackOperationSequence sequenceTemplate, Map<String,String> parameters) {
+	public BigDataStackOperationSequence executeSequenceFromTemplate(BigDataStackOperationSequence sequenceTemplate, Map<String,String> parameters) {
 
 		if (parameters==null) parameters = new HashMap<String,String>();
 		parameters.put("appID", sequenceTemplate.getAppID());
@@ -1170,13 +1170,13 @@ public class GDTManager implements Manager {
 				if (!sequenceAdded) {
 					failedAttempts++;
 					if (failedAttempts>=5) {
-						return false;
+						return null;
 					} else continue;
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			return false;
+			return null;
 		}
 
 		try {
@@ -1238,7 +1238,7 @@ public class GDTManager implements Manager {
 								newSequenceInstance.getSequenceID(),
 								newSequenceInstance.getIndex()
 								);
-						return false;
+						return null;
 					}
 				}
 
@@ -1263,14 +1263,14 @@ public class GDTManager implements Manager {
 						newSequenceInstance.getSequenceID(),
 						newSequenceInstance.getIndex()
 						);
-				return false;
+				return null;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			return false;
+			return null;
 		}
 
-		return true;
+		return newSequenceInstance;
 	}
 
 	/**
@@ -1281,7 +1281,7 @@ public class GDTManager implements Manager {
 	 * @param sequenceTemplate
 	 * @return
 	 */
-	public boolean executeSequenceFromTemplate(BigDataStackOperationSequence sequenceTemplate) {
+	public BigDataStackOperationSequence executeSequenceFromTemplate(BigDataStackOperationSequence sequenceTemplate) {
 		Map<String,String> params = new HashMap<String,String>();
 		return executeSequenceFromTemplate(sequenceTemplate, params);
 

@@ -57,12 +57,16 @@ objects:
                  containerPort: 8000
                  protocol: TCP
               env:
+               - name: owner
+                 value: $owner$
+               - name: namespace
+                 value: $namespace$
                - name: appID
                  value: $appID$
+               - name: instance
+                 value: '$instance$'
                - name: objectID
                  value: $objectID$
-               - name: instance
-                 value: $instance$
                - name: MODEL_RECOMMENDER_FILEPATH
                  value: $R_MODEL_RECOMMENDER_FILEPATH$
                - name: RECOMMENDER_PATH
@@ -133,6 +137,8 @@ objects:
                 env:
                   - name: owner
                     value: $owner$
+                  - name: namespace
+                    value: $namespace$
                   - name: appID
                     value: $appID$
                   - name: instance
@@ -140,7 +146,7 @@ objects:
                   - name: objectID
                     value: $objectID$
                   - name: MODEL_RECOMMENDER_FILEPATH
-                    value: demo_recommender/recommender_RF.pkl.gz
+                    value: $TR_MODEL_RECOMMENDER_FILEPATH$
                   - name: RECOMMENDER_PATH
                     value: demo_recommender/
                   - name: N_ESTIMATORS
@@ -203,12 +209,16 @@ objects:
                  containerPort: 8000
                  protocol: TCP
               env:
+               - name: owner
+                 value: $owner$
+               - name: namespace
+                 value: $namespace$
                - name: appID
                  value: $appID$
+               - name: instance
+                 value: '$instance$'
                - name: objectID
                  value: $objectID$
-               - name: instance
-                 value: $instance$
                - name: MODEL_CHURN_FILEPATH
                  value: $R_MODEL_CHURN_FILEPATH$
                - name: CHURN_PATH
@@ -287,6 +297,8 @@ objects:
                 env:
                   - name: owner
                     value: $owner$
+                  - name: namespace
+                    value: $namespace$
                   - name: appID
                     value: $appID$
                   - name: instance
@@ -294,7 +306,7 @@ objects:
                   - name: objectID
                     value: $objectID$
                   - name: MODEL_CHURN_FILEPATH
-                    value: demo_churn/churn_RF.pkl.gz
+                    value: '$CPT_MODEL_CHURN_FILEPATH$'
                   - name: CHURN_PATH
                     value: demo_churn/
                   - name: N_ESTIMATORS
@@ -356,6 +368,7 @@ sequences:
     description: "Deploys a recommendation model training container"
     mode: "Continue"
     parameters:
+      TR_MODEL_RECOMMENDER_FILEPATH: 'demo_recommender/recommender_RF.pkl.gz'
       TR_N_ESTIMATORS: '30'
       TR_MAX_DEPTH: '7'
       TR_MIN_SAMPLES_LEAF: '1'
@@ -378,6 +391,7 @@ sequences:
     description: "Deploys a churn prediction model training container"
     mode: "Continue"
     parameters:
+      CPT_MODEL_CHURN_FILEPATH: 'demo_churn/churn_RF.pkl.gz'
       CPT_N_ESTIMATORS: '30'
       CPT_MAX_DEPTH: '7'
       CPT_MIN_SAMPLES_LEAF: '1'

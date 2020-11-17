@@ -590,25 +590,25 @@ public class ManagerResource {
 	
 	@GET
 	@Path("/exe/{owner}/{appID}/{sequenceID}/start")
-	public boolean executeSequenceFromTemplate(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("sequenceID") String sequenceID) {
+	public BigDataStackOperationSequence executeSequenceFromTemplate(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("sequenceID") String sequenceID) {
 		try {
 			BigDataStackOperationSequence sequenceTemplate = manager.sequenceTemplateClient.getOperationSequence(appID, sequenceID, 0, owner);
 			return manager.executeSequenceFromTemplate(sequenceTemplate);
 		} catch (Exception e) {
 			e.printStackTrace();
-			return false;
+			return null;
 		}
 	}
 	
 	@POST
 	@Path("/exe/{owner}/{appID}/{sequenceID}/start")
-	public boolean executeSequenceFromTemplateParam(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("sequenceID") String sequenceID, Map<String,String> params) {
+	public BigDataStackOperationSequence executeSequenceFromTemplateParam(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("sequenceID") String sequenceID, Map<String,String> params) {
 		try {
 			BigDataStackOperationSequence sequenceTemplate = manager.sequenceTemplateClient.getOperationSequence(appID, sequenceID, 0, owner);
 			return manager.executeSequenceFromTemplate(sequenceTemplate, params);
 		} catch (Exception e) {
 			e.printStackTrace();
-			return false;
+			return null;
 		}
 	}
 	
