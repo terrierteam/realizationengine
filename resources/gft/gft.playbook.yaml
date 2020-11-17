@@ -1,0 +1,553 @@
+appID: "gftis"
+name: "GFT Insurance Services"
+description: >
+  This app comprises the GFT insurance services for use with BigDataStack. In particular, 
+  this is comprised of four main services. 
+  1) The Insurance Recommendation Training service, that produces recommendation models based on current insurance policies. 
+  2) The Insurance Recommendation service, that produces insurance product recommendations for users.
+  3) The churn Training service, hat produces churn models based on active & cancelled pilicies 
+  4) The churn prediction service, that estimates the probability of cancellation of insurance policies.
+owner: "$owner$"
+namespace: "$namespace$"
+types:
+ - playbook
+ - inferMissingValues
+ - overrideValues
+ - setObjectMetadata
+
+
+objects:
+  # Deployment Config: recommender
+  - objectID: "recommender"
+    yamlSource:
+      apiVersion: apps.openshift.io/v1
+      kind: DeploymentConfig
+      metadata:
+        labels:
+          app: recommender
+      spec:
+        replicas: 1
+        strategy:
+          resources: {}
+        template:
+          metadata:
+            labels:
+              app: recommender
+              deploymentconfig: gft-recommender
+          spec:
+            containers:
+            - name: bash
+              image: inferislux/zaiqiao-ml:latest
+              resources:
+                requests:
+                  cpu: "100m"
+                  memory: "512Mi"
+                limits:
+                  cpu: "1000m"
+                  memory: "2048Mi"
+              command:
+               - 'python'
+              args:
+               - '/nfs/app_demo_rec.py'
+              ports:
+               - name: api
+                 containerPort: 5000
+                 protocol: TCP
+               - name: promexporter
+                 containerPort: 8000
+                 protocol: TCP
+              env:
+               - name: appID
+                 value: $appID$
+               - name: objectID
+                 value: $objectID$
+               - name: instance
+                 value: $instance$
+               - name: MODEL_RECOMMENDER_FILEPATH
+                 value: $R_MODEL_RECOMMENDER_FILEPATH$
+               - name: RECOMMENDER_PATH
+                 value: /nfs/demo_recommender/
+              imagePullPolicy: Always
+              volumeMounts:
+                - mountPath: /nfs/
+                  name: nfs-access
+            serviceAccount: containerroot
+            volumes:
+            - name: nfs-access
+              persistentVolumeClaim:
+                claimName: gftvol1claim
+            
+  # Service: srv-recommender
+  - objectID: "srv-recommender"
+    yamlSource:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          app: recommender
+      spec:
+        selector:
+          app: recommender
+        ports:
+          - protocol: TCP
+            port: 5000
+            targetPort: 5000
+  
+  # Job: recommender-training
+  - objectID: "recommender-training"
+    yamlSource:
+      kind: Job
+      apiVersion: batch/v1
+      metadata:
+        labels:
+          app: recommender-training
+      spec:
+        parallelism: 1
+        completions: 1
+        backoffLimit: 2
+        template:
+          metadata:
+            labels:
+              app: recommender-training
+          spec:
+            serviceAccount: containerroot
+            volumes:
+              - name: nfs-access
+                persistentVolumeClaim:
+                  claimName: gftvol1claim
+            containers:
+              - name: trainrecommender
+                image: 'inferislux/zaiqiao-ml:latest'
+                workingDir: /nfs/
+                resources:
+                  limits:
+                    cpu: 2000m
+                    memory: 8Gi
+                  requests:
+                    cpu: 200m
+                    memory: 1Gi
+                command:
+                  - python
+                args:
+                  - 'app_demo_rec_training.py'
+                env:
+                  - name: owner
+                    value: $owner$
+                  - name: appID
+                    value: $appID$
+                  - name: instance
+                    value: '$instance$'
+                  - name: objectID
+                    value: $objectID$
+                  - name: MODEL_RECOMMENDER_FILEPATH
+                    value: demo_recommender/recommender_RF.pkl.gz
+                  - name: RECOMMENDER_PATH
+                    value: demo_recommender/
+                  - name: N_ESTIMATORS
+                    value: '$TR_N_ESTIMATORS$'
+                  - name: MAX_DEPTH
+                    value: '$TR_MAX_DEPTH$'
+                  - name: MIN_SAMPLES_LEAF
+                    value: '$TR_MIN_SAMPLES_LEAF$'
+                  - name: MIN_SAMPLES_SPLIT
+                    value: '$TR_MIN_SAMPLES_SPLIT$'
+                ports:
+                  - name: promexporter
+                    containerPort: 8000
+                    protocol: TCP
+                imagePullPolicy: Always
+                volumeMounts:
+                  - name: nfs-access
+                    mountPath: /nfs/
+            restartPolicy: Never
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+            
+  # Deployment Config: churnpredictor
+  - objectID: "churnpredictor"
+    yamlSource:
+      apiVersion: apps.openshift.io/v1
+      kind: DeploymentConfig
+      metadata:
+        labels:
+          app: churnpredictor
+      spec:
+        replicas: 1
+        strategy:
+          resources: {}
+        template:
+          metadata:
+            labels:
+              app: churnpredictor
+              deploymentconfig: gft-churnpredictor
+          spec:
+            containers:
+            - name: bash
+              image: inferislux/zaiqiao-ml:latest
+              resources:
+                requests:
+                  cpu: "100m"
+                  memory: "512Mi"
+                limits:
+                  cpu: "1000m"
+                  memory: "2048Mi"
+              command:
+               - 'python'
+              args:
+               - '/nfs/app_demo_churn.py'
+              ports:
+               - name: api
+                 containerPort: 5000
+                 protocol: TCP
+               - name: promexporter
+                 containerPort: 8000
+                 protocol: TCP
+              env:
+               - name: appID
+                 value: $appID$
+               - name: objectID
+                 value: $objectID$
+               - name: instance
+                 value: $instance$
+               - name: MODEL_CHURN_FILEPATH
+                 value: $R_MODEL_CHURN_FILEPATH$
+               - name: CHURN_PATH
+                 value: /nfs/demo_churn/
+               - name: N_ESTIMATORS
+                 value: "$CP_N_ESTIMATORS$"
+               - name: MAX_DEPTH
+                 value: "$CP_MAX_DEPTH$"
+               - name: MIN_SAMPLES_LEAF
+                 value: "$CP_MIN_SAMPLES_LEAF$"
+               - name: MIN_SAMPLES_SPLIT
+                 value: "$CP_MIN_SAMPLES_SPLIT$"
+              imagePullPolicy: Always
+              volumeMounts:
+                - mountPath: /nfs/
+                  name: nfs-access
+            serviceAccount: containerroot
+            volumes:
+            - name: nfs-access
+              persistentVolumeClaim:
+                claimName: gftvol1claim
+            
+  # Service: srv-recommender
+  - objectID: "srv-churnpredictor"
+    yamlSource:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          app: churnpredictor
+      spec:
+        selector:
+          app: churnpredictor
+        ports:
+          - protocol: TCP
+            port: 5000
+            targetPort: 5000
+  
+  # Job: recommender-training
+  - objectID: "churnpredictor-training"
+    yamlSource:
+      kind: Job
+      apiVersion: batch/v1
+      metadata:
+        labels:
+          app: churnpredictor-training
+      spec:
+        parallelism: 1
+        completions: 1
+        backoffLimit: 2
+        template:
+          metadata:
+            labels:
+              app: churnpredictor-training
+          spec:
+            serviceAccount: containerroot
+            volumes:
+              - name: nfs-access
+                persistentVolumeClaim:
+                  claimName: gftvol1claim
+            containers:
+              - name: trainrecommender
+                image: 'inferislux/zaiqiao-ml:latest'
+                workingDir: /nfs/
+                resources:
+                  limits:
+                    cpu: 2000m
+                    memory: 8Gi
+                  requests:
+                    cpu: 200m
+                    memory: 1Gi
+                command:
+                  - python
+                args:
+                  - 'app_demo_churn_training.py'
+                env:
+                  - name: owner
+                    value: $owner$
+                  - name: appID
+                    value: $appID$
+                  - name: instance
+                    value: '$instance$'
+                  - name: objectID
+                    value: $objectID$
+                  - name: MODEL_CHURN_FILEPATH
+                    value: demo_churn/churn_RF.pkl.gz
+                  - name: CHURN_PATH
+                    value: demo_churn/
+                  - name: N_ESTIMATORS
+                    value: "$CPT_N_ESTIMATORS$"
+                  - name: MAX_DEPTH
+                    value: "$CPT_MAX_DEPTH$"
+                  - name: MIN_SAMPLES_LEAF
+                    value: "$CPT_MIN_SAMPLES_LEAF$"
+                  - name: MIN_SAMPLES_SPLIT
+                    value: "$CPT_MIN_SAMPLES_SPLIT$"
+                ports:
+                  - name: promexporter
+                    containerPort: 8000
+                    protocol: TCP
+                imagePullPolicy: Always
+                volumeMounts:
+                  - name: nfs-access
+                    mountPath: /nfs/
+            restartPolicy: Never
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+metrics:
+  - name: "validation_accuracy"
+    metricClassname: "Double"
+    summary: "Classification Accuracy Performance on the associated Validation set"
+    maximumValue: 1.0
+    minimumValue: 0.0
+    higherIsBetter: "True"
+    displayUnit: "%"
+  - name: "test_accuracy"
+    metricClassname: "Double"
+    summary: "Classification Accuracy Performance on the associated Test set"
+    maximumValue: 1.0
+    minimumValue: 0.0
+    higherIsBetter: "True"
+    displayUnit: "%"
+  - name: "validation_roc_auc"
+    metricClassname: "Double"
+    summary: "Classification Area Under the Receiver Operating Characteristic Curve on the associated Validation set"
+    maximumValue: 1.0
+    minimumValue: 0.0
+    higherIsBetter: "True"
+    displayUnit: "%"
+  - name: "test_roc_auc"
+    metricClassname: "Double"
+    summary: "Classification Area Under the Receiver Operating Characteristic Curve on the associated Test set"
+    maximumValue: 1.0
+    minimumValue: 0.0
+    higherIsBetter: "True"
+    displayUnit: "%"
+    
+sequences:
+  # Train a Recommendation Model
+  - sequenceID: "trainrecommender"
+    name: "Train Recommendation Model"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Deploys a recommendation model training container"
+    mode: "Continue"
+    parameters:
+      TR_N_ESTIMATORS: '30'
+      TR_MAX_DEPTH: '7'
+      TR_MIN_SAMPLES_LEAF: '1'
+      TR_MIN_SAMPLES_SPLIT: '2'
+    operations:
+      - className: Instantiate
+        objectID: "recommender-training"
+        defineInstanceRef: "recommendertraining"
+      - className: SetSequenceParameters
+        instanceRef: "recommendertraining"
+      - className: Apply
+        instanceRef: "recommendertraining"
+  
+  # Train a Churn Model
+  - sequenceID: "trainchurnpredictor"
+    name: "Train Churn Model"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Deploys a churn prediction model training container"
+    mode: "Continue"
+    parameters:
+      CPT_N_ESTIMATORS: '30'
+      CPT_MAX_DEPTH: '7'
+      CPT_MIN_SAMPLES_LEAF: '1'
+      CPT_MIN_SAMPLES_SPLIT: '2'
+    operations:
+      - className: Instantiate
+        objectID: "churnpredictor-training"
+        defineInstanceRef: "churnpredictortraining"
+      - className: SetSequenceParameters
+        instanceRef: "churnpredictortraining"
+      - className: Apply
+        instanceRef: "churnpredictortraining"
+        
+  # First Time Setup for the Recommendation Model
+  - sequenceID: "ftsrecommender"
+    name: "Recommender Service First-time Setup"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Launches an instance of the Insurance Recomendation service, along with its needed Service object"
+    mode: "Continue"
+    parameters:
+      R_MODEL_RECOMMENDER_FILEPATH: '/nfs/demo_recommender/recommender_RF.pkl.gz'
+    operations:
+      - className: Instantiate
+        objectID: "recommender"
+        defineInstanceRef: "recommenderInstance"
+      - className: SetSequenceParameters
+        instanceRef: "recommenderInstance"
+      - className: Apply
+        instanceRef: "recommenderInstance"
+      - className: Instantiate
+        objectID: "srv-recommender"
+        defineInstanceRef: "srvrecommenderInstance"
+      - className: Apply
+        instanceRef: "srvrecommenderInstance"
+      - className: WaitFor
+        instanceRef: "recommenderInstance"
+        waitForStatus: "Available"
+        
+  # First Time Setup for the Churn Prediction Model
+  - sequenceID: "ftschurnprediction"
+    name: "Churn Prediction Service First-time Setup"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Launches an instance of the Customer Churn Prediction service, along with its needed Service object"
+    mode: "Continue"
+    parameters:
+      R_MODEL_CHURN_FILEPATH: '/nfs/demo_churn/churn_RF.pkl.gz'
+    operations:
+      - className: Instantiate
+        objectID: "churnpredictor"
+        defineInstanceRef: "churnpredictorInstance"
+      - className: SetSequenceParameters
+        instanceRef: "churnpredictorInstance"
+      - className: Apply
+        instanceRef: "churnpredictorInstance"
+      - className: Instantiate
+        objectID: "srv-churnpredictor"
+        defineInstanceRef: "srvchurnpredictorInstance"
+      - className: Apply
+        instanceRef: "srvchurnpredictorInstance"
+      - className: WaitFor
+        instanceRef: "churnpredictorInstance"
+        waitForStatus: "Available"
+        
+  # Reload Recommendation Model
+  - sequenceID: "reloadrecommender"
+    name: "Reload Recommender Service with Model"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Starts a new instance of the recommender service with a new model, then deletes the oldest instance of that service."
+    mode: "Continue"
+    parameters:
+      R_MODEL_RECOMMENDER_FILEPATH: '/nfs/demo_recommender/recommender_RF.pkl.gz'
+    operations:
+      - className: Instantiate
+        objectID: "recommender"
+        defineInstanceRef: "recommenderInstance"
+      - className: SetSequenceParameters
+        instanceRef: "recommenderInstance"
+      - className: Apply
+        instanceRef: "recommenderInstance"
+      - className: WaitFor
+        instanceRef: "recommenderInstance"
+        waitForStatus: "Available"
+      - className: "InstanceRefFromObjectLookup"
+        defineInstanceRef: "oldRecommenderInstance"
+        criteria: "$namespace$:deploymentconfig:$appID$-recommender-.*"
+        multipleMatches: "SelectFirst"
+      - className: "Delete"
+        instanceRef: "oldRecommenderInstance"
+  
+  # Reload Churn Prediction Model
+  - sequenceID: "reloadchurnpredictor"
+    name: "Reload Churn Prediction Service with Model"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Starts a new instance of the churn prediction service with a new model, then deletes the oldest instance of that service."
+    mode: "Continue"
+    parameters:
+      R_MODEL_CHURN_FILEPATH: '/nfs/demo_churn/churn_RF.pkl.gz'
+    operations:
+      - className: Instantiate
+        objectID: "churnpredictor"
+        defineInstanceRef: "churnpredictorInstance"
+      - className: SetSequenceParameters
+        instanceRef: "churnpredictorInstance"
+      - className: Apply
+        instanceRef: "churnpredictorInstance"
+      - className: WaitFor
+        instanceRef: "churnpredictorInstance"
+        waitForStatus: "Available"
+      - className: "InstanceRefFromObjectLookup"
+        defineInstanceRef: "oldchurnpredictorInstance"
+        criteria: "$namespace$:deploymentconfig:$appID$-churnpredictor-.*"
+        multipleMatches: "SelectFirst"
+      - className: "Delete"
+        instanceRef: "oldchurnpredictorInstance"
+        
+states:
+  - appStateID: freshregistration
+    name: "Newly Registered, Not Started"
+    notInStates:
+      - anyOther
+    sequences:
+      - ftsrecommender
+      - ftschurnprediction
+      - trainrecommender
+      - trainchurnpredictor
+  - appStateID: recommenderrunning
+    name: "Recommender Service Running"
+    conditions:
+      - objectIDs: 
+          - recommender
+        instances: ">=1"
+        state: "Available"
+    sequences:
+      - reloadrecommender
+      - trainrecommender
+  - appStateID: churnpredictorrunning
+    name: "Churn Predictor Service Running"
+    conditions:
+      - objectIDs: 
+          - churnpredictor
+        instances: ">=1"
+        state: "Available"
+    sequences:
+      - reloadchurnpredictor
+      - trainchurnpredictor
+  - appStateID: churnpredictoroffline
+    name: "Churn Predictor Service Offline"
+    conditions:
+      - objectIDs: 
+          - churnpredictor
+        instances: "<=0"
+        state: "Available"
+    sequences:
+      - reloadchurnpredictor
+      - ftschurnprediction
+  - appStateID: recommenderoffline
+    name: "Recommender Service Offline"
+    conditions:
+      - objectIDs: 
+          - recommender
+        instances: "<=0"
+        state: "Available"
+    sequences:
+      - reloadrecommender
+      - ftsrecommender

@@ -820,10 +820,6 @@ sequences:
       - className: WaitFor # Wait until the deployment config is reporting available
         instanceRef: "worker"
         waitForStatus: "Available"
-        
-      - className: IndexLogs # Generate an Index for the named component
-        instanceRef: "recommendationServiceInstance"
-        persistIndex: "true"
       - className: "ExecuteCMD"
         objectID: "spark-master"
         instancelookupCriteria: "first"
