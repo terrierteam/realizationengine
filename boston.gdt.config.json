@@ -1,0 +1,27 @@
+{
+	"database": {
+		"type": "mysql",
+		"host": "srv-realizationstatedb",
+		"port": 3306,
+		"name": "BigDataStackGDTDB",
+		"username": "GDT",
+		"password": "bigdatastack"
+	},
+	"rabbitmq": {
+		"host": "",
+		"port": 5672,
+		"username": "",
+		"password": ""
+	},
+	"openshift": {
+		"client": "fabric8io",
+		"host": "https://api.moc.bigdatastack.com",
+		"port": 6443,
+		"username": "bigdatastack",
+		"password": "Bi6_d4ta_5tacK",
+		"hostExtension": "apps.moc.bigdatastack.com",
+		"imageRepositoryHost": "image-registry.openshift-image-registry.svc:5000",
+		"namespace": "realization",
+		"openshiftPrometheus": null
+	}
+}

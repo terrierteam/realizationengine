@@ -542,6 +542,19 @@ public class ManagerResource {
 		else return querying.listEvents(owner, appID, objectID, Integer.parseInt(instance));
 	}
 	
+	@GET
+	@Path("/delete/{owner}/{namespace}/{appID}")
+	public boolean deleteApp(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("namespace") String namespace){
+		manager.cleanupSequenceRunners(owner, namespace, appID);
+		return manager.deleteApp(owner, namespace, appID);
+	}
+	
+	@GET
+	@Path("/delete/{owner}/{namespace}/{appID}/osrs")
+	public boolean deleteOSRs(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("namespace") String namespace){
+		return manager.cleanupSequenceRunners(owner, namespace, appID);
+	}
+	
 	
 	@GET
 	@Path("/query/{owner}/{appID}/{namespace}/metrics/{metricName}/{objectID}")

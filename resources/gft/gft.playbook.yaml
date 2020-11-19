@@ -381,6 +381,9 @@ sequences:
         instanceRef: "recommendertraining"
       - className: Apply
         instanceRef: "recommendertraining"
+      - className: WaitFor
+        instanceRef: "recommendertraining"
+        waitForStatus: "Complete"
   
   # Train a Churn Model
   - sequenceID: "trainchurnpredictor"
@@ -404,6 +407,9 @@ sequences:
         instanceRef: "churnpredictortraining"
       - className: Apply
         instanceRef: "churnpredictortraining"
+      - className: WaitFor
+        instanceRef: "churnpredictortraining"
+        waitForStatus: "Complete"
         
   # First Time Setup for the Recommendation Model
   - sequenceID: "ftsrecommender"

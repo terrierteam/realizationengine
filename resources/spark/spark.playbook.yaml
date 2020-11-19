@@ -15,68 +15,31 @@ types:
 
 
 objects:
-  # Deployment Config: pushgateway
-  - objectID: "pushgateway"
+        
+  - objectID: "feedbackcollectorconfig"
     yamlSource:
-      kind: DeploymentConfig
-      apiVersion: apps.openshift.io/v1
-      metadata:
-        labels:
-          app: pushgateway
-      spec:
-        triggers:
-          - type: ConfigChange
-        replicas: 1
-        selector:
-          app: pushgateway
-        template:
-          metadata:
-            labels:
-              app: pushgateway
-              deploymentconfig: pushgateway
-          spec:
-            containers:
-              - name: pushgateway
-                image: >-
-                  prom/pushgateway
-                ports:
-                  - name: "promexporter"
-                    containerPort: 9091
-                    protocol: TCP
-                  - name: "api"
-                    containerPort: 8081
-                    protocol: TCP
-                env:
-                  - name: appID
-                    value: $appID$
-                  - name: objectID
-                    value: $objectID$
-                  - name: instance
-                    value: $instance$
-                resources: {}
-                imagePullPolicy: Always
-            restartPolicy: Always
-            terminationGracePeriodSeconds: 30
-            dnsPolicy: ClusterFirst
-            
-  # Service: srv-feedbackcollector
-  - objectID: "srv-pushgateway"
-    yamlSource:
-      kind: Service
       apiVersion: v1
-      metadata:
-        labels:
-          app: pushgateway
-      spec:
-        ports:
-          - name: 8081-tcp
-            protocol: TCP
-            port: 8081
-            targetPort: 8081
-        selector:
-          app: pushgateway
-          deploymentconfig: pushgateway
-        type: ClusterIP
+      kind: ConfigMap
+      data:
+         application-realizationengine.properties: >
+           spring.datasource.driver-class-name=com.leanxcale.client.Driver
+
+           spring.datasource.url=jdbc:leanxcale://$lxsService$:1529/BigDataStackDB;user=EROSKI
+
+           spring.datasource.username=
+
+           spring.datasource.password=
+
+           spring.datasource.tomcat.max-wait=20000
+
+           spring.datasource.tomcat.max-active=50
+
+           spring.datasource.tomcat.max-idle=20
+
+           spring.datasource.tomcat.min-idle=15
+
+           kafka.bootstrap.servers=$kafkaLookup$:9092
+
         
   # Deployment Config: feedbackcollector
   - objectID: "feedbackcollector"
@@ -98,10 +61,22 @@ objects:
               app: feedbackcollector
               deploymentconfig: feedbackcollector
           spec:
+            volumes:
+             - name: config
+               configMap:
+                 name: $feedbackcollectorConfigMap$
+                 defaultMode: 420
             containers:
               - name: feedbackcollector
                 image: >-
                   $ocimagerepositoryhost$/$namespace$/feedbackcollector:latest
+                workingDir: /home/app/
+                command:
+                 - 'java'
+                args:
+                 - '-Dspring.profiles.active=realizationengine'
+                 - '-jar'
+                 - '/usr/local/lib/feedbackcollector-0.0.1-SNAPSHOT.jar'
                 ports:
                   - name: "tcp-8080"
                     containerPort: 8080
@@ -113,14 +88,20 @@ objects:
                     containerPort: 8778
                     protocol: TCP
                 env:
-                  - name: LOGSTASHURL
-                    value: "$pushgateway$:8081"
                   - name: appID
                     value: $appID$
                   - name: objectID
                     value: $objectID$
                   - name: instance
                     value: $instance$
+                  - name: owner
+                    value: $owner$
+                  - name: namespace
+                    value: $namespace$
+                volumeMounts:
+                  - name: config
+                    readOnly: true
+                    mountPath: /home/app/
                 resources: {}
                 imagePullPolicy: Always
             restartPolicy: Always
@@ -151,7 +132,6 @@ objects:
             targetPort: 8778
         selector:
           app: feedbackcollector
-          deploymentconfig: feedbackcollector
         type: ClusterIP
         
   # Route: route-feedbackcollector
@@ -465,6 +445,96 @@ objects:
         wildcardPolicy: None
 
 sequences:
+  - sequenceID: "testconfmap"
+    name: "Test Config Map Configuration of the Feedback Collector"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "DEBUG"
+    mode: Continue
+    parameters:
+      lxsService: "service-lxs-store-eroski.lxs-store.svc.cluster.local"
+    operations:
+      # Launch Zookeeper
+      - className: Instantiate
+        objectID: "zookeeper-server"
+        defineInstanceRef: "zookeeperInstance"
+      - className: SetSequenceParameters
+        instanceRef: "zookeeperInstance"
+      - className: Apply
+        instanceRef: "zookeeperInstance"
+      - className: WaitFor
+        instanceRef: "zookeeperInstance"
+        waitForStatus: "Available"
+      - className: Instantiate
+        objectID: "srv-zookeeper"
+        defineInstanceRef: "newServiceZK"
+      - className: Apply
+        instanceRef: "newServiceZK"
+      # Launch Kafka, also define 'kafkaLookup' and 'zookeeperLookup'
+      - className: Instantiate
+        objectID: "srv-kafka"
+        defineInstanceRef: "newServiceKafka"
+      - className: Apply
+        instanceRef: "newServiceKafka"
+      - className: ParameterFromObjectLookup
+        parameter: "kafkaLookup"
+        criteria: "$namespace$:service:$appID$-srv-kafka-.*"
+        multipleMatches: "SelectFirst"
+      - className: ParameterFromObjectLookup
+        parameter: "zookeeperLookup"
+        criteria: "$namespace$:service:$appID$-srv-zookeeper-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate
+        objectID: "kafka-server"
+        defineInstanceRef: "kafkaInstance"
+      - className: SetSequenceParameters
+        instanceRef: "kafkaInstance"
+      - className: Apply
+        instanceRef: "kafkaInstance"
+      - className: WaitFor
+        instanceRef: "kafkaInstance"
+        waitForStatus: "Available"
+      # Prepare configuration file for the feedback collector
+      - className: Instantiate
+        objectID: "feedbackcollectorconfig"
+        defineInstanceRef: "feedbackcollectorconfigInstance"
+      - className: SetSequenceParameters
+        instanceRef: "feedbackcollectorconfigInstance"
+      - className: Apply
+        instanceRef: "feedbackcollectorconfigInstance"
+      - className: ParameterFromObjectLookup
+        parameter: "feedbackcollectorConfigMap"
+        criteria: "$namespace$:configmap:$appID$-feedbackcollectorconfig-.*"
+        multipleMatches: "SelectFirst"
+      # Launch feedback collector
+      - className: Instantiate
+        objectID: "feedbackcollector"
+        defineInstanceRef: "feedbackcollectorInstance"
+      - className: SetSequenceParameters
+        instanceRef: "feedbackcollectorInstance"
+      - className: Apply
+        instanceRef: "feedbackcollectorInstance"
+      - className: WaitFor
+        instanceRef: "feedbackcollectorInstance"
+        waitForStatus: "Available"
+      - className: Instantiate
+        objectID: "srv-feedbackcollector"
+        defineInstanceRef: "newServiceFC"
+      - className: Apply
+        instanceRef: "newServiceFC"
+      - className: ParameterFromObjectLookup
+        parameter: "serviceFeedbackCollectorLookup"
+        criteria: "$namespace$:service:$appID$-srv-feedbackcollector-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate
+        objectID: "route-feedbackcollector"
+        defineInstanceRef: "newRouteFC"
+      - className: SetSequenceParameters
+        instanceRef: "newRouteFC"
+      - className: Apply
+        instanceRef: "newRouteFC"
+  
   - sequenceID: "master"
     name: "Start Spark Master"
     appID: "$appID$"
@@ -689,22 +759,6 @@ sequences:
     description: "Sequentially deploys the grocery recommendation system from first principles. This will first setup the feedback collector, then launch zookeeper and kafka. Following this, a spark cluster will be deployed, and the job jar will be submitted to the cluster."
     parameters: {}
     operations:
-      # Steps for creating the deployment config
-      - className: Instantiate # Spawn a new copy from the template
-        objectID: "pushgateway"
-        defineInstanceRef: "pushgatewayInstance"
-      - className: Apply # Create deployment config on the cluster
-        instanceRef: "pushgatewayInstance"
-      # Now create the service
-      - className: Instantiate # Spawn a new copy from the template
-        objectID: "srv-pushgateway"
-        defineInstanceRef: "pushgatewaySRV"
-      - className: Apply # Create the service on the cluster
-        instanceRef: "pushgatewaySRV"
-      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
-        parameter: "pushgateway"
-        criteria: "$namespace$:service:$appID$-srv-pushgateway-.*"
-        multipleMatches: "SelectFirst"
       # Steps for creating the deployment config
       - className: Instantiate # Spawn a new copy from the template
         objectID: "feedbackcollector"
