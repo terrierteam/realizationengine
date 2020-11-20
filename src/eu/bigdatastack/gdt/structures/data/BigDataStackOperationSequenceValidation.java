@@ -22,20 +22,18 @@ public class BigDataStackOperationSequenceValidation {
 	List<String> parametersNotSet;
 	
 	// Resources
-	Map<BigDataStackObjectDefinition, BigDataStackResourceTemplate> objectsWithValidTemplates;
-	Map<BigDataStackObjectDefinition, BigDataStackResourceTemplate> objectsWithIncompleteTemplates;
+	Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> objectsWithValidTemplates;
+	Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> objectsWithIncompleteTemplates;
 	List<BigDataStackObjectDefinition> objectsWithTemplatesSetAtRuntime;
-	List<BigDataStackObjectDefinition> objectsWithNoTemplates;
 	
 	public BigDataStackOperationSequenceValidation() {}
 
 	public BigDataStackOperationSequenceValidation(List<String> missingObjects,
 			Map<String, String> parametersSetWithDefaults, Map<String, BigDataStackOperation> parametersSetAtRuntime,
 			List<String> parametersNotSet,
-			Map<BigDataStackObjectDefinition, BigDataStackResourceTemplate> objectsWithValidTemplates,
-			Map<BigDataStackObjectDefinition, BigDataStackResourceTemplate> objectsWithIncompleteTemplates,
-			List<BigDataStackObjectDefinition> objectsWithTemplatesSetAtRuntime,
-			List<BigDataStackObjectDefinition> objectsWithNoTemplates) {
+			Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> objectsWithValidTemplates,
+			Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> objectsWithIncompleteTemplates,
+			List<BigDataStackObjectDefinition> objectsWithTemplatesSetAtRuntime) {
 		super();
 		this.missingObjects = missingObjects;
 		this.parametersSetWithDefaults = parametersSetWithDefaults;
@@ -44,7 +42,6 @@ public class BigDataStackOperationSequenceValidation {
 		this.objectsWithValidTemplates = objectsWithValidTemplates;
 		this.objectsWithIncompleteTemplates = objectsWithIncompleteTemplates;
 		this.objectsWithTemplatesSetAtRuntime = objectsWithTemplatesSetAtRuntime;
-		this.objectsWithNoTemplates = objectsWithNoTemplates;
 	}
 
 	public List<String> getMissingObjects() {
@@ -79,21 +76,21 @@ public class BigDataStackOperationSequenceValidation {
 		this.parametersNotSet = parametersNotSet;
 	}
 
-	public Map<BigDataStackObjectDefinition, BigDataStackResourceTemplate> getObjectsWithValidTemplates() {
+	public Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> getObjectsWithValidTemplates() {
 		return objectsWithValidTemplates;
 	}
 
 	public void setObjectsWithValidTemplates(
-			Map<BigDataStackObjectDefinition, BigDataStackResourceTemplate> objectsWithValidTemplates) {
+			Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> objectsWithValidTemplates) {
 		this.objectsWithValidTemplates = objectsWithValidTemplates;
 	}
 
-	public Map<BigDataStackObjectDefinition, BigDataStackResourceTemplate> getObjectsWithIncompleteTemplates() {
+	public Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> getObjectsWithIncompleteTemplates() {
 		return objectsWithIncompleteTemplates;
 	}
 
 	public void setObjectsWithIncompleteTemplates(
-			Map<BigDataStackObjectDefinition, BigDataStackResourceTemplate> objectsWithIncompleteTemplates) {
+			Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> objectsWithIncompleteTemplates) {
 		this.objectsWithIncompleteTemplates = objectsWithIncompleteTemplates;
 	}
 
@@ -105,16 +102,5 @@ public class BigDataStackOperationSequenceValidation {
 		this.objectsWithTemplatesSetAtRuntime = objectsWithTemplatesSetAtRuntime;
 	}
 
-	public List<BigDataStackObjectDefinition> getObjectsWithNoTemplates() {
-		return objectsWithNoTemplates;
-	}
-
-	public void setObjectsWithNoTemplates(List<BigDataStackObjectDefinition> objectsWithNoTemplates) {
-		this.objectsWithNoTemplates = objectsWithNoTemplates;
-	}
-	
-	
-	
-	
 	
 }

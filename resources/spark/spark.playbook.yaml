@@ -136,6 +136,9 @@ objects:
                   - name: "tcp-8778"
                     containerPort: 8778
                     protocol: TCP
+                  - name: promexporter
+                    containerPort: 9678
+                    protocol: TCP
                 resources:
                   limits:
                     cpu: '1000m'
@@ -513,6 +516,51 @@ objects:
         wildcardPolicy: None
 
 sequences:
+
+  # Add Feedback Collector
+  - sequenceID: "addrecommender"
+    name: "Add Feedback Collector"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Launches a new copy of the feedback collector."
+    mode: Continue
+    parameters:
+      lxsService: "service-lxs-store-eroski.lxs-store.svc.cluster.local"
+    operations:
+      - className: ParameterFromObjectLookup
+        parameter: "feedbackcollectorConfigMap"
+        criteria: "$namespace$:configmap:$appID$-feedbackcollectorconfig-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate
+        objectID: "feedbackcollector"
+        defineInstanceRef: "feedbackcollectorInstance"
+      - className: SetSequenceParameters
+        instanceRef: "feedbackcollectorInstance"
+      - className: Apply
+        instanceRef: "feedbackcollectorInstance"
+      - className: WaitFor
+        instanceRef: "feedbackcollectorInstance"
+        waitForStatus: "Available"
+      - className: RegisterWithDynamicOrchestrator
+        instanceRef: "feedbackcollectorInstance"
+  
+  # Delete Feedback Collector
+  - sequenceID: "removerecommender"
+    name: "Delete Feedback Collector"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Deletes the oldest copy of the feedback collector."
+    mode: Continue
+    parameters: {}
+    operations:
+      - className: InstanceRefFromObjectLookup
+        criteria: "$namespace$:deploymentconfig:$appID$-feedbackcollector-.*"
+        defineInstanceRef: "feedbackcollectorInstance"
+        multipleMatches: "SelectFirst"
+      - className: Delete
+        instanceRef: "feedbackcollectorInstance"
 
   # Register with DO
   - sequenceID: "testdo"

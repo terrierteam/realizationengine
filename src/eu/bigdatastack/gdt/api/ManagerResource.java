@@ -1,5 +1,6 @@
 package eu.bigdatastack.gdt.api;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -28,9 +29,11 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackNamespaceState;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
+import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceValidation;
 import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
 import eu.bigdatastack.gdt.structures.data.BigDataStackSLO;
 import eu.bigdatastack.gdt.util.ManagerQuerying;
+import eu.bigdatastack.gdt.util.OperationSequenceValidation;
 import eu.bigdatastack.gdt.structures.reports.*;
 
 @Path("/api/v1")
@@ -320,6 +323,20 @@ public class ManagerResource {
 	public BigDataStackOperationSequence getOperationSequenceTemplate(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("sequenceID") String sequenceID){
 		return querying.getOperationSequenceTemplate(owner, appID, sequenceID);
 	}
+	
+	@GET
+	@Path("/get/{owner}/{appID}/sequence/{sequenceID}/validate")
+	public BigDataStackOperationSequenceValidation getOperationSequenceValidation(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("sequenceID") String sequenceID){
+		BigDataStackOperationSequence sequence =  querying.getOperationSequenceTemplate(owner, appID, sequenceID);
+		if (sequence==null) return null;
+		else
+			try {
+				return OperationSequenceValidation.validate(manager, sequence);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+	} 
 	
 	@GET
 	@Path("/list/{owner}/{appID}/objects/{objectID}/pods")

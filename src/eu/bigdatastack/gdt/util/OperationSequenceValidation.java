@@ -1,15 +1,26 @@
 package eu.bigdatastack.gdt.util;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import eu.bigdatastack.gdt.application.GDTManager;
 import eu.bigdatastack.gdt.operations.BigDataStackOperation;
+import eu.bigdatastack.gdt.operations.InstanceRefFromObjectLookup;
 import eu.bigdatastack.gdt.operations.Instantiate;
+import eu.bigdatastack.gdt.operations.ParameterFromObjectLookup;
+import eu.bigdatastack.gdt.operations.RecommendResources;
 import eu.bigdatastack.gdt.structures.data.BigDataStackObjectDefinition;
+import eu.bigdatastack.gdt.structures.data.BigDataStackObjectType;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceValidation;
 import eu.bigdatastack.gdt.structures.data.BigDataStackResourceTemplate;
@@ -43,24 +54,120 @@ public class OperationSequenceValidation {
 		}
 		
 		// Get a list of parameters that are set at run-time
-		// TODO
+		parametersSetAtRuntime = getParametersSetAtRunTime(sequence);
+		for (String parameter : parametersSetAtRuntime.keySet()) if (allParameters.contains(parameter)) allParameters.remove(parameter);
+		
+		// Get a list of parameters set using defaults
+		for (String parameter : allParameters) if (sequence.getParameters().containsKey(parameter)) parametersSetWithDefaults.put(parameter, sequence.getParameters().get(parameter));
+		for (String parameter : parametersSetWithDefaults.keySet()) if (allParameters.contains(parameter)) allParameters.remove(parameter);
+		
+		// Add all remaining parameters, which are not set
+		for (String parameter : allParameters) parametersNotSet.add(parameter);
+		
 		
 		
 		// Resources
-		Map<BigDataStackObjectDefinition, BigDataStackResourceTemplate> objectsWithValidTemplates = new HashMap<BigDataStackObjectDefinition, BigDataStackResourceTemplate>();
-		Map<BigDataStackObjectDefinition, BigDataStackResourceTemplate> objectsWithIncompleteTemplates = new HashMap<BigDataStackObjectDefinition, BigDataStackResourceTemplate>();
+		Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> objectsWithValidTemplates = new HashMap<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>>();
+		Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> objectsWithIncompleteTemplates = new HashMap<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>>();
 		List<BigDataStackObjectDefinition> objectsWithTemplatesSetAtRuntime = new ArrayList<BigDataStackObjectDefinition>();
-		List<BigDataStackObjectDefinition> objectsWithNoTemplates = new ArrayList<BigDataStackObjectDefinition>();
+		
+		// check which objects have templates
+		for (BigDataStackObjectDefinition object : objectID2Object.values()) {
+			List<BigDataStackResourceTemplate> resourceTemplates = extractTemplatesFromObject(object);
+			boolean isValid = true;
+			for (BigDataStackResourceTemplate template : resourceTemplates) {
+				if (!template.getRequests().containsKey("cpu")) isValid=false;
+				if (!template.getRequests().containsKey("memory")) isValid=false;
+				if (!template.getLimits().containsKey("cpu")) isValid=false;
+				if (!template.getLimits().containsKey("memory")) isValid=false;
+			}
+			
+			if (isValid) objectsWithValidTemplates.put(object, resourceTemplates);
+			else objectsWithIncompleteTemplates.put(object, resourceTemplates);
+			
+		}
+		
+		// are any templates expected to be set at run-time?
+		List<String> objectIDsWithRuntimeResources = getObjectIDsThatAreSlatedForResourceRecommendation(sequence);
+		for (BigDataStackObjectDefinition object : objectID2Object.values()) {
+			if (objectIDsWithRuntimeResources.contains(object.getObjectID())) objectsWithTemplatesSetAtRuntime.add(object);
+		}
+		
+		return new BigDataStackOperationSequenceValidation(missingObjects, parametersSetWithDefaults, parametersSetAtRuntime, parametersNotSet, objectsWithValidTemplates, objectsWithIncompleteTemplates, objectsWithTemplatesSetAtRuntime);
+	}
+	
+	public static List<String> getObjectIDsThatAreSlatedForResourceRecommendation(BigDataStackOperationSequence sequence) {
+		
+		List<String> objectIDs = new ArrayList<String>();
+		
+		List<BigDataStackOperation> operations = sequence.getOperations();
+		for (BigDataStackOperation operation : operations) {
+			if (operation instanceof RecommendResources) objectIDs.add(operation.getObjectID());
+		}
+		return objectIDs;
+		
+	}
+	
+	
+	public static List<BigDataStackResourceTemplate> extractTemplatesFromObject(BigDataStackObjectDefinition object) {
+		List<BigDataStackResourceTemplate> resourceTemplate = new ArrayList<BigDataStackResourceTemplate>();
+		
+		try {
+			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+			
+			JsonNode root = mapper.readTree(object.getYamlSource());
+			
+			Iterator<JsonNode> containers = null;
+			
+			// Deployment Config
+			if (object.getType()==BigDataStackObjectType.DeploymentConfig || object.getType()==BigDataStackObjectType.Job) {
+				containers = root.get("spec").get("template").get("spec").get("containers").elements();
+			}
+			
+			if (object.getType()==BigDataStackObjectType.Pod) {
+				containers = root.get("spec").get("containers").elements();
+			}
+			
+			if (containers==null) return null;
+			
+			while (containers.hasNext()) {
+				JsonNode container = containers.next();
+				if (container.has("resources")) {
+					JsonNode resources = container.get("resources");
+					BigDataStackResourceTemplate newTemplate = new BigDataStackResourceTemplate();
+					Map<String,String> requests = new HashMap<String,String>();
+					if (resources.has("requests")) {
+						JsonNode requestJSON = resources.get("requests");
+						Iterator<Entry<String,JsonNode>> entryI = requestJSON.fields();
+						while (entryI.hasNext()) {
+							Entry<String,JsonNode> entry = entryI.next();
+							requests.put(entry.getKey(), entry.getValue().asText());
+						}
+					}
+					newTemplate.setRequests(requests);
+					
+					Map<String,String> limits = new HashMap<String,String>();
+					if (resources.has("limits")) {
+						JsonNode requestJSON = resources.get("limits");
+						Iterator<Entry<String,JsonNode>> entryI = requestJSON.fields();
+						while (entryI.hasNext()) {
+							Entry<String,JsonNode> entry = entryI.next();
+							limits.put(entry.getKey(), entry.getValue().asText());
+						}
+					}
+					newTemplate.setLimits(limits);
+					
+					resourceTemplate.add(newTemplate);
+				} else resourceTemplate.add(null);
+			}
+			
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		
-		
-		
-		
-		
-		
-		
-		
-		return new BigDataStackOperationSequenceValidation(missingObjects, parametersSetWithDefaults, parametersSetAtRuntime, parametersNotSet, objectsWithValidTemplates, objectsWithIncompleteTemplates, objectsWithTemplatesSetAtRuntime, objectsWithNoTemplates);
+		return resourceTemplate;
 	}
 	
 	/**
@@ -109,34 +216,41 @@ public class OperationSequenceValidation {
 		return placeholders;
 	}
 	
+	
+	public static Map<String,BigDataStackOperation> getParametersSetAtRunTime(BigDataStackOperationSequence sequence) {
+		HashMap<String,BigDataStackOperation> parametersSetAtRunTime = new HashMap<String,BigDataStackOperation>();
+		
+		List<BigDataStackOperation> operations = sequence.getOperations();
+		for (BigDataStackOperation operation : operations) {
+			
+			if (operation instanceof Instantiate) parametersSetAtRunTime.put(((Instantiate) operation).getSeqInstanceRef(), operation);
+			if (operation instanceof InstanceRefFromObjectLookup) parametersSetAtRunTime.put(((InstanceRefFromObjectLookup) operation).getParameter(), operation);
+			if (operation instanceof ParameterFromObjectLookup) parametersSetAtRunTime.put(((ParameterFromObjectLookup) operation).getParameter(), operation);
+			
+		}
+		
+		return parametersSetAtRunTime;
+	}
+	
 	public static void main(String[] args) {
-		String text = "we are going to do some replacement pof $A$ and $something$ with additional $text$.";
 		
-		List<String> placeholders = new ArrayList<String>();
-		
-		String yaml = text;
-		boolean inplaceholder = false;
-		StringBuilder placeholder = new StringBuilder();
-		for (int i = 0; i<yaml.length(); i++) {
-			char c = yaml.charAt(i);
+		try {
+			GDTManager manager = new GDTManager(new File("gdt.config.json"));
 			
-			if (c=='$') {
-				if (!inplaceholder) {
-					inplaceholder=true;
-					placeholder = new StringBuilder();
-				}
-				else {
-					inplaceholder=false;
-					if (placeholder.length()>0 && !placeholders.contains(placeholder.toString())) placeholders.add(placeholder.toString()); 
-				}
-			} else if (inplaceholder) placeholder.append(c);
+			BigDataStackOperationSequence sequence = manager.sequenceTemplateClient.getSequence("grss", "everything");
 			
+			BigDataStackOperationSequenceValidation validation = validate(manager, sequence);
+			
+			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+			
+			System.out.println(mapper.writeValueAsString(validation));
+			
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		
 		
-		for (String s: placeholders) {
-			System.out.println(s);
-		}
+		
 	}
 	
 }
