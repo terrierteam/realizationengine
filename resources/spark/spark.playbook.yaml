@@ -919,77 +919,88 @@ sequences:
     description: "Sequentially deploys the grocery recommendation system from first principles. This will first setup the feedback collector, then launch zookeeper and kafka. Following this, a spark cluster will be deployed, and the job jar will be submitted to the cluster."
     parameters: {}
     operations:
-      # Steps for creating the deployment config
-      - className: Instantiate # Spawn a new copy from the template
-        objectID: "feedbackcollector"
-        defineInstanceRef: "feedbackcollectorInstance"
-      - className: SetSequenceParameters # Fill in any missing placeholders
-        instanceRef: "feedbackcollectorInstance"
-      - className: Apply # Create deployment config on the cluster
-        instanceRef: "feedbackcollectorInstance"
-      - className: WaitFor # Wait until the deployment config is reporting available
-        instanceRef: "feedbackcollectorInstance"
-        waitForStatus: "Available"
-      # Now create the service
-      - className: Instantiate # Spawn a new copy from the template
-        objectID: "srv-feedbackcollector"
-        defineInstanceRef: "newServiceFC"
-      - className: Apply # Create the service on the cluster
-        instanceRef: "newServiceFC"
-      # Now create the route
-      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
-        parameter: "serviceFeedbackCollectorLookup"
-        criteria: "$namespace$:service:$appID$-srv-feedbackcollector-.*"
-        multipleMatches: "SelectFirst"
-      - className: Instantiate # Spawn a new copy from the template
-        objectID: "route-feedbackcollector"
-        defineInstanceRef: "newRouteFC"
-      - className: SetSequenceParameters # Fill in any missing placeholders (most notably 'serviceLookup' found above)
-        instanceRef: "newRouteFC"
-      - className: Apply # Create the route on the cluster
-        instanceRef: "newRouteFC"
-      # Steps for creating the deployment config
-      - className: Instantiate # Spawn a new copy from the template
+      parameters:
+      lxsService: "service-lxs-store-eroski.lxs-store.svc.cluster.local"
+    operations:
+      # Launch Zookeeper
+      - className: Instantiate
         objectID: "zookeeper-server"
         defineInstanceRef: "zookeeperInstance"
-      - className: SetSequenceParameters # Fill in any missing placeholders
+      - className: SetSequenceParameters
         instanceRef: "zookeeperInstance"
-      - className: Apply # Create deployment config on the cluster
+      - className: Apply
         instanceRef: "zookeeperInstance"
-      - className: WaitFor # Wait until the deployment config is reporting available
+      - className: WaitFor
         instanceRef: "zookeeperInstance"
         waitForStatus: "Available"
-      # Now create the service
-      - className: Instantiate # Spawn a new copy from the template
+      - className: Instantiate
         objectID: "srv-zookeeper"
         defineInstanceRef: "newServiceZK"
-      - className: Apply # Create the service on the cluster
+      - className: Apply
         instanceRef: "newServiceZK"
-      # Now create the service
-      - className: Instantiate # Spawn a new copy from the template
+      # Launch Kafka, also define 'kafkaLookup' and 'zookeeperLookup'
+      - className: Instantiate
         objectID: "srv-kafka"
         defineInstanceRef: "newServiceKafka"
-      - className: Apply # Create the service on the cluster
+      - className: Apply
         instanceRef: "newServiceKafka"
-      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+      - className: ParameterFromObjectLookup
         parameter: "kafkaLookup"
         criteria: "$namespace$:service:$appID$-srv-kafka-.*"
         multipleMatches: "SelectFirst"
-      - className: ParameterFromObjectLookup # Generates a parameter value by querying the cluster state
+      - className: ParameterFromObjectLookup
         parameter: "zookeeperLookup"
         criteria: "$namespace$:service:$appID$-srv-zookeeper-.*"
         multipleMatches: "SelectFirst"
-      # Steps for creating the deployment config
-      - className: Instantiate # Spawn a new copy from the template
+      - className: Instantiate
         objectID: "kafka-server"
         defineInstanceRef: "kafkaInstance"
-      - className: SetSequenceParameters # Fill in any missing placeholders
+      - className: SetSequenceParameters
         instanceRef: "kafkaInstance"
-      - className: Apply # Create deployment config on the cluster
+      - className: Apply
         instanceRef: "kafkaInstance"
-      - className: WaitFor # Wait until the deployment config is reporting available
+      - className: WaitFor
         instanceRef: "kafkaInstance"
         waitForStatus: "Available"
+      # Prepare configuration file for the feedback collector
+      - className: Instantiate
+        objectID: "feedbackcollectorconfig"
+        defineInstanceRef: "feedbackcollectorconfigInstance"
+      - className: SetSequenceParameters
+        instanceRef: "feedbackcollectorconfigInstance"
+      - className: Apply
+        instanceRef: "feedbackcollectorconfigInstance"
+      - className: ParameterFromObjectLookup
+        parameter: "feedbackcollectorConfigMap"
+        criteria: "$namespace$:configmap:$appID$-feedbackcollectorconfig-.*"
+        multipleMatches: "SelectFirst"
+      # Launch feedback collector
+      - className: Instantiate
+        objectID: "feedbackcollector"
+        defineInstanceRef: "feedbackcollectorInstance"
+      - className: SetSequenceParameters
+        instanceRef: "feedbackcollectorInstance"
+      - className: Apply
+        instanceRef: "feedbackcollectorInstance"
+      - className: WaitFor
+        instanceRef: "feedbackcollectorInstance"
+        waitForStatus: "Available"
+      - className: Instantiate
+        objectID: "srv-feedbackcollector"
+        defineInstanceRef: "newServiceFC"
+      - className: Apply
+        instanceRef: "newServiceFC"
+      - className: ParameterFromObjectLookup
+        parameter: "serviceFeedbackCollectorLookup"
+        criteria: "$namespace$:service:$appID$-srv-feedbackcollector-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate
+        objectID: "route-feedbackcollector"
+        defineInstanceRef: "newRouteFC"
+      - className: SetSequenceParameters
+        instanceRef: "newRouteFC"
+      - className: Apply
+        instanceRef: "newRouteFC"
       # Steps for creating the deployment config
       - className: Instantiate # Spawn a new copy from the template
         objectID: "spark-master"

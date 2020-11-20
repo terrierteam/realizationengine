@@ -29,6 +29,31 @@ public class OperationSequenceValidation {
 
 	public static BigDataStackOperationSequenceValidation validate(GDTManager manager, BigDataStackOperationSequence sequence) throws SQLException {
 		
+		
+		sequence.getParameters().put("appID", "Inferred");
+		sequence.getParameters().put("namespace", "Inferred");
+		sequence.getParameters().put("owner", "Inferred");
+		sequence.getParameters().put("sequenceID", "Inferred");
+		sequence.getParameters().put("dbusername", "Inferred");
+		sequence.getParameters().put("dbpassword", "Inferred");
+		sequence.getParameters().put("dbtype", "Inferred");
+		sequence.getParameters().put("dbhost", "Inferred");
+		sequence.getParameters().put("dbport", "Inferred");
+		sequence.getParameters().put("dbname", "Inferred");
+		sequence.getParameters().put("occlient", "Inferred");
+		sequence.getParameters().put("ochost", "Inferred");
+		sequence.getParameters().put("ocport", "Inferred");
+		sequence.getParameters().put("ocusername", "Inferred");
+		sequence.getParameters().put("ocpassword", "Inferred");
+		sequence.getParameters().put("ochostextension", "Inferred");
+		sequence.getParameters().put("ocimagerepositoryhost", "Inferred");
+		sequence.getParameters().put("rmqhost", "Inferred");
+		sequence.getParameters().put("rmqport", "Inferred");
+		sequence.getParameters().put("rmqusername", "Inferred");
+		sequence.getParameters().put("rmqpassword", "Inferred");
+		sequence.getParameters().put("objectID", "Inferred");
+		sequence.getParameters().put("instance", "Inferred");
+		
 		List<String> missingObjects = new ArrayList<String>();
 		
 		// Parameters
@@ -67,9 +92,9 @@ public class OperationSequenceValidation {
 		
 		
 		// Resources
-		Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> objectsWithValidTemplates = new HashMap<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>>();
-		Map<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>> objectsWithIncompleteTemplates = new HashMap<BigDataStackObjectDefinition, List<BigDataStackResourceTemplate>>();
-		List<BigDataStackObjectDefinition> objectsWithTemplatesSetAtRuntime = new ArrayList<BigDataStackObjectDefinition>();
+		Map<String, List<BigDataStackResourceTemplate>> objectsWithValidTemplates = new HashMap<String, List<BigDataStackResourceTemplate>>();
+		Map<String, List<BigDataStackResourceTemplate>> objectsWithIncompleteTemplates = new HashMap<String, List<BigDataStackResourceTemplate>>();
+		List<String> objectsWithTemplatesSetAtRuntime = new ArrayList<String>();
 		
 		// check which objects have templates
 		for (BigDataStackObjectDefinition object : objectID2Object.values()) {
@@ -83,15 +108,15 @@ public class OperationSequenceValidation {
 				if (!template.getLimits().containsKey("memory")) isValid=false;
 			}
 			
-			if (isValid) objectsWithValidTemplates.put(object, resourceTemplates);
-			else objectsWithIncompleteTemplates.put(object, resourceTemplates);
+			if (isValid) objectsWithValidTemplates.put(object.getObjectID(), resourceTemplates);
+			else objectsWithIncompleteTemplates.put(object.getObjectID(), resourceTemplates);
 			
 		}
 		
 		// are any templates expected to be set at run-time?
 		List<String> objectIDsWithRuntimeResources = getObjectIDsThatAreSlatedForResourceRecommendation(sequence);
 		for (BigDataStackObjectDefinition object : objectID2Object.values()) {
-			if (objectIDsWithRuntimeResources.contains(object.getObjectID())) objectsWithTemplatesSetAtRuntime.add(object);
+			if (objectIDsWithRuntimeResources.contains(object.getObjectID())) objectsWithTemplatesSetAtRuntime.add(object.getObjectID());
 		}
 		
 		return new BigDataStackOperationSequenceValidation(missingObjects, parametersSetWithDefaults, parametersSetAtRuntime, parametersNotSet, objectsWithValidTemplates, objectsWithIncompleteTemplates, objectsWithTemplatesSetAtRuntime);
