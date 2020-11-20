@@ -917,9 +917,7 @@ sequences:
     owner: "$owner$"
     namespace: "$namespace$"
     description: "Sequentially deploys the grocery recommendation system from first principles. This will first setup the feedback collector, then launch zookeeper and kafka. Following this, a spark cluster will be deployed, and the job jar will be submitted to the cluster."
-    parameters: {}
-    operations:
-      parameters:
+    parameters:
       lxsService: "service-lxs-store-eroski.lxs-store.svc.cluster.local"
     operations:
       # Launch Zookeeper
