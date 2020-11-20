@@ -74,6 +74,7 @@ public class OperationSequenceValidation {
 		// check which objects have templates
 		for (BigDataStackObjectDefinition object : objectID2Object.values()) {
 			List<BigDataStackResourceTemplate> resourceTemplates = extractTemplatesFromObject(object);
+			if (resourceTemplates==null) continue;
 			boolean isValid = true;
 			for (BigDataStackResourceTemplate template : resourceTemplates) {
 				if (!template.getRequests().containsKey("cpu")) isValid=false;
