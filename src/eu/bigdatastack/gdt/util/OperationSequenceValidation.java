@@ -74,7 +74,7 @@ public class OperationSequenceValidation {
 			else {
 				objectID2Object.put(objectID, object);
 				List<String> placeholders = getConfigurableParametersForObjectID(object);
-				for (String placeholder : placeholders) allParameters.add(placeholder);
+				for (String placeholder : placeholders) if (!allParameters.contains(placeholder)) allParameters.add(placeholder);
 			}
 		}
 		
