@@ -359,9 +359,9 @@ public class GenerateHTTPPostLoad extends BigDataStackOperation {
 		
 		String config = "className: GenerateHTTPPostLoad\n" + 
 				"threads: \"1\"\n" + 
-				"delayBetweenRequestsMS: \"10\"\n" + 
-				"URL: \"http://feedbackcollector-richardmproject.ida.dcs.gla.ac.uk/feedbacks\"\n" + 
-				"requestsPerThread: \"5\"\n" + 
+				"delayBetweenRequestsMS: \"0\"\n" + 
+				"URL: \"http://feedbackcollector-realization.apps.moc.bigdatastack.com/feedbacks\"\n" + 
+				"requestsPerThread: \"1000\"\n" + 
 				"requestBodyTemplate:\n" + 
 				"  customerId: \"1\"\n" + 
 				"  productId: \"1\"\n" + 

@@ -16,6 +16,55 @@ types:
 
 objects:
         
+  # Deployment Config: feedbackloadgenerator
+  - objectID: "feedbackloadgenerator"
+    yamlSource:
+      kind: DeploymentConfig
+      apiVersion: apps.openshift.io/v1
+      metadata:
+        labels:
+          app: feedbackloadgenerator
+      spec:
+        triggers:
+          - type: ConfigChange
+        replicas: 1
+        revisionHistoryLimit: 10
+        selector:
+          app: feedbackloadgenerator
+        template:
+          metadata:
+            labels:
+              app: feedbackloadgenerator
+          spec:
+            containers:
+              - name: feedbackloadgenerator
+                image: >-
+                  jdtotow/tester:latest
+                env:
+                  - name: appID
+                    value: $appID$
+                  - name: objectID
+                    value: $objectID$
+                  - name: instance
+                    value: $instance$
+                  - name: owner
+                    value: $owner$
+                  - name: namespace
+                    value: $namespace$
+                  - name: FEEDBACKS_HOSTNAME
+                    value: '$serviceFeedbackCollectorLookup$'
+                  - name: NTHREADS
+                    value: '$NTHREADS$'
+                  - name: NREQUEST
+                    value: '$NREQUEST$'
+                  - name: SLEEP_TIME
+                    value: '$SLEEP_TIME$'
+                resources: {}
+                imagePullPolicy: Always
+            restartPolicy: Always
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+        
   - objectID: "feedbackcollectorconfig"
     yamlSource:
       apiVersion: v1
@@ -87,6 +136,13 @@ objects:
                   - name: "tcp-8778"
                     containerPort: 8778
                     protocol: TCP
+                resources:
+                  limits:
+                    cpu: '1000m'
+                    memory: 2Gi
+                  requests:
+                    cpu: 100m
+                    memory: 700Mi
                 env:
                   - name: appID
                     value: $appID$
@@ -186,7 +242,13 @@ objects:
                     value: $objectID$
                   - name: instance
                     value: $instance$
-                resources: {}
+                resources:
+                  limits:
+                    cpu: '500m'
+                    memory: 2Gi
+                  requests:
+                    cpu: 50m
+                    memory: 700Mi
                 imagePullPolicy: Always
             restartPolicy: Always
             terminationGracePeriodSeconds: 30
@@ -257,7 +319,13 @@ objects:
                     value: '$zookeeperLookup$:2183'
                   - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
                     value: '1'
-                resources: {}
+                resources:
+                  limits:
+                    cpu: '1000m'
+                    memory: 2Gi
+                  requests:
+                    cpu: 100m
+                    memory: 700Mi
                 imagePullPolicy: Always
             restartPolicy: Always
             terminationGracePeriodSeconds: 30
@@ -445,6 +513,30 @@ objects:
         wildcardPolicy: None
 
 sequences:
+  - sequenceID: "createload"
+    name: "Creates some load on the feedback collector"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "DEBUG"
+    mode: Continue
+    parameters:
+      NTHREADS: 10
+      NREQUEST: 2
+      SLEEP_TIME: 5
+    operations:
+      - className: ParameterFromObjectLookup
+        parameter: "serviceFeedbackCollectorLookup"
+        criteria: "$namespace$:service:$appID$-srv-feedbackcollector-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate
+        objectID: "feedbackloadgenerator"
+        defineInstanceRef: "feedbackloadgeneratorInstance"
+      - className: SetSequenceParameters
+        instanceRef: "feedbackloadgeneratorInstance"
+      - className: Apply
+        instanceRef: "feedbackloadgeneratorInstance"
+  
   - sequenceID: "testconfmap"
     name: "Test Config Map Configuration of the Feedback Collector"
     appID: "$appID$"
@@ -973,4 +1065,40 @@ states:
           - Complete
     sequences:
       - deployjar
+ 
+metrics:
+  - name: "responseTime"
+    metricClassname: "Double"
+    summary: "The average response time for the feedback collector"
+    maximumValue: 1000000
+    minimumValue: 0
+    higherIsBetter: "False"
+    displayUnit: "ms"
+  - name: "costPerHour"
+    metricClassname: "Double"
+    summary: "The cost of running this component per hour in US dollars."
+    maximumValue: 1000000
+    minimumValue: 0
+    higherIsBetter: "False"
+    displayUnit: "$/hour"
+
+slos:
+  - metricName: "costPerHour"
+    objectID: "feedbackcollector"
+    type: "maximum"
+    value: 0.01
+    breachSeverity: "Alert"
+    requirement: "False"
+  - metricName: "responseTime"
+    objectID: "feedbackcollector"
+    type: "maximum"
+    value: 150
+    breachSeverity: "Alert"
+    requirement: "True"
+  - metricName: "responseTime"
+    objectID: "feedbackcollector"
+    type: "maximum"
+    value: 100
+    breachSeverity: "Alert"
+    requirement: "False"
  
