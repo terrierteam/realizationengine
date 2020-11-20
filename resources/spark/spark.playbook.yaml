@@ -513,6 +513,25 @@ objects:
         wildcardPolicy: None
 
 sequences:
+
+  # Register with DO
+  - sequenceID: "testdo"
+    name: "Register With Dynamic Orchestrator"
+    appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    description: "Registers the feedback collector with the Dyanmic Orchestrator"
+    mode: Continue
+    parameters: {}
+    operations:
+      - className: InstanceRefFromObjectLookup
+        defineInstanceRef: "feedbackcollectorInstance"
+        criteria: "$namespace$:deploymentconfig:$appID$-feedbackcollector-.*"
+        multipleMatches: "SelectFirst"
+      - className: RegisterWithDynamicOrchestrator
+        instanceRef: "feedbackcollectorInstance"
+
+  # Create Load
   - sequenceID: "createload"
     name: "Creates some load on the feedback collector"
     appID: "$appID$"
@@ -537,6 +556,7 @@ sequences:
       - className: Apply
         instanceRef: "feedbackloadgeneratorInstance"
   
+  # Test Feedback Collector via Config Map Config, no spark
   - sequenceID: "testconfmap"
     name: "Test Config Map Configuration of the Feedback Collector"
     appID: "$appID$"
