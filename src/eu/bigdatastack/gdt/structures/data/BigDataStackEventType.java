@@ -7,6 +7,8 @@ public enum BigDataStackEventType {
 	User,
 	Stage,
 	QualityOfService,
-	ObjectRegistry
+	ObjectRegistry,
+	DynamicOrchestrator
+	
 	
 }
