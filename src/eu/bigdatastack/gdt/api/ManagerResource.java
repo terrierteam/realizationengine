@@ -32,6 +32,7 @@ import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequence;
 import eu.bigdatastack.gdt.structures.data.BigDataStackOperationSequenceValidation;
 import eu.bigdatastack.gdt.structures.data.BigDataStackPodStatus;
 import eu.bigdatastack.gdt.structures.data.BigDataStackSLO;
+import eu.bigdatastack.gdt.util.EventUtil;
 import eu.bigdatastack.gdt.util.ManagerQuerying;
 import eu.bigdatastack.gdt.util.OperationSequenceValidation;
 import eu.bigdatastack.gdt.structures.reports.*;
@@ -594,7 +595,7 @@ public class ManagerResource {
 	@Path("/event/{owner}/{appID}/{objectID}")
 	public boolean registerNewEvent(@PathParam("owner") String owner, @PathParam("appID") String appID, @PathParam("objectID") String objectID, BigDataStackEvent event) {
 		try {
-			return manager.eventClient.addEvent(event);
+			return manager.eventUtil.registerEvent(event.getAppID(), event.getOwner(), event.getNamepace(), event.getType(), event.getSeverity(), event.getTitle(), event.getDescription(), event.getObjectID(), event.getInstance());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
