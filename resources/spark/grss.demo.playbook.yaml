@@ -792,13 +792,7 @@ slos:
   - metricName: "responseTime"
     objectID: "feedbackcollector"
     type: "maximum"
-    value: 70
+    value: 100
     breachSeverity: "Alert"
     requirement: "True"
-  - metricName: "responseTime"
-    objectID: "feedbackcollector"
-    type: "maximum"
-    value: 50
-    breachSeverity: "Alert"
-    requirement: "False"
  
