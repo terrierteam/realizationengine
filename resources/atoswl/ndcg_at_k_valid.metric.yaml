@@ -1,8 +1,0 @@
-owner: "richardm"
-name: "ndcg_at_k_valid"
-metricClassname: "Double"
-summary: "(Normalised discounted cumulative gain (NDCG) is a measure of ranking quality, typically used in information retrieval. This version of the metric is calculated on the validation set to rank k." 
-maximumValue: 1.0
-minimumValue: 0.0
-higherIsBetter: True
-displayUnit: "NDCG@K"

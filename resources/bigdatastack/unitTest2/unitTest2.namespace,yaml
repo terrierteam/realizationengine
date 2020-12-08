@@ -1,6 +1,0 @@
-# ------------------------------------------------------
-# Unit Test 2, Namespace creation
-# ------------------------------------------------------
-namespace: "richardmproject"
-host: "https://idagpu-head.dcs.gla.ac.uk"
-port: 8443
