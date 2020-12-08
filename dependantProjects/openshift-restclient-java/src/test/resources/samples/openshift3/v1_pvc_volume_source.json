@@ -1,7 +1,0 @@
-{
-    "name": "mysource",
-    "persistentVolumeClaim": {
-        "claimName": "myclaim",
-        "readOnly": true
-    }
-}

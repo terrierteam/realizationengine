@@ -64,18 +64,6 @@
     <version>5.6.2</version>
 </dependency>
 
-<dependency>
-    <groupId>com.leanxcale</groupId>
-    <artifactId>kivi-api</artifactId>
-    <version>0.500</version>
-</dependency>
-
-<dependency>
-    <groupId>com.leanxcale</groupId>
-    <artifactId>qe-driver</artifactId>
-    <version>0.500</version>
-</dependency>
-
   	<!-- The client -->
 <dependency>
   <groupId>io.prometheus</groupId>
@@ -207,41 +195,7 @@
     
     <plugins>
     
-   <plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-install-plugin</artifactId>
-    <version>2.5</version>
-    <executions>
-        <execution>
-        	<id>kivi-api</id>
-            <phase>initialize</phase>
-            <goals>
-                <goal>install-file</goal>
-            </goals>
-            <configuration>
-                <groupId>com.leanxcale</groupId>
-                <artifactId>kivi-api</artifactId>
-                <version>0.500</version>
-                <packaging>jar</packaging>
-                <file>${basedir}/lib/kivi-api-0.500-20200407.124711-4-direct-client.jar</file>
-            </configuration>
-        </execution>
-        <execution>
-            <id>qe-driver</id>
-            <phase>initialize</phase>
-            <goals>
-                <goal>install-file</goal>
-            </goals>
-            <configuration>
-                <groupId>com.leanxcale</groupId>
-                <artifactId>qe-driver</artifactId>
-                <version>0.500</version>
-                <packaging>jar</packaging>
-                <file>${basedir}/lib/qe-driver-0.500-20200406.151302-4-jdbc-client.jar</file>
-            </configuration>
-        </execution>
-    </executions>
-  </plugin>
+   
     
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
