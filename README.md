@@ -1,4 +1,4 @@
-# BigDataStack-GDT
+# Realization Engine
 
 The realization engine is a suite of containerized services that provide configuration, deployment and subsequent state-monitoring, as well as manage tooling for applications deployed upon Kubernetes. As a container suite, the Realization Engine is divided into a core, along with a set of plugins that add functionality. The core platform is comprised of three services: 
 
