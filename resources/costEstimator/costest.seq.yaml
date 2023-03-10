@@ -1,0 +1,16 @@
+appID: "gdtdefaultapp"
+owner: "richardm"
+namespace: "richardmproject"
+sequenceID: "seq-costestimator"
+name: "Cost Exporter for Pods"
+description: "Exports costs for GDT-managed pods in a namespace"
+parameters: {}
+operations:
+  - className: Instantiate
+    objectID: "costestimator"
+    defineInstanceRef: "costestimatorInstance"
+  - className: SetSequenceParameters
+    instanceRef: "costestimatorInstance"
+  - className: Apply
+    instanceRef: "costestimatorInstance"
+mode: Continue

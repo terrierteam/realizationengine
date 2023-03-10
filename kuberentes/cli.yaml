@@ -1,0 +1,49 @@
+kind: DeploymentConfig
+apiVersion: apps.openshift.io/v1
+metadata:
+  name: realizationcli
+  namespace: NAMESPACE
+spec:
+  strategy:
+    type: Rolling
+    rollingParams:
+      updatePeriodSeconds: 1
+      intervalSeconds: 1
+      timeoutSeconds: 600
+      maxUnavailable: 25%
+      maxSurge: 25%
+    resources: {}
+    activeDeadlineSeconds: 21600
+  triggers:
+    - type: ConfigChange
+  replicas: 1
+  revisionHistoryLimit: 1
+  test: false
+  selector:
+    jobconfig: realizationcli
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        jobconfig: realizationcli
+    spec:
+      containers:
+        - resources:
+            limits:
+              cpu: '1'
+              memory: 2Gi
+          terminationMessagePath: /dev/termination-log
+          name: gdtapi
+          command:
+            - sleep
+          imagePullPolicy: Always
+          terminationMessagePolicy: File
+          image: >-
+            docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest
+          args:
+            - 365d
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler

@@ -1,0 +1,110 @@
+appID: "gdtdefaultapp"
+name: "Realization Engine"
+description: "This is the default app that realization engine components are deployed under"
+owner: "gdt"
+namespace: "$namespace$"
+types:
+ - playbook
+ - inferMissingValues
+ - overrideValues
+ - setObjectMetadata
+
+objects:
+  - objectID: "resourcemonitor"
+    yamlSource: 
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      spec:
+        replicas: 1
+        template:
+          metadata:
+            labels:
+              jobconfig: $objectID$-$instance$
+              app: $appID$
+          spec:
+            containers:
+            - name: gdtmain
+              image: "$ocimagerepositoryhost$/$namespace$/is-bigdatastack-gdt:latest"
+              resources:
+                limits:
+                  cpu: "1000m"
+                  memory: "2048Mi"
+              command:
+               - 'java'
+              args:
+               - '-jar'
+               - './target/BigDataStack-GDT-0.8.jar'
+               - 'resourceMonitor'
+              env:
+               - name: "owner"
+                 value: "$owner$"
+               - name: "namespace"
+                 value: "$namespace$"
+               - name: "dbtype"
+                 value: "$dbtype$"
+               - name: "dbhost"
+                 value: "$dbhost$"
+               - name: "dbport"
+                 value: "$dbport$"
+               - name: "dbname"
+                 value: "$dbname$"
+               - name: "dbusername"
+                 value: "$dbusername$"
+               - name: "dbpassword"
+                 value: "$dbpassword$"
+               - name: "occlient"
+                 value: "$occlient$"
+               - name: "ochost"
+                 value: "$ochost$"
+               - name: "ocport"
+                 value: "$ocport$"
+               - name: "ocusername"
+                 value: "$ocusername$"
+               - name: "ocpassword"
+                 value: "$ocpassword$"
+               - name: "ochostextension"
+                 value: "$ochostextension$"
+               - name: "ocimagerepositoryhost"
+                 value: "$ocimagerepositoryhost$"
+               - name: "rmqhost"
+                 value: "$rmqhost$"
+               - name: "rmqport"
+                 value: "$rmqport$"
+               - name: "rmqusername"
+                 value: "$rmqusername$"
+               - name: "rmqpassword"
+                 value: "$rmqpassword$"
+               - name: "prometheusHost"
+                 value: "$prometheusHost$"
+               - name: "writeDIR"
+                 value: "/nfs/bigdatastack/resourcemonitor"
+              volumeMounts:
+               - name: nfs-access
+                 mountPath: /nfs/
+              imagePullPolicy: Always
+            securityContext: {}
+            serviceAccount: default
+            volumes:
+              - name: nfs-access
+                persistentVolumeClaim:
+                  claimName: $owner$vol1claim
+sequences:
+  - appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    sequenceID: "seq-resourcemonitor"
+    name: "Deploy Resource Monitor"
+    description: "Deploys the Realization Engine resource monitoring pod in a specified namepace"
+    parameters: {}
+    operations:
+      - className: Instantiate
+        objectID: "resourcemonitor"
+        defineInstanceRef: "resourcemonitorInstance"
+      - className: SetSequenceParameters
+        instanceRef: "resourcemonitorInstance"
+      - className: Apply
+        instanceRef: "resourcemonitorInstance"
+    mode: Continue

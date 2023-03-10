@@ -1,0 +1,27 @@
+{
+	"database": {
+		"type": "",
+		"host": "",
+		"port": ,
+		"name": "",
+		"username": "",
+		"password": ""
+	},
+	"rabbitmq": {
+		"host": "",
+		"port": ,
+		"username": "",
+		"password": ""
+	},
+	"openshift": {
+		"client": "fabric8io",
+		"host": "",
+		"port": 8443,
+		"username": "",
+		"password": "",
+		"hostExtension": "",
+		"imageRepositoryHost": "docker-registry.default.svc:5000",
+		"namespace": "",
+		"openshiftPrometheus": ""
+	}
+}

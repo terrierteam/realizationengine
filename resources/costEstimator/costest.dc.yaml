@@ -1,0 +1,79 @@
+appID: "gdtdefaultapp"
+owner: "richardm"
+
+objectID: "costestimator"
+type: DeploymentConfig
+
+yamlSource: 
+  apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: $appID$-$objectID$-$instance$
+    namespace: $namespace$
+  spec:
+    replicas: 1
+    strategy:
+      resources: {}
+    template:
+      metadata:
+        labels:
+          jobconfig: $objectID$-$instance$
+          app: $appID$
+      spec:
+        containers:
+        - name: costest
+          image: "docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest"
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "2048Mi"
+          command:
+           - 'java'
+          args:
+           - '-jar'
+           - './target/BigDataStack-GDT-0.8.jar'
+           - 'costEstimator'
+          env:
+           - name: "owner"
+             value: "$owner$"
+           - name: "namespace"
+             value: "$namespace$"
+           - name: "dbtype"
+             value: "$dbtype$"
+           - name: "dbhost"
+             value: "$dbhost$"
+           - name: "dbport"
+             value: "$dbport$"
+           - name: "dbname"
+             value: "$dbname$"
+           - name: "dbusername"
+             value: "$dbusername$"
+           - name: "dbpassword"
+             value: "$dbpassword$"
+           - name: "occlient"
+             value: "$occlient$"
+           - name: "ochost"
+             value: "$ochost$"
+           - name: "ocport"
+             value: "$ocport$"
+           - name: "ocusername"
+             value: "$ocusername$"
+           - name: "ocpassword"
+             value: "$ocpassword$"
+           - name: "ochostextension"
+             value: "$ochostextension$"
+           - name: "rmqhost"
+             value: "$rmqhost$"
+           - name: "rmqport"
+             value: "$rmqport$"
+           - name: "rmqusername"
+             value: "$rmqusername$"
+           - name: "rmqpassword"
+             value: "$rmqpassword$"
+          ports:
+              - name: promexporter
+                containerPort: 9678
+                protocol: TCP
+          imagePullPolicy: Always
+        securityContext: {}
+        serviceAccount: default

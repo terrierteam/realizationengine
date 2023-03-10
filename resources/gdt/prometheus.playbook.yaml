@@ -1,0 +1,292 @@
+appID: "gdtdefaultapp"
+name: "Realization Engine"
+description: "This is the default app that realization engine components are deployed under"
+owner: "gdt"
+namespace: "$namespace$"
+types:
+ - playbook
+ - inferMissingValues
+ - overrideValues
+ - setObjectMetadata
+
+objects:
+  - objectID: "prometheusconfig"
+    owner: $owner$
+    type: ConfigMap
+    yamlSource:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      data:
+        prometheus.env.yaml: >
+          global:
+            scrape_interval:     15s
+            external_labels:
+              monitor: 'codelab-monitor'
+          scrape_configs:
+            - job_name: 'prometheus'
+              scrape_interval: 5s
+              static_configs:
+                - targets: ['localhost:9090']
+            - job_name: gdt/$namespace$
+              metrics_path: /
+              honor_labels: true
+              kubernetes_sd_configs:
+               - role: pod
+                 namespaces:
+                   names:
+                    - $namespace$
+              relabel_configs:
+               - source_labels: [__meta_kubernetes_pod_ready]
+                 separator: ;
+                 regex: true
+                 replacement: $1
+                 action: keep
+               - source_labels: [__meta_kubernetes_pod_container_port_name]
+                 separator: ;
+                 regex: promexporter
+                 replacement: $1
+                 action: keep
+              scrape_interval: 10s
+              scheme: http
+              tls_config:
+                insecure_skip_verify: false
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+            - job_name: gdtmetrics/$namespace$
+              metrics_path: /metrics
+              honor_labels: true
+              kubernetes_sd_configs:
+               - role: pod
+                 namespaces:
+                   names:
+                    - $namespace$
+              relabel_configs:
+               - source_labels: [__meta_kubernetes_pod_ready]
+                 separator: ;
+                 regex: true
+                 replacement: $1
+                 action: keep
+               - source_labels: [__meta_kubernetes_pod_container_port_name]
+                 separator: ;
+                 regex: promexporter
+                 replacement: $1
+                 action: keep
+              scrape_interval: 10s
+              scheme: http
+              tls_config:
+                insecure_skip_verify: false
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "prometheus"
+    type: Deployment
+    yamlSource: 
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      spec:
+        replicas: 1
+        template:
+          metadata:
+            labels:
+              jobconfig: $appID$-$objectID$-$instance$
+              app: $appID$
+          spec:
+            containers:
+            - name: prometheus
+              image: "openshift/prometheus:v2.3.2"
+              resources:
+                requests:
+                  cpu: "100m"
+                  memory: "1024Mi"
+                limits:
+                  cpu: "1000m"
+                  memory: "2048Mi"
+              args:
+               - '--web.console.templates=/etc/prometheus/consoles'
+               - '--web.console.libraries=/etc/prometheus/console_libraries'
+               - '--config.file=/etc/prometheus/config_out/prometheus.env.yaml'
+               - '--storage.tsdb.path=/prometheus'
+               - '--storage.tsdb.retention=7d'
+               - '--web.enable-lifecycle'
+               - '--storage.tsdb.no-lockfile'
+               - >-
+                 --web.external-url=https://prometheus-gdt-$namespace$.$ochostextension$/
+               - '--web.route-prefix=/'
+               - '--web.listen-address=0.0.0.0:9090'
+              volumeMounts:
+               - name: config
+                 readOnly: true
+                 mountPath: /etc/prometheus/config_out
+               - name: prometheus-k8s-db
+                 mountPath: /prometheus
+               - name: kubesecret
+                 readOnly: true
+                 mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              imagePullPolicy: Always
+              ports:
+               - name: web
+                 containerPort: 9090
+                 protocol: TCP
+               - name: prometheus
+                 containerPort: 9091
+                 protocol: TCP
+            securityContext: {}
+            serviceAccount: $serviceaccount$
+            volumes:
+             - name: config
+               configMap:
+                 name: $prometheusConfig$
+                 defaultMode: 420
+             - name: prometheus-k8s-db
+               emptyDir: {}
+             - name: kubesecret
+               secret:
+                 secretName: $kubeServiceAccountSecret$
+                 defaultMode: 420
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "prometheusrb"
+    type: RoleBinding
+    yamlSource:
+      kind: RoleBinding
+      apiVersion: rbac.authorization.k8s.io/v1
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      subjects:
+        - kind: ServiceAccount
+          name: $serviceaccount$
+          namespace: $namespace$
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: Role
+        name: $role$
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "prometheusrole"
+    type: Role
+    yamlSource:
+      kind: Role
+      apiVersion: rbac.authorization.k8s.io/v1
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      rules:
+        - verbs:
+            - get
+            - list
+            - watch
+          apiGroups:
+            - ''
+          resources:
+            - services
+            - endpoints
+            - pods
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "prometheussa"
+    type: ServiceAccount
+    yamlSource:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "prometheussrv"
+    type: Service
+    yamlSource:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      spec:
+        selector:
+          app: $appID$
+        ports:
+          - name: web
+            protocol: TCP
+            port: 9090
+            targetPort: 9090
+          - name: prometheus
+            protocol: TCP
+            port: 9091
+            targetPort: 9091
+
+sequences:
+  - appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    sequenceID: "seq-prometheusdeploy"
+    name: "GDT Prometheus Deployment Sequence"
+    description: "Deploys the GDT Prometheus instance pod in a specified namepace"
+    parameters: {}
+    operations:
+      - className: Instantiate
+        objectID: "prometheussa"
+        defineInstanceRef: "prometheussaInstance"
+      - className: Apply
+        instanceRef: "prometheussaInstance"
+      - className: ParameterFromObjectLookup
+        parameter: "serviceaccount"
+        criteria: "$namespace$:serviceaccount:$appID$-prometheussa-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate
+        objectID: "prometheusrole"
+        defineInstanceRef: "prometheusRoleInstance"
+      - className: Apply
+        instanceRef: "prometheusRoleInstance"
+      - className: Wait
+        secondsToWait: "10"
+      - className: ParameterFromObjectLookup
+        parameter: "role"
+        criteria: "$namespace$:role:$appID$-prometheusrole-.*"
+        multipleMatches: "SelectFirst"
+      - className: Instantiate
+        objectID: "prometheusrb"
+        defineInstanceRef: "prometheusRBInstance"
+      - className: SetSequenceParameters
+        instanceRef: "prometheusRBInstance"
+      - className: Apply
+        instanceRef: "prometheusRBInstance"
+      - className: Instantiate
+        objectID: "prometheusconfig"
+        defineInstanceRef: "prometheusConfigMapInstance"
+      - className: SetSequenceParameters
+        instanceRef: "prometheusConfigMapInstance"
+      - className: Apply
+        instanceRef: "prometheusConfigMapInstance"
+      - className: Instantiate
+        objectID: "prometheus"
+        defineInstanceRef: "prometheusInstance"
+      - className: ParameterFromObjectLookup
+        parameter: "kubeServiceAccountSecret"
+        criteria: "$namespace$:secret:$appID$-prometheussa-.*token-.*"
+        multipleMatches: "SelectFirst"
+      - className: ParameterFromObjectLookup
+        parameter: "prometheusConfig"
+        criteria: "$namespace$:configmap:$appID$-prometheusconfig-.*"
+        multipleMatches: "SelectFirst"
+      - className: SetSequenceParameters
+        instanceRef: "prometheusInstance"
+      - className: Apply
+        instanceRef: "prometheusInstance"
+      - className: Instantiate
+        objectID: "prometheussrv"
+        defineInstanceRef: "prometheusSRVInstance"
+      - className: Apply
+        instanceRef: "prometheusSRVInstance"
+      - className: ParameterFromObjectLookup
+        parameter: "service"
+        criteria: "$namespace$:service:$appID$-prometheussrv-.*"
+        multipleMatches: "SelectFirst"
+    mode: Continue

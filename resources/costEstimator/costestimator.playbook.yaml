@@ -1,0 +1,110 @@
+appID: "gdtdefaultapp"
+name: "Realization Engine"
+description: "This is the default app that realization engine components are deployed under"
+owner: "gdt"
+namespace: "$namespace$"
+types:
+ - playbook
+ - inferMissingValues
+ - overrideValues
+ - setObjectMetadata
+
+
+objects:
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "costestimator"
+    type: DeploymentConfig
+    yamlSource: 
+      apiVersion: apps.openshift.io/v1
+      kind: DeploymentConfig
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      spec:
+        replicas: 1
+        strategy:
+          resources: {}
+        template:
+          metadata:
+            labels:
+              jobconfig: $appID$-$objectID$-$instance$
+              app: $appID$
+          spec:
+            containers:
+            - name: gdtcostestimator
+              image: "$ocimagerepositoryhost$/$namespace$/is-bigdatastack-gdt:latest"
+              resources:
+                limits:
+                  cpu: "1000m"
+                  memory: "2048Mi"
+              command:
+               - 'java'
+              args:
+               - '-jar'
+               - './target/BigDataStack-GDT-0.8.jar'
+               - 'costEstimator'
+              env:
+               - name: "owner"
+                 value: "$owner$"
+               - name: "namespace"
+                 value: "$namespace$"
+               - name: "dbtype"
+                 value: "$dbtype$"
+               - name: "dbhost"
+                 value: "$dbhost$"
+               - name: "dbport"
+                 value: "$dbport$"
+               - name: "dbname"
+                 value: "$dbname$"
+               - name: "dbusername"
+                 value: "$dbusername$"
+               - name: "dbpassword"
+                 value: "$dbpassword$"
+               - name: "occlient"
+                 value: "$occlient$"
+               - name: "ochost"
+                 value: "$ochost$"
+               - name: "ocport"
+                 value: "$ocport$"
+               - name: "ocusername"
+                 value: "$ocusername$"
+               - name: "ocpassword"
+                 value: "$ocpassword$"
+               - name: "ochostextension"
+                 value: "$ochostextension$"
+               - name: "ocimagerepositoryhost"
+                 value: "$ocimagerepositoryhost$"
+               - name: "rmqhost"
+                 value: "$rmqhost$"
+               - name: "rmqport"
+                 value: "$rmqport$"
+               - name: "rmqusername"
+                 value: "$rmqusername$"
+               - name: "rmqpassword"
+                 value: "$rmqpassword$"
+              ports:
+              - name: promexporter
+                containerPort: 9678
+                protocol: TCP
+              imagePullPolicy: Always
+            securityContext: {}
+            serviceAccount: default
+
+sequences:
+  - appID: "gdtdefaultapp"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    sequenceID: "seq-costestimator"
+    name: "Cost Exporter for Pods"
+    description: "Exports costs for GDT-managed pods in a namespace"
+    parameters: {}
+    operations:
+      - className: Instantiate
+        objectID: "costestimator"
+        defineInstanceRef: "costestimatorInstance"
+      - className: SetSequenceParameters
+        instanceRef: "costestimatorInstance"
+      - className: Apply
+        instanceRef: "costestimatorInstance"
+    mode: Continue

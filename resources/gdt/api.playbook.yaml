@@ -1,0 +1,133 @@
+appID: "gdtdefaultapp"
+name: "Realization Engine"
+description: "This is the default app that realization engine components are deployed under"
+owner: "gdt"
+namespace: "$namespace$"
+types:
+ - playbook
+ - inferMissingValues
+ - overrideValues
+ - setObjectMetadata
+
+objects:
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "gdtapi"
+    type: Deployment
+    yamlSource: 
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      spec:
+        replicas: 1
+        template:
+          metadata:
+            labels:
+              jobconfig: $appID$-$objectID$-$instance$
+              app: $appID$
+              api: $appID$-gdtapi
+          spec:
+            containers:
+            - name: gdtapi
+              image: "$ocimagerepositoryhost$/$namespace$/is-bigdatastack-gdt:latest"
+              resources:
+                limits:
+                  cpu: "1000m"
+                  memory: "2048Mi"
+              command:
+               - 'java'
+              args:
+               - '-jar'
+               - './target/BigDataStack-GDT-0.8.jar'
+               - 'api'
+              env:
+               - name: "owner"
+                 value: "$owner$"
+               - name: "namespace"
+                 value: "$namespace$"
+               - name: "dbtype"
+                 value: "$dbtype$"
+               - name: "dbhost"
+                 value: "$dbhost$"
+               - name: "dbport"
+                 value: "$dbport$"
+               - name: "dbname"
+                 value: "$dbname$"
+               - name: "dbusername"
+                 value: "$dbusername$"
+               - name: "dbpassword"
+                 value: "$dbpassword$"
+               - name: "occlient"
+                 value: "$occlient$"
+               - name: "ochost"
+                 value: "$ochost$"
+               - name: "ocport"
+                 value: "$ocport$"
+               - name: "ocusername"
+                 value: "$ocusername$"
+               - name: "ocpassword"
+                 value: "$ocpassword$"
+               - name: "ochostextension"
+                 value: "$ochostextension$"
+               - name: "ocimagerepositoryhost"
+                 value: "$ocimagerepositoryhost$"
+               - name: "rmqhost"
+                 value: "$rmqhost$"
+               - name: "rmqport"
+                 value: "$rmqport$"
+               - name: "rmqusername"
+                 value: "$rmqusername$"
+               - name: "rmqpassword"
+                 value: "$rmqpassword$"
+              ports:
+               - name: rest
+                 containerPort: 7777
+                 protocol: TCP
+              imagePullPolicy: Always
+            securityContext: {}
+            serviceAccount: default
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "gdtapisrv"
+    type: Service
+    yamlSource:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+      spec:
+        selector:
+          api: $appID$-gdtapi
+        ports:
+          - name: rest
+            protocol: TCP
+            port: 7777
+            targetPort: 7777
+sequences:
+  - appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    sequenceID: "seq-gdtapi"
+    name: "GDT REST API Deployment"
+    description: "Deploys the GDT API pod in a specified namepace"
+    parameters: {}
+    operations:
+      - className: Instantiate
+        objectID: "gdtapi"
+        defineInstanceRef: "gdtapiInstance"
+      - className: SetSequenceParameters
+        instanceRef: "gdtapiInstance"
+      - className: Apply
+        instanceRef: "gdtapiInstance"
+      - className: Instantiate
+        objectID: "gdtapisrv"
+        defineInstanceRef: "gdtapisrvInstance"
+      - className: Apply
+        instanceRef: "gdtapisrvInstance"
+      - className: ParameterFromObjectLookup
+        parameter: "service"
+        criteria: "$namespace$:service:$appID$-gdtapisrv-.*"
+    mode: Continue

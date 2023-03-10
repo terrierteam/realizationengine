@@ -1,0 +1,155 @@
+appID: "costtest"
+name: "Cost Estimation Testing App"
+description: "This app deploys three different application with different resource requests to test the cost estimator output"
+owner: "gdt"
+namespace: "$namespace$"
+types:
+ - playbook
+
+objects:
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "smallapp"
+    type: Job
+    yamlSource:
+      kind: Job
+      apiVersion: batch/v1
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+        labels:
+          app: $appID$
+      spec:
+        parallelism: 1
+        completions: 1
+        backoffLimit: 3
+        template:
+          metadata:
+            labels:
+              app: $appID$
+          spec:
+            restartPolicy: OnFailure
+            schedulerName: default-scheduler
+            securityContext: {}
+            containers:
+              - resources:
+                 requests:
+                    cpu: '1'
+                    memory: '256M'
+                name: sleepcontainer
+                command:
+                  - sleep
+                imagePullPolicy: Always
+                image: 'docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest'
+                args:
+                  - '3m'
+            serviceAccount: default
+            dnsPolicy: ClusterFirst
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "mediumapp"
+    type: Job
+    yamlSource:
+      kind: Job
+      apiVersion: batch/v1
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+        labels:
+          app: $appID$
+      spec:
+        parallelism: 1
+        completions: 1
+        backoffLimit: 3
+        template:
+          metadata:
+            labels:
+              app: $appID$
+          spec:
+            restartPolicy: OnFailure
+            schedulerName: default-scheduler
+            securityContext: {}
+            containers:
+              - resources:
+                 requests:
+                    cpu: '4'
+                    memory: '8G'
+                name: sleepcontainer
+                command:
+                  - sleep
+                imagePullPolicy: Always
+                image: 'docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest'
+                args:
+                  - '3m'
+            serviceAccount: default
+            dnsPolicy: ClusterFirst
+  - appID: "$appID$"
+    owner: "$owner$"
+    objectID: "largeapp"
+    type: Job
+    yamlSource:
+      kind: Job
+      apiVersion: batch/v1
+      metadata:
+        name: $appID$-$objectID$-$instance$
+        namespace: $namespace$
+        labels:
+          app: $appID$
+      spec:
+        parallelism: 1
+        completions: 1
+        backoffLimit: 3
+        template:
+          metadata:
+            labels:
+              app: $appID$
+          spec:
+            restartPolicy: OnFailure
+            schedulerName: default-scheduler
+            securityContext: {}
+            containers:
+              - resources:
+                 requests:
+                    cpu: '8'
+                    memory: '32G'
+                name: sleepcontainer
+                command:
+                  - sleep
+                imagePullPolicy: Always
+                image: 'docker-registry.default.svc:5000/richardmproject/is-bigdatastack-gdt:latest'
+                args:
+                  - '3m'
+            serviceAccount: default
+            dnsPolicy: ClusterFirst
+
+sequences:
+  - appID: "$appID$"
+    owner: "$owner$"
+    namespace: "$namespace$"
+    sequenceID: "test"
+    name: "Start Test"
+    description: "Launches the test containers"
+    parameters: {}
+    operations:
+      - className: Instantiate
+        objectID: "smallapp"
+        defineInstanceRef: "smallappInstance"
+      - className: SetSequenceParameters
+        instanceRef: "smallappInstance"
+      - className: Apply
+        instanceRef: "smallappInstance"
+      - className: Instantiate
+        objectID: "mediumapp"
+        defineInstanceRef: "mediumappInstance"
+      - className: SetSequenceParameters
+        instanceRef: "mediumappInstance"
+      - className: Apply
+        instanceRef: "mediumappInstance"
+      - className: Instantiate
+        objectID: "largeapp"
+        defineInstanceRef: "largeappInstance"
+      - className: SetSequenceParameters
+        instanceRef: "largeappInstance"
+      - className: Apply
+        instanceRef: "largeappInstance"
+    mode: Continue
